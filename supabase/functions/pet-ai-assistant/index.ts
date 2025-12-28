@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -25,30 +25,31 @@ serve(async (req) => {
     console.log('Pet context:', pet_context);
 
     // Build system prompt with pet context
-let systemPrompt = `You are a professional Veterinary Assistant. 
-
-STRATEGY: 
-- Never give a diagnosis. 
-- When a user reports a symptom, DO NOT provide a full advice immediately. 
-- FIRST, ask exactly 2-3 short follow-up questions to understand the situation better (e.g., color, duration, energy levels).
-- After the user answers, provide concise guidance.
-
-TONE: 
-- Friendly but professional. 
-- Use Persian (Farsi) for communication.
-- If it sounds like an emergency, use bold text to advise immediate clinic visit.`;
+    let systemPrompt = `You are a warm, empathetic, and knowledgeable Veterinary Assistant. 
     
-    if (pet_context) {
-      systemPrompt += `\n\nCurrent Pet Context:
-- Name: ${pet_context.name || 'Unknown'}
-- Breed: ${pet_context.breed || 'Unknown'}
-- Birth Date: ${pet_context.birth_date || 'Unknown'}
-- Weight: ${pet_context.weight ? `${pet_context.weight} kg` : 'Unknown'}
+    CORE BEHAVIORS:
+    - Language: Communicate ONLY in Persian (Farsi). NEVER use English, Thai, Hindi, or other non-Persian scripts in your output.
+    - Tone: Friendly, reassuring, and professional. Act like a caring pet lover who happens to be an expert.
+    - Empathy: Always acknowledge the owner's feelings (e.g., "I'm so sorry your pet is feeling unwell").
+    - Safety: If symptoms suggest an emergency (vomiting blood, difficulty breathing, seizures, etc.), IMMEDIATELY advise visiting a vet in BOLD text.
+    
+    CONSULTATION APPROACH:
+    - Do not diagnose medical conditions.
+    - If the user provides vague symptoms, ask naturally for more details (e.g., "How long has this been happening?" or "Is he eating normally?"). 
+    - Don't barrage the user with a list of questions; keep it conversational.
+    - Once you have enough context, provide general veterinary advice and home care tips if appropriate.`;
 
-Use this information to personalize your responses when relevant.`;
+    if (pet_context) {
+      systemPrompt += `\n\nAbout the pet:
+    - Name: ${pet_context.name || 'Unknown'}
+    - Breed: ${pet_context.breed || 'Unknown'}
+    - Age/Birthday: ${pet_context.birth_date || 'Unknown'}
+    - Weight: ${pet_context.weight ? `${pet_context.weight} kg` : 'Unknown'}
+    
+    Please mention the pet's name when appropriate to make it personal.`;
     }
 
-    // Build messages array
+    // Build messages array (Standard OpenAI format for Groq)
     const messages = [
       { role: 'system', content: systemPrompt },
     ];
@@ -66,50 +67,49 @@ Use this information to personalize your responses when relevant.`;
     // Add the current user message
     messages.push({ role: 'user', content: user_message });
 
-    console.log('Sending request to Lovable AI Gateway...');
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 
-    // Call Lovable AI Gateway
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    console.log('Sending request to Groq...');
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'llama-3.3-70b-versatile',
         messages: messages,
         max_tokens: 1024,
-        temperature: 0.7,
+        temperature: 0.5,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', errorText);
-      throw new Error(`AI Gateway error: ${response.status}`);
+      console.error('Groq API error:', errorText);
+      throw new Error(`Groq Error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
     const aiResponse = data.choices?.[0]?.message?.content || 'I apologize, but I was unable to process your request. Please try again.';
-
-    console.log('AI Response received successfully');
 
     return new Response(
       JSON.stringify({ response: aiResponse }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in pet-ai-assistant:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: errorMessage,
-        response: 'I apologize, but I encountered an error. Please try again in a moment.'
+        response: `DEBUG ERROR: ${errorMessage}`
       }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

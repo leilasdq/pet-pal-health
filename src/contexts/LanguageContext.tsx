@@ -16,7 +16,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.vault': 'Vault',
     'nav.chat': 'AI Chat',
     'nav.profile': 'Profile',
-    
+
     // Auth
     'auth.welcome': 'Welcome to PetCare',
     'auth.subtitle': 'Your pet\'s health companion',
@@ -29,7 +29,13 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.creatingAccount': 'Creating account...',
     'auth.noAccount': 'Don\'t have an account?',
     'auth.hasAccount': 'Already have an account?',
-    
+    'auth.welcomeBack': 'Welcome back!',
+    'auth.signedIn': 'You have successfully signed in.',
+    'auth.accountCreated': 'Account created!',
+    'auth.signupSuccess': 'Welcome to PetCare! You can now sign in.',
+    'auth.emailUsed': 'This email is already registered. Please sign in instead.',
+    'auth.invalidLogin': 'Invalid email or password. Please try again.',
+
     // Dashboard
     'dashboard.title': 'Dashboard',
     'dashboard.myPets': 'My Pets',
@@ -42,7 +48,7 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.allCaughtUp': 'All caught up! 🎉',
     'dashboard.yearsOld': 'years old',
     'dashboard.kg': 'kg',
-    
+
     // Add Pet Dialog
     'pet.addNew': 'Add New Pet',
     'pet.name': 'Pet Name',
@@ -57,7 +63,7 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.adding': 'Adding...',
     'pet.added': 'Pet added successfully!',
     'pet.addError': 'Failed to add pet',
-    
+
     // Add Reminder Dialog
     'reminder.addNew': 'Add Reminder',
     'reminder.title': 'Title',
@@ -78,7 +84,7 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.added': 'Reminder added successfully!',
     'reminder.addError': 'Failed to add reminder',
     'reminder.markComplete': 'Mark as complete',
-    
+
     // Health Vault
     'vault.title': 'Health Vault',
     'vault.subtitle': 'Medical records & documents',
@@ -101,7 +107,7 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.uploading': 'Uploading...',
     'vault.uploaded': 'Record uploaded successfully!',
     'vault.uploadError': 'Failed to upload record',
-    
+
     // AI Chat
     'chat.title': 'AI Vet Assistant',
     'chat.subtitle': 'Ask me anything about pet health',
@@ -114,7 +120,14 @@ const translations: Record<Language, Record<string, string>> = {
     'chat.suggestion1': 'What vaccines does my pet need?',
     'chat.suggestion2': 'Signs of common pet illnesses',
     'chat.suggestion3': 'Diet tips for my pet',
-    
+    'chat.chatDeleted': 'Chat deleted',
+    'chat.chatDeletedDesc': 'The chat session has been permanently removed.',
+    'chat.deleteError': 'Delete failed',
+    'chat.deleteErrorDesc': 'Failed to delete the chat session.',
+    'chat.createError': 'Creation failed',
+    'chat.createErrorDesc': 'Failed to create a new chat session.',
+    'chat.newChat': 'New Chat',
+
     // Profile
     'profile.title': 'Profile',
     'profile.editProfile': 'Edit Profile',
@@ -132,7 +145,7 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.language': 'Language',
     'profile.english': 'English',
     'profile.persian': 'فارسی',
-    
+
     // Common
     'common.loading': 'Loading...',
     'common.error': 'An error occurred',
@@ -148,7 +161,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.vault': 'پرونده',
     'nav.chat': 'مشاوره',
     'nav.profile': 'پروفایل',
-    
+
     // Auth
     'auth.welcome': 'به پت‌کر خوش آمدید',
     'auth.subtitle': 'همراه سلامت حیوان خانگی شما',
@@ -161,7 +174,13 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.creatingAccount': 'در حال ساخت حساب...',
     'auth.noAccount': 'حساب کاربری ندارید؟',
     'auth.hasAccount': 'قبلاً ثبت نام کرده‌اید؟',
-    
+    'auth.welcomeBack': 'خوش برگشتید!',
+    'auth.signedIn': 'با موفقیت وارد شدید.',
+    'auth.accountCreated': 'حساب ایجاد شد!',
+    'auth.signupSuccess': 'به پت‌کر خوش آمدید! اکنون می‌توانید وارد شوید.',
+    'auth.emailUsed': 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.',
+    'auth.invalidLogin': 'ایمیل یا رمز عبور اشتباه است.',
+
     // Dashboard
     'dashboard.title': 'داشبورد',
     'dashboard.myPets': 'حیوانات من',
@@ -174,7 +193,7 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.allCaughtUp': 'همه چیز مرتب است! 🎉',
     'dashboard.yearsOld': 'ساله',
     'dashboard.kg': 'کیلوگرم',
-    
+
     // Add Pet Dialog
     'pet.addNew': 'افزودن حیوان جدید',
     'pet.name': 'نام حیوان',
@@ -189,7 +208,7 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.adding': 'در حال افزودن...',
     'pet.added': 'حیوان با موفقیت اضافه شد!',
     'pet.addError': 'خطا در افزودن حیوان',
-    
+
     // Add Reminder Dialog
     'reminder.addNew': 'افزودن یادآوری',
     'reminder.title': 'عنوان',
@@ -210,7 +229,7 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.added': 'یادآوری با موفقیت اضافه شد!',
     'reminder.addError': 'خطا در افزودن یادآوری',
     'reminder.markComplete': 'تکمیل شد',
-    
+
     // Health Vault
     'vault.title': 'پرونده سلامت',
     'vault.subtitle': 'مدارک و اسناد پزشکی',
@@ -233,7 +252,7 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.uploading': 'در حال آپلود...',
     'vault.uploaded': 'مدرک با موفقیت آپلود شد!',
     'vault.uploadError': 'خطا در آپلود مدرک',
-    
+
     // AI Chat
     'chat.title': 'دستیار هوش مصنوعی دامپزشکی',
     'chat.subtitle': 'هر سوالی درباره سلامت حیوان بپرسید',
@@ -246,7 +265,14 @@ const translations: Record<Language, Record<string, string>> = {
     'chat.suggestion1': 'حیوان من به چه واکسن‌هایی نیاز دارد؟',
     'chat.suggestion2': 'علائم بیماری‌های رایج حیوانات',
     'chat.suggestion3': 'نکات تغذیه‌ای برای حیوان من',
-    
+    'chat.chatDeleted': 'گفتگو حذف شد',
+    'chat.chatDeletedDesc': 'تاریخچه این گفتگو برای همیشه پاک شد.',
+    'chat.deleteError': 'خطا در حذف',
+    'chat.deleteErrorDesc': 'حذف گفتگو با مشکل مواجه شد.',
+    'chat.createError': 'خطا در ایجاد',
+    'chat.createErrorDesc': 'ایجاد گفتگوی جدید با مشکل مواجه شد.',
+    'chat.newChat': 'گفتگوی جدید',
+
     // Profile
     'profile.title': 'پروفایل',
     'profile.editProfile': 'ویرایش پروفایل',
@@ -264,7 +290,7 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.language': 'زبان',
     'profile.english': 'English',
     'profile.persian': 'فارسی',
-    
+
     // Common
     'common.loading': 'در حال بارگذاری...',
     'common.error': 'خطایی رخ داد',
@@ -281,7 +307,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('petcare-language');
-    return (saved as Language) || 'en';
+    return (saved as Language) || 'fa';
   });
 
   const setLanguage = (lang: Language) => {

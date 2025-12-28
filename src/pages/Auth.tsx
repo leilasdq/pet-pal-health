@@ -35,7 +35,7 @@ const Auth = () => {
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
-    
+
     try {
       emailSchema.parse(formData.email);
     } catch (e) {
@@ -43,7 +43,7 @@ const Auth = () => {
         newErrors.email = e.errors[0].message;
       }
     }
-    
+
     try {
       passwordSchema.parse(formData.password);
     } catch (e) {
@@ -51,7 +51,7 @@ const Auth = () => {
         newErrors.password = e.errors[0].message;
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -59,23 +59,23 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setLoading(true);
     const { error } = await signIn(formData.email, formData.password);
     setLoading(false);
-    
+
     if (error) {
       toast({
         title: t('auth.signIn'),
-        description: error.message === 'Invalid login credentials' 
-          ? 'Invalid email or password. Please try again.'
+        description: error.message === 'Invalid login credentials'
+          ? t('auth.invalidLogin')
           : error.message,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
+        title: t('auth.welcomeBack'),
+        description: t('auth.signedIn'),
       });
     }
   };
@@ -83,16 +83,16 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setLoading(true);
     const { error } = await signUp(formData.email, formData.password, formData.fullName);
     setLoading(false);
-    
+
     if (error) {
       const errorMessage = error.message.includes('already registered')
-        ? 'This email is already registered. Please sign in instead.'
+        ? t('auth.emailUsed')
         : error.message;
-      
+
       toast({
         title: t('auth.signUp'),
         description: errorMessage,
@@ -100,8 +100,8 @@ const Auth = () => {
       });
     } else {
       toast({
-        title: 'Account created!',
-        description: 'Welcome to PetCare! You can now sign in.',
+        title: t('auth.accountCreated'),
+        description: t('auth.signupSuccess'),
       });
     }
   };
