@@ -5,6 +5,19 @@
 /* PetCare Design System - Warm, friendly pet health app */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700&display=swap');
 
+/* RTL Support */
+html[dir="rtl"] {
+  font-family: 'Vazirmatn', 'Nunito', sans-serif;
+}
+
+html[dir="rtl"] .rtl\:rotate-180 {
+  transform: rotate(180deg);
+}
+
+.font-vazirmatn {
+  font-family: 'Vazirmatn', sans-serif;
+}
+
 @layer base {
   :root {
     /* Core palette - Warm coral/salmon with teal accents */

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Send, Bot, User, Loader2, Sparkles, PawPrint, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +30,7 @@ const AIChat = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -155,8 +157,8 @@ const AIChat = () => {
 
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to get AI response. Please try again.',
+        title: t('common.error'),
+        description: t('chat.error'),
         variant: 'destructive',
       });
       // Remove optimistic message on error
@@ -188,8 +190,8 @@ const AIChat = () => {
                 <Bot className="w-5 h-5 text-secondary-foreground" />
               </div>
               <div>
-                <h1 className="font-bold text-lg">AI Vet Assistant</h1>
-                <p className="text-xs text-muted-foreground">Ask health questions</p>
+                <h1 className="font-bold text-lg">{t('chat.title')}</h1>
+                <p className="text-xs text-muted-foreground">{t('chat.subtitle')}</p>
               </div>
             </div>
             <Sparkles className="w-5 h-5 text-primary animate-bounce-gentle" />
@@ -199,7 +201,7 @@ const AIChat = () => {
           {pets.length > 0 && (
             <Select value={selectedPetId} onValueChange={setSelectedPetId}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a pet for context" />
+                <SelectValue placeholder={t('chat.selectPet')} />
               </SelectTrigger>
               <SelectContent>
                 {pets.map((pet) => (
@@ -224,13 +226,13 @@ const AIChat = () => {
               </div>
               <h2 className="text-xl font-bold mb-2">Hello! 👋</h2>
               <p className="text-muted-foreground mb-6 max-w-xs">
-                I'm your AI Vet Assistant. Ask me anything about your pet's health, nutrition, or behavior.
+                {t('chat.subtitle')}
               </p>
               <div className="flex flex-col gap-2 w-full max-w-xs">
                 {[
-                  "My dog isn't eating well",
-                  "How often should I vaccinate?",
-                  "Signs of dehydration in cats",
+                  t('chat.suggestion1'),
+                  t('chat.suggestion2'),
+                  t('chat.suggestion3'),
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
@@ -238,7 +240,7 @@ const AIChat = () => {
                       setInput(suggestion);
                       inputRef.current?.focus();
                     }}
-                    className="text-left p-3 rounded-xl bg-muted/50 hover:bg-muted text-sm transition-colors"
+                    className="text-start p-3 rounded-xl bg-muted/50 hover:bg-muted text-sm transition-colors"
                   >
                     {suggestion}
                   </button>
@@ -308,12 +310,13 @@ const AIChat = () => {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your question..."
+              placeholder={t('chat.placeholder')}
               className="flex-1"
+              dir={isRTL ? 'rtl' : 'ltr'}
               disabled={sending}
             />
             <Button type="submit" size="icon" disabled={!input.trim() || sending}>
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 rtl:rotate-180" />}
             </Button>
           </div>
         </form>

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2 } from 'lucide-react';
 import { format, differenceInDays, parseISO, isWithinInterval, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const [pets, setPets] = useState<Pet[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +58,8 @@ const Dashboard = () => {
   const [selectedPetId, setSelectedPetId] = useState<string>('');
   const [newPet, setNewPet] = useState({ name: '', breed: '', birth_date: '', weight: '' });
   const [newReminder, setNewReminder] = useState({ title: '', type: 'vaccination', due_date: '' });
+  const [addingPet, setAddingPet] = useState(false);
+  const [addingReminder, setAddingReminder] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -77,7 +81,7 @@ const Dashboard = () => {
       .order('created_at', { ascending: false });
     
     if (error) {
-      toast({ title: 'Error', description: 'Failed to load pets', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('pet.addError'), variant: 'destructive' });
     } else {
       setPets(data || []);
     }
@@ -103,6 +107,7 @@ const Dashboard = () => {
     e.preventDefault();
     if (!user) return;
 
+    setAddingPet(true);
     const { error } = await supabase.from('pets').insert({
       user_id: user.id,
       name: newPet.name,
@@ -112,19 +117,21 @@ const Dashboard = () => {
     });
 
     if (error) {
-      toast({ title: 'Error', description: 'Failed to add pet', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('pet.addError'), variant: 'destructive' });
     } else {
-      toast({ title: 'Success', description: `${newPet.name} has been added!` });
+      toast({ title: t('pet.added'), description: '' });
       setNewPet({ name: '', breed: '', birth_date: '', weight: '' });
       setAddPetOpen(false);
       fetchPets();
     }
+    setAddingPet(false);
   };
 
   const handleAddReminder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPetId) return;
 
+    setAddingReminder(true);
     const { error } = await supabase.from('reminders').insert({
       pet_id: selectedPetId,
       title: newReminder.title,
@@ -133,13 +140,14 @@ const Dashboard = () => {
     });
 
     if (error) {
-      toast({ title: 'Error', description: 'Failed to add reminder', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('reminder.addError'), variant: 'destructive' });
     } else {
-      toast({ title: 'Success', description: 'Reminder added!' });
+      toast({ title: t('reminder.added'), description: '' });
       setNewReminder({ title: '', type: 'vaccination', due_date: '' });
       setAddReminderOpen(false);
       fetchReminders();
     }
+    setAddingReminder(false);
   };
 
   const getUpcomingReminders = () => {
@@ -160,6 +168,15 @@ const Dashboard = () => {
     return `${months} months`;
   };
 
+  const getReminderTypeLabel = (type: string) => {
+    switch (type) {
+      case 'vaccination': return t('reminder.vaccination');
+      case 'antiparasitic': return t('reminder.antiparasitic');
+      case 'checkup': return t('reminder.checkup');
+      default: return type;
+    }
+  };
+
   const upcomingReminders = getUpcomingReminders();
 
   if (authLoading || loading) {
@@ -178,8 +195,8 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">My Pets</h1>
-            <p className="text-muted-foreground text-sm">Manage your furry friends</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('dashboard.myPets')}</h1>
+            <p className="text-muted-foreground text-sm">{t('dashboard.next7Days')}</p>
           </div>
           <Dialog open={addPetOpen} onOpenChange={setAddPetOpen}>
             <DialogTrigger asChild>
@@ -189,31 +206,33 @@ const Dashboard = () => {
             </DialogTrigger>
             <DialogContent className="max-w-sm">
               <DialogHeader>
-                <DialogTitle>Add New Pet</DialogTitle>
+                <DialogTitle>{t('pet.addNew')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleAddPet} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="pet-name">Name *</Label>
+                  <Label htmlFor="pet-name">{t('pet.name')} *</Label>
                   <Input
                     id="pet-name"
                     value={newPet.name}
                     onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
-                    placeholder="Buddy"
+                    placeholder={t('pet.namePlaceholder')}
+                    dir={isRTL ? 'rtl' : 'ltr'}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pet-breed">Breed</Label>
+                  <Label htmlFor="pet-breed">{t('pet.breed')}</Label>
                   <Input
                     id="pet-breed"
                     value={newPet.breed}
                     onChange={(e) => setNewPet({ ...newPet, breed: e.target.value })}
-                    placeholder="Golden Retriever"
+                    placeholder={t('pet.breedPlaceholder')}
+                    dir={isRTL ? 'rtl' : 'ltr'}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="pet-birth">Birth Date</Label>
+                    <Label htmlFor="pet-birth">{t('pet.birthDate')}</Label>
                     <Input
                       id="pet-birth"
                       type="date"
@@ -222,18 +241,21 @@ const Dashboard = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pet-weight">Weight (kg)</Label>
+                    <Label htmlFor="pet-weight">{t('pet.weight')}</Label>
                     <Input
                       id="pet-weight"
                       type="number"
                       step="0.1"
                       value={newPet.weight}
                       onChange={(e) => setNewPet({ ...newPet, weight: e.target.value })}
-                      placeholder="12.5"
+                      placeholder={t('pet.weightPlaceholder')}
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full">Add Pet</Button>
+                <Button type="submit" className="w-full" disabled={addingPet}>
+                  {addingPet ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                  {addingPet ? t('pet.adding') : t('pet.add')}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -245,7 +267,7 @@ const Dashboard = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Bell className="w-4 h-4 text-warning" />
-                Upcoming This Week
+                {t('dashboard.upcomingReminders')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -283,13 +305,13 @@ const Dashboard = () => {
               <div className="w-16 h-16 rounded-full bg-primary-soft flex items-center justify-center mb-4">
                 <PawPrint className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-1">No pets yet</h3>
+              <h3 className="text-lg font-semibold mb-1">{t('dashboard.noPets')}</h3>
               <p className="text-muted-foreground text-sm text-center mb-4">
-                Add your first pet to start tracking their health
+                {t('dashboard.addFirstPet')}
               </p>
               <Button onClick={() => setAddPetOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Pet
+                <Plus className="w-4 h-4 me-2" />
+                {t('dashboard.addPet')}
               </Button>
             </CardContent>
           </Card>
@@ -317,10 +339,10 @@ const Dashboard = () => {
                         {pet.birth_date && ` • ${calculateAge(pet.birth_date)}`}
                       </p>
                       {pet.weight && (
-                        <p className="text-xs text-muted-foreground mt-1">{pet.weight} kg</p>
+                        <p className="text-xs text-muted-foreground mt-1">{pet.weight} {t('dashboard.kg')}</p>
                       )}
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground rtl:rotate-180" />
                   </div>
                   
                   {/* Quick actions */}
@@ -331,17 +353,17 @@ const Dashboard = () => {
                     }}>
                       <DialogTrigger asChild>
                         <Button variant="soft" size="sm" className="flex-1">
-                          <Bell className="w-4 h-4 mr-1" />
-                          Add Reminder
+                          <Bell className="w-4 h-4 me-1" />
+                          {t('reminder.addNew')}
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-sm">
                         <DialogHeader>
-                          <DialogTitle>Add Reminder for {pet.name}</DialogTitle>
+                          <DialogTitle>{t('reminder.addNew')} - {pet.name}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleAddReminder} className="space-y-4">
                           <div className="space-y-2">
-                            <Label>Reminder Type</Label>
+                            <Label>{t('reminder.type')}</Label>
                             <div className="grid grid-cols-3 gap-2">
                               {Object.entries(reminderTypeIcons).map(([type, Icon]) => (
                                 <button
@@ -356,23 +378,24 @@ const Dashboard = () => {
                                   )}
                                 >
                                   <Icon className="w-5 h-5" />
-                                  <span className="text-xs capitalize">{type}</span>
+                                  <span className="text-xs">{getReminderTypeLabel(type)}</span>
                                 </button>
                               ))}
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="reminder-title">Title</Label>
+                            <Label htmlFor="reminder-title">{t('reminder.title')}</Label>
                             <Input
                               id="reminder-title"
                               value={newReminder.title}
                               onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })}
-                              placeholder="Annual vaccination"
+                              placeholder={t('reminder.titlePlaceholder')}
+                              dir={isRTL ? 'rtl' : 'ltr'}
                               required
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="reminder-date">Due Date</Label>
+                            <Label htmlFor="reminder-date">{t('reminder.dueDate')}</Label>
                             <Input
                               id="reminder-date"
                               type="date"
@@ -381,7 +404,10 @@ const Dashboard = () => {
                               required
                             />
                           </div>
-                          <Button type="submit" className="w-full">Add Reminder</Button>
+                          <Button type="submit" className="w-full" disabled={addingReminder}>
+                            {addingReminder ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                            {addingReminder ? t('reminder.adding') : t('reminder.add')}
+                          </Button>
                         </form>
                       </DialogContent>
                     </Dialog>
@@ -395,7 +421,7 @@ const Dashboard = () => {
         {/* All Reminders Section */}
         {reminders.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold">All Reminders</h2>
+            <h2 className="text-lg font-semibold">{t('dashboard.upcomingReminders')}</h2>
             {reminders.map((reminder) => {
               const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
               return (

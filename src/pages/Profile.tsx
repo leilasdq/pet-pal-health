@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -21,6 +22,7 @@ const Profile = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, language, setLanguage, isRTL } = useLanguage();
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,6 @@ const Profile = () => {
       setProfile(data);
       setFormData({ full_name: data.full_name || '' });
     } else {
-      // Profile might not exist yet, use user data
       setProfile({
         id: user.id,
         email: user.email || null,
@@ -94,9 +95,9 @@ const Profile = () => {
       });
     
     if (error) {
-      toast({ title: 'Error', description: 'Failed to update profile', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('profile.saveError'), variant: 'destructive' });
     } else {
-      toast({ title: 'Success', description: 'Profile updated!' });
+      toast({ title: t('profile.saved'), description: '' });
       fetchProfile();
     }
     setSaving(false);
@@ -138,43 +139,80 @@ const Profile = () => {
             <CardContent className="py-4">
               <PawPrint className="w-6 h-6 mx-auto text-primary mb-1" />
               <p className="text-2xl font-bold">{stats.pets}</p>
-              <p className="text-xs text-muted-foreground">Pets</p>
+              <p className="text-xs text-muted-foreground">{t('profile.pets')}</p>
             </CardContent>
           </Card>
           <Card className="card-elevated text-center">
             <CardContent className="py-4">
               <Heart className="w-6 h-6 mx-auto text-destructive mb-1" />
               <p className="text-2xl font-bold">{stats.records}</p>
-              <p className="text-xs text-muted-foreground">Records</p>
+              <p className="text-xs text-muted-foreground">{t('profile.records')}</p>
             </CardContent>
           </Card>
           <Card className="card-elevated text-center">
             <CardContent className="py-4">
               <PawPrint className="w-6 h-6 mx-auto text-secondary mb-1" />
               <p className="text-2xl font-bold">{stats.reminders}</p>
-              <p className="text-xs text-muted-foreground">Reminders</p>
+              <p className="text-xs text-muted-foreground">{t('profile.reminders')}</p>
             </CardContent>
           </Card>
         </div>
 
+        {/* Language Toggle */}
+        <Card className="card-elevated">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              {t('profile.language')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setLanguage('en')}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  language === 'en'
+                    ? 'border-primary bg-primary-soft'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <span className="text-2xl mb-1 block">🇬🇧</span>
+                <span className="font-medium">{t('profile.english')}</span>
+              </button>
+              <button
+                onClick={() => setLanguage('fa')}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  language === 'fa'
+                    ? 'border-primary bg-primary-soft'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <span className="text-2xl mb-1 block">🇮🇷</span>
+                <span className="font-medium font-vazirmatn">{t('profile.persian')}</span>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Edit Profile */}
         <Card className="card-elevated">
           <CardHeader>
-            <CardTitle className="text-lg">Edit Profile</CardTitle>
+            <CardTitle className="text-lg">{t('profile.editProfile')}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="full-name">Full Name</Label>
+                <Label htmlFor="full-name">{t('profile.fullName')}</Label>
                 <Input
                   id="full-name"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   placeholder="John Doe"
+                  dir={isRTL ? 'rtl' : 'ltr'}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>{t('profile.email')}</Label>
                 <Input
                   value={user?.email || ''}
                   disabled
@@ -182,8 +220,8 @@ const Profile = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Save Changes
+                {saving ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Save className="w-4 h-4 me-2" />}
+                {t('profile.save')}
               </Button>
             </form>
           </CardContent>
@@ -195,8 +233,8 @@ const Profile = () => {
           className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
           onClick={handleSignOut}
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
+          <LogOut className="w-4 h-4 me-2" />
+          {t('profile.signOut')}
         </Button>
 
         {/* App Info */}

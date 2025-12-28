@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -32,16 +33,11 @@ interface MedicalRecord {
   pet?: Pet;
 }
 
-const categories = [
-  { value: 'medical_test', label: 'Medical Tests', icon: FileText, color: 'bg-primary/10 text-primary' },
-  { value: 'prescription', label: 'Prescriptions', icon: Pill, color: 'bg-secondary/10 text-secondary' },
-  { value: 'passport', label: 'Pet Passport/ID', icon: CreditCard, color: 'bg-accent/10 text-accent-foreground' },
-];
-
 const HealthVault = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [pets, setPets] = useState<Pet[]>([]);
@@ -60,6 +56,12 @@ const HealthVault = () => {
   });
   const [activeTab, setActiveTab] = useState('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const categories = [
+    { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
+    { value: 'prescription', labelKey: 'vault.prescription', icon: Pill, color: 'bg-secondary/10 text-secondary' },
+    { value: 'passport', labelKey: 'vault.passport', icon: CreditCard, color: 'bg-accent/10 text-accent-foreground' },
+  ];
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -99,7 +101,7 @@ const HealthVault = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast({ title: 'Error', description: 'File size must be less than 10MB', variant: 'destructive' });
+        toast({ title: t('common.error'), description: 'File size must be less than 10MB', variant: 'destructive' });
         return;
       }
       setSelectedFile(file);
@@ -134,7 +136,7 @@ const HealthVault = () => {
 
       if (insertError) throw insertError;
 
-      toast({ title: 'Success', description: 'Record uploaded successfully!' });
+      toast({ title: t('vault.uploaded'), description: '' });
       setAddRecordOpen(false);
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -147,7 +149,7 @@ const HealthVault = () => {
       });
       fetchRecords();
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to upload record', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('vault.uploadError'), variant: 'destructive' });
     } finally {
       setUploading(false);
     }
@@ -178,8 +180,8 @@ const HealthVault = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Health Vault</h1>
-            <p className="text-muted-foreground text-sm">Store medical records & documents</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('vault.title')}</h1>
+            <p className="text-muted-foreground text-sm">{t('vault.subtitle')}</p>
           </div>
           <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
             <DialogTrigger asChild>
@@ -189,12 +191,12 @@ const HealthVault = () => {
             </DialogTrigger>
             <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Upload Medical Record</DialogTitle>
+                <DialogTitle>{t('vault.uploadNew')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleUpload} className="space-y-4">
                 {/* File Upload */}
                 <div className="space-y-2">
-                  <Label>Photo/Document</Label>
+                  <Label>{t('vault.image')}</Label>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -209,7 +211,7 @@ const HealthVault = () => {
                         type="button"
                         variant="destructive"
                         size="icon-sm"
-                        className="absolute top-2 right-2"
+                        className="absolute top-2 end-2"
                         onClick={() => {
                           setSelectedFile(null);
                           setPreviewUrl(null);
@@ -225,20 +227,20 @@ const HealthVault = () => {
                       className="w-full h-32 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors"
                     >
                       <Upload className="w-8 h-8 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Tap to upload</span>
+                      <span className="text-sm text-muted-foreground">{t('vault.upload')}</span>
                     </button>
                   )}
                 </div>
 
                 {/* Pet Selection */}
                 <div className="space-y-2">
-                  <Label>Select Pet *</Label>
+                  <Label>{t('reminder.selectPet')} *</Label>
                   <Select
                     value={newRecord.pet_id}
                     onValueChange={(value) => setNewRecord({ ...newRecord, pet_id: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a pet" />
+                      <SelectValue placeholder={t('reminder.choosePet')} />
                     </SelectTrigger>
                     <SelectContent>
                       {pets.map((pet) => (
@@ -250,7 +252,7 @@ const HealthVault = () => {
 
                 {/* Category */}
                 <div className="space-y-2">
-                  <Label>Category</Label>
+                  <Label>{t('vault.category')}</Label>
                   <div className="grid grid-cols-3 gap-2">
                     {categories.map((cat) => {
                       const Icon = cat.icon;
@@ -267,7 +269,7 @@ const HealthVault = () => {
                           )}
                         >
                           <Icon className="w-5 h-5" />
-                          <span className="text-center leading-tight">{cat.label}</span>
+                          <span className="text-center leading-tight">{t(cat.labelKey)}</span>
                         </button>
                       );
                     })}
@@ -276,18 +278,19 @@ const HealthVault = () => {
 
                 {/* Title */}
                 <div className="space-y-2">
-                  <Label htmlFor="record-title">Title (optional)</Label>
+                  <Label htmlFor="record-title">{t('vault.recordTitle')}</Label>
                   <Input
                     id="record-title"
                     value={newRecord.title}
                     onChange={(e) => setNewRecord({ ...newRecord, title: e.target.value })}
-                    placeholder="Blood test results"
+                    placeholder={t('vault.titlePlaceholder')}
+                    dir={isRTL ? 'rtl' : 'ltr'}
                   />
                 </div>
 
                 {/* Date */}
                 <div className="space-y-2">
-                  <Label htmlFor="record-date">Date</Label>
+                  <Label htmlFor="record-date">{t('vault.recordDate')}</Label>
                   <Input
                     id="record-date"
                     type="date"
@@ -301,8 +304,8 @@ const HealthVault = () => {
                   className="w-full" 
                   disabled={!selectedFile || !newRecord.pet_id || uploading}
                 >
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                  Upload Record
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Upload className="w-4 h-4 me-2" />}
+                  {uploading ? t('vault.uploading') : t('vault.upload')}
                 </Button>
               </form>
             </DialogContent>
@@ -313,9 +316,9 @@ const HealthVault = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full grid grid-cols-4 bg-muted/50">
             <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-            <TabsTrigger value="medical_test" className="text-xs">Tests</TabsTrigger>
-            <TabsTrigger value="prescription" className="text-xs">Rx</TabsTrigger>
-            <TabsTrigger value="passport" className="text-xs">ID</TabsTrigger>
+            <TabsTrigger value="medical_test" className="text-xs">{t('vault.medicalTests')}</TabsTrigger>
+            <TabsTrigger value="prescription" className="text-xs">{t('vault.prescriptions')}</TabsTrigger>
+            <TabsTrigger value="passport" className="text-xs">{t('vault.passports')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-4">
@@ -325,13 +328,13 @@ const HealthVault = () => {
                   <div className="w-16 h-16 rounded-full bg-primary-soft flex items-center justify-center mb-4">
                     <ImageIcon className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-1">No records yet</h3>
+                  <h3 className="text-lg font-semibold mb-1">{t('vault.noRecords')}</h3>
                   <p className="text-muted-foreground text-sm text-center mb-4">
-                    Upload photos of medical documents to keep them organized
+                    {t('vault.startUploading')}
                   </p>
                   <Button onClick={() => setAddRecordOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Record
+                    <Plus className="w-4 h-4 me-2" />
+                    {t('vault.upload')}
                   </Button>
                 </CardContent>
               </Card>
@@ -355,7 +358,7 @@ const HealthVault = () => {
                           className="w-full h-full object-cover"
                         />
                         <div className={cn(
-                          "absolute top-2 left-2 p-1.5 rounded-lg",
+                          "absolute top-2 start-2 p-1.5 rounded-lg",
                           category?.color
                         )}>
                           <Icon className="w-4 h-4" />
@@ -363,7 +366,7 @@ const HealthVault = () => {
                       </div>
                       <CardContent className="p-3">
                         <p className="font-medium text-sm truncate">
-                          {record.title || category?.label}
+                          {record.title || (category ? t(category.labelKey) : '')}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {record.pet?.name} • {record.record_date && format(parseISO(record.record_date), 'MMM d, yyyy')}
