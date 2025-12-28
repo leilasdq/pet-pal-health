@@ -4,9 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Heart, PawPrint, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 
@@ -17,6 +18,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { user, signIn, signUp, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -64,7 +66,7 @@ const Auth = () => {
     
     if (error) {
       toast({
-        title: 'Sign in failed',
+        title: t('auth.signIn'),
         description: error.message === 'Invalid login credentials' 
           ? 'Invalid email or password. Please try again.'
           : error.message,
@@ -92,7 +94,7 @@ const Auth = () => {
         : error.message;
       
       toast({
-        title: 'Sign up failed',
+        title: t('auth.signUp'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -122,8 +124,8 @@ const Auth = () => {
           </div>
           <Heart className="absolute -top-1 -right-1 w-6 h-6 text-destructive fill-destructive animate-bounce-gentle" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground">PetCare</h1>
-        <p className="text-muted-foreground mt-1">Your pet's health companion</p>
+        <h1 className="text-3xl font-bold text-foreground">{t('auth.welcome')}</h1>
+        <p className="text-muted-foreground mt-1">{t('auth.subtitle')}</p>
       </div>
 
       {/* Auth card */}
@@ -132,10 +134,10 @@ const Auth = () => {
           <CardHeader className="pb-4">
             <TabsList className="grid w-full grid-cols-2 bg-muted/50">
               <TabsTrigger value="signin" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
-                Sign In
+                {t('auth.signIn')}
               </TabsTrigger>
               <TabsTrigger value="signup" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
-                Sign Up
+                {t('auth.signUp')}
               </TabsTrigger>
             </TabsList>
           </CardHeader>
@@ -144,7 +146,7 @@ const Auth = () => {
             <TabsContent value="signin" className="mt-0">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email">{t('auth.email')}</Label>
                   <Input
                     id="signin-email"
                     type="email"
@@ -152,12 +154,13 @@ const Auth = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="input-focus"
+                    dir="ltr"
                     required
                   />
                   {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <Label htmlFor="signin-password">{t('auth.password')}</Label>
                   <Input
                     id="signin-password"
                     type="password"
@@ -165,13 +168,14 @@ const Auth = () => {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="input-focus"
+                    dir="ltr"
                     required
                   />
                   {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
                 </div>
                 <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Sign In
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                  {loading ? t('auth.signingIn') : t('auth.signIn')}
                 </Button>
               </form>
             </TabsContent>
@@ -179,7 +183,7 @@ const Auth = () => {
             <TabsContent value="signup" className="mt-0">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
                   <Input
                     id="signup-name"
                     type="text"
@@ -187,10 +191,11 @@ const Auth = () => {
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                     className="input-focus"
+                    dir={isRTL ? 'rtl' : 'ltr'}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">{t('auth.email')}</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -198,12 +203,13 @@ const Auth = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="input-focus"
+                    dir="ltr"
                     required
                   />
                   {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password">{t('auth.password')}</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -211,13 +217,14 @@ const Auth = () => {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="input-focus"
+                    dir="ltr"
                     required
                   />
                   {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
                 </div>
                 <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Create Account
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                  {loading ? t('auth.creatingAccount') : t('auth.signUp')}
                 </Button>
               </form>
             </TabsContent>

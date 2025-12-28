@@ -1,17 +1,19 @@
 import { Home, FolderHeart, MessageCircle, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const navItems = [
-  { path: '/dashboard', icon: Home, label: 'داشبورد', labelEn: 'Dashboard' },
-  { path: '/vault', icon: FolderHeart, label: 'پرونده', labelEn: 'Vault' },
-  { path: '/chat', icon: MessageCircle, label: 'مشاوره', labelEn: 'AI Chat' },
-  { path: '/profile', icon: User, label: 'پروفایل', labelEn: 'Profile' },
+  { path: '/dashboard', icon: Home, labelKey: 'nav.dashboard' },
+  { path: '/vault', icon: FolderHeart, labelKey: 'nav.vault' },
+  { path: '/chat', icon: MessageCircle, labelKey: 'nav.chat' },
+  { path: '/profile', icon: User, labelKey: 'nav.profile' },
 ];
 
 export const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/50 pb-safe">
@@ -41,7 +43,7 @@ export const BottomNav = () => {
                 "text-[10px] font-medium transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}>
-                {item.labelEn}
+                {t(item.labelKey)}
               </span>
             </button>
           );
