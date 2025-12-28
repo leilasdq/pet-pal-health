@@ -1,1 +1,4 @@
 project_id = "rrbyseeqiwbvazoazoot"
+
+[functions.pet-ai-assistant]
+verify_jwt = false
