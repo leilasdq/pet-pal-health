@@ -342,7 +342,7 @@ const Dashboard = () => {
                         <p className="text-xs text-muted-foreground mt-1">{pet.weight} {t('dashboard.kg')}</p>
                       )}
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground rtl:rotate-180" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground icon-directional" />
                   </div>
                   
                   {/* Quick actions */}

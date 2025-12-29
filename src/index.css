@@ -10,8 +10,9 @@ html[dir="rtl"] {
   font-family: 'Vazirmatn', 'Nunito', sans-serif;
 }
 
-html[dir="rtl"] .rtl\:rotate-180 {
-  transform: rotate(180deg);
+/* Icons that need flipping in RTL */
+[dir="rtl"] .icon-directional {
+  transform: scaleX(-1);
 }
 
 .font-vazirmatn {
@@ -216,11 +217,23 @@ html[dir="rtl"] .rtl\:rotate-180 {
 
   /* Chat bubble styles */
   .chat-bubble-user {
-    @apply bg-primary text-primary-foreground rounded-2xl rounded-br-md;
+    @apply bg-primary text-primary-foreground rounded-2xl;
+    border-bottom-right-radius: 0.375rem;
+  }
+
+  [dir="rtl"] .chat-bubble-user {
+    border-bottom-right-radius: 1rem;
+    border-bottom-left-radius: 0.375rem;
   }
 
   .chat-bubble-assistant {
-    @apply bg-muted text-foreground rounded-2xl rounded-bl-md;
+    @apply bg-muted text-foreground rounded-2xl;
+    border-bottom-left-radius: 0.375rem;
+  }
+
+  [dir="rtl"] .chat-bubble-assistant {
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 0.375rem;
   }
 
   /* Floating action button */

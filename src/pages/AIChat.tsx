@@ -317,8 +317,9 @@ const AIChat = () => {
 
         {/* Sidebar */}
         <div className={cn(
-          "fixed md:relative inset-y-0 left-0 z-30 w-72 bg-card border-r border-border transform transition-transform duration-200 md:transform-none flex flex-col",
-          showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          "fixed md:relative inset-y-0 z-30 w-72 bg-card border-border transform transition-transform duration-200 md:transform-none flex flex-col",
+          "ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l",
+          showSidebar ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full md:translate-x-0",
           "md:w-64"
         )}>
           <div className="p-3 border-b border-border">
@@ -509,7 +510,7 @@ const AIChat = () => {
                 disabled={sending}
               />
               <Button type="submit" size="icon" disabled={!input.trim() || sending}>
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 rtl:rotate-180" />}
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 icon-directional" />}
               </Button>
             </div>
           </form>
