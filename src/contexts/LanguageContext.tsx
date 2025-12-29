@@ -114,6 +114,10 @@ const translations: Record<Language, Record<string, string>> = {
     'chat.suggestion1': 'What vaccines does my pet need?',
     'chat.suggestion2': 'Signs of common pet illnesses',
     'chat.suggestion3': 'Diet tips for my pet',
+    'chat.newChat': 'New Chat',
+    'chat.noChats': 'No chats yet. Start a new conversation!',
+    'chat.welcome': 'Hello! 👋',
+    'chat.disclaimer': 'AI advice is not a substitute for professional veterinary care.',
     
     // Profile
     'profile.title': 'Profile',
@@ -246,6 +250,10 @@ const translations: Record<Language, Record<string, string>> = {
     'chat.suggestion1': 'حیوان من به چه واکسن‌هایی نیاز دارد؟',
     'chat.suggestion2': 'علائم بیماری‌های رایج حیوانات',
     'chat.suggestion3': 'نکات تغذیه‌ای برای حیوان من',
+    'chat.newChat': 'گفتگوی جدید',
+    'chat.noChats': 'هنوز گفتگویی ندارید. یک مکالمه جدید شروع کنید!',
+    'chat.welcome': 'سلام! 👋',
+    'chat.disclaimer': 'مشاوره هوش مصنوعی جایگزین مراقبت‌های دامپزشکی حرفه‌ای نیست.',
     
     // Profile
     'profile.title': 'پروفایل',
