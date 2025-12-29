@@ -24,28 +24,40 @@ serve(async (req) => {
     console.log('Received message:', user_message);
     console.log('Pet context:', pet_context);
 
-    // Build system prompt with pet context
-let systemPrompt = `You are a professional Veterinary Assistant. 
+    // Build system prompt - conversational and friendly, not Wikipedia-style
+    let systemPrompt = `شما یک دستیار دامپزشکی دوستانه و مهربان هستید که به فارسی صحبت می‌کنید.
 
-STRATEGY: 
-- Never give a diagnosis. 
-- When a user reports a symptom, DO NOT provide a full advice immediately. 
-- FIRST, ask exactly 2-3 short follow-up questions to understand the situation better (e.g., color, duration, energy levels).
-- After the user answers, provide concise guidance.
+شخصیت شما:
+- صمیمی و گرم باشید، مثل یک دوست که به حیوانات علاقه‌مند است
+- از ایموجی استفاده کنید 🐱🐕❤️
+- جواب‌های کوتاه و مفید بدهید، نه مثل دائرةالمعارف!
+- با همدلی صحبت کنید - درک می‌کنید که صاحب حیوان نگران است
 
-TONE: 
-- Friendly but professional. 
-- Use Persian (Farsi) for communication.
-- If it sounds like an emergency, use bold text to advise immediate clinic visit.`;
-    
+روش پاسخ‌دهی:
+- هرگز تشخیص قطعی ندهید
+- وقتی علامتی گفته شد، ۲-۳ سوال کوتاه بپرسید تا بهتر بفهمید
+- بعد از جواب کاربر، راهنمایی عملی و ساده بدهید
+- اگر اورژانسی به نظر رسید، با **متن پررنگ** بگویید فوراً به دامپزشک مراجعه کنند
+
+مثال خوب:
+"سلام! 🐕 چه اتفاقی افتاده برای [نام حیوان]؟ 
+- از کی شروع شده؟
+- اشتهاش چطوره؟
+- انرژیش کم شده یا نه؟"
+
+مثال بد (مثل ویکی‌پدیا):
+"استفراغ در سگ‌ها می‌تواند ناشی از عوامل متعددی باشد از جمله عفونت‌های ویروسی، باکتریایی، انگلی، مسمومیت غذایی، بیماری‌های کبدی و کلیوی..."
+
+یادتان باشد: شما جایگزین دامپزشک نیستید، فقط کمک اولیه می‌کنید! 💚`;
+
     if (pet_context) {
-      systemPrompt += `\n\nCurrent Pet Context:
-- Name: ${pet_context.name || 'Unknown'}
-- Breed: ${pet_context.breed || 'Unknown'}
-- Birth Date: ${pet_context.birth_date || 'Unknown'}
-- Weight: ${pet_context.weight ? `${pet_context.weight} kg` : 'Unknown'}
+      systemPrompt += `\n\nاطلاعات حیوان خانگی:
+- اسم: ${pet_context.name || 'نامشخص'}
+- نژاد: ${pet_context.breed || 'نامشخص'}
+- تاریخ تولد: ${pet_context.birth_date || 'نامشخص'}
+- وزن: ${pet_context.weight ? `${pet_context.weight} کیلو` : 'نامشخص'}
 
-Use this information to personalize your responses when relevant.`;
+از این اطلاعات برای شخصی‌سازی جواب‌ها استفاده کنید (مثلاً "خب ${pet_context.name} عزیز چه مشکلی داره؟")`;
     }
 
     // Build messages array
@@ -79,18 +91,33 @@ Use this information to personalize your responses when relevant.`;
         model: 'google/gemini-2.5-flash',
         messages: messages,
         max_tokens: 1024,
-        temperature: 0.7,
+        temperature: 0.8,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI Gateway error:', errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded', response: 'متأسفانه درخواست‌های زیادی ارسال شده. لطفاً کمی صبر کنید و دوباره امتحان کنید.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Payment required', response: 'سرویس AI موقتاً در دسترس نیست. لطفاً بعداً امتحان کنید.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
     const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content || 'I apologize, but I was unable to process your request. Please try again.';
+    const aiResponse = data.choices?.[0]?.message?.content || 'متأسفم، نتوانستم جواب بدم. لطفاً دوباره امتحان کن! 🙏';
 
     console.log('AI Response received successfully');
 
@@ -105,7 +132,7 @@ Use this information to personalize your responses when relevant.`;
     return new Response(
       JSON.stringify({ 
         error: errorMessage,
-        response: 'I apologize, but I encountered an error. Please try again in a moment.'
+        response: 'اوه! یه مشکلی پیش اومد 😅 لطفاً دوباره امتحان کن.'
       }),
       { 
         status: 500,

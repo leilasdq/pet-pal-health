@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Send, Bot, User, Loader2, Sparkles, PawPrint, AlertCircle } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, PawPrint, AlertCircle, Plus, MessageSquare, Trash2, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -26,6 +26,14 @@ interface Pet {
   weight: number | null;
 }
 
+interface Conversation {
+  id: string;
+  title: string;
+  pet_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const AIChat = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -34,12 +42,15 @@ const AIChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string>('');
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,9 +61,17 @@ const AIChat = () => {
   useEffect(() => {
     if (user) {
       fetchPets();
-      fetchMessages();
+      fetchConversations();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (currentConversationId) {
+      fetchMessages(currentConversationId);
+    } else {
+      setMessages([]);
+    }
+  }, [currentConversationId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -72,12 +91,31 @@ const AIChat = () => {
     }
   };
 
-  const fetchMessages = async () => {
+  const fetchConversations = async () => {
+    const { data } = await supabase
+      .from('conversations')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    
+    if (data) {
+      setConversations(data);
+      // Select the most recent conversation if none selected
+      if (data.length > 0 && !currentConversationId) {
+        setCurrentConversationId(data[0].id);
+        if (data[0].pet_id) {
+          setSelectedPetId(data[0].pet_id);
+        }
+      }
+    }
+    setLoading(false);
+  };
+
+  const fetchMessages = async (conversationId: string) => {
     const { data } = await supabase
       .from('chat_messages')
       .select('*')
-      .order('created_at', { ascending: true })
-      .limit(50);
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
     
     if (data) {
       setMessages(data.map(m => ({
@@ -85,7 +123,52 @@ const AIChat = () => {
         role: m.role as 'user' | 'assistant',
       })));
     }
-    setLoading(false);
+  };
+
+  const createNewConversation = async () => {
+    if (!user) return;
+
+    const selectedPet = pets.find(p => p.id === selectedPetId);
+    const title = selectedPet ? `Chat about ${selectedPet.name}` : 'New Chat';
+
+    const { data, error } = await supabase
+      .from('conversations')
+      .insert({
+        user_id: user.id,
+        title,
+        pet_id: selectedPetId || null,
+      })
+      .select()
+      .single();
+
+    if (data) {
+      setConversations(prev => [data, ...prev]);
+      setCurrentConversationId(data.id);
+      setMessages([]);
+      setShowSidebar(false);
+    }
+  };
+
+  const deleteConversation = async (id: string) => {
+    await supabase.from('conversations').delete().eq('id', id);
+    setConversations(prev => prev.filter(c => c.id !== id));
+    
+    if (currentConversationId === id) {
+      const remaining = conversations.filter(c => c.id !== id);
+      if (remaining.length > 0) {
+        setCurrentConversationId(remaining[0].id);
+      } else {
+        setCurrentConversationId(null);
+      }
+    }
+  };
+
+  const selectConversation = (conv: Conversation) => {
+    setCurrentConversationId(conv.id);
+    if (conv.pet_id) {
+      setSelectedPetId(conv.pet_id);
+    }
+    setShowSidebar(false);
   };
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -105,6 +188,27 @@ const AIChat = () => {
       weight: selectedPet.weight,
     } : null;
 
+    // Create conversation if none exists
+    let conversationId = currentConversationId;
+    if (!conversationId) {
+      const title = selectedPet ? `Chat about ${selectedPet.name}` : userMessage.slice(0, 50);
+      const { data: newConv } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user.id,
+          title,
+          pet_id: selectedPetId || null,
+        })
+        .select()
+        .single();
+      
+      if (newConv) {
+        conversationId = newConv.id;
+        setCurrentConversationId(newConv.id);
+        setConversations(prev => [newConv, ...prev]);
+      }
+    }
+
     // Optimistically add user message
     const tempUserMessage: Message = {
       id: `temp-${Date.now()}`,
@@ -121,7 +225,21 @@ const AIChat = () => {
         role: 'user',
         content: userMessage,
         pet_context: petContext,
+        conversation_id: conversationId,
       });
+
+      // Update conversation title if it's the first message
+      if (messages.length === 0) {
+        const title = userMessage.slice(0, 50) + (userMessage.length > 50 ? '...' : '');
+        await supabase
+          .from('conversations')
+          .update({ title, updated_at: new Date().toISOString() })
+          .eq('id', conversationId);
+        
+        setConversations(prev => prev.map(c => 
+          c.id === conversationId ? { ...c, title } : c
+        ));
+      }
 
       // Call edge function
       const { data, error } = await supabase.functions.invoke('pet-ai-assistant', {
@@ -144,7 +262,14 @@ const AIChat = () => {
         user_id: user.id,
         role: 'assistant',
         content: assistantContent,
+        conversation_id: conversationId,
       });
+
+      // Update conversation updated_at
+      await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
 
       // Add assistant message
       const assistantMessage: Message = {
@@ -181,145 +306,214 @@ const AIChat = () => {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-5rem)]">
-        {/* Header */}
-        <div className="px-4 py-4 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-secondary flex items-center justify-center">
-                <Bot className="w-5 h-5 text-secondary-foreground" />
-              </div>
-              <div>
-                <h1 className="font-bold text-lg">{t('chat.title')}</h1>
-                <p className="text-xs text-muted-foreground">{t('chat.subtitle')}</p>
-              </div>
-            </div>
-            <Sparkles className="w-5 h-5 text-primary animate-bounce-gentle" />
-          </div>
-          
-          {/* Pet selector */}
-          {pets.length > 0 && (
-            <Select value={selectedPetId} onValueChange={setSelectedPetId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('chat.selectPet')} />
-              </SelectTrigger>
-              <SelectContent>
-                {pets.map((pet) => (
-                  <SelectItem key={pet.id} value={pet.id}>
-                    <div className="flex items-center gap-2">
-                      <PawPrint className="w-4 h-4" />
-                      {pet.name} {pet.breed && `(${pet.breed})`}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+      <div className="flex h-[calc(100vh-5rem)] relative">
+        {/* Sidebar overlay */}
+        {showSidebar && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-20 md:hidden"
+            onClick={() => setShowSidebar(false)}
+          />
+        )}
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-secondary flex items-center justify-center mb-4 shadow-glow">
-                <Bot className="w-10 h-10 text-secondary-foreground" />
-              </div>
-              <h2 className="text-xl font-bold mb-2">Hello! 👋</h2>
-              <p className="text-muted-foreground mb-6 max-w-xs">
-                {t('chat.subtitle')}
-              </p>
-              <div className="flex flex-col gap-2 w-full max-w-xs">
-                {[
-                  t('chat.suggestion1'),
-                  t('chat.suggestion2'),
-                  t('chat.suggestion3'),
-                ].map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onClick={() => {
-                      setInput(suggestion);
-                      inputRef.current?.focus();
-                    }}
-                    className="text-start p-3 rounded-xl bg-muted/50 hover:bg-muted text-sm transition-colors"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <>
-              {messages.map((message, index) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-3 animate-slide-up",
-                    message.role === 'user' ? "flex-row-reverse" : ""
-                  )}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                    message.role === 'user' 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-secondary text-secondary-foreground"
-                  )}>
-                    {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </div>
-                  <div className={cn(
-                    "max-w-[80%] p-3 rounded-2xl",
-                    message.role === 'user' 
-                      ? "chat-bubble-user" 
-                      : "chat-bubble-assistant"
-                  )}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                </div>
-              ))}
-              {sending && (
-                <div className="flex gap-3 animate-fade-in">
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-secondary-foreground" />
-                  </div>
-                  <div className="chat-bubble-assistant p-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </>
-          )}
-        </div>
-
-        {/* Disclaimer */}
-        <div className="px-4 py-2 bg-warning/10 border-t border-warning/20">
-          <p className="text-[10px] text-warning-foreground/80 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
-            AI advice is not a substitute for professional veterinary care.
-          </p>
-        </div>
-
-        {/* Input */}
-        <form onSubmit={sendMessage} className="px-4 py-4 border-t border-border bg-card/80 backdrop-blur-sm">
-          <div className="flex gap-2">
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={t('chat.placeholder')}
-              className="flex-1"
-              dir={isRTL ? 'rtl' : 'ltr'}
-              disabled={sending}
-            />
-            <Button type="submit" size="icon" disabled={!input.trim() || sending}>
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 rtl:rotate-180" />}
+        {/* Sidebar */}
+        <div className={cn(
+          "fixed md:relative inset-y-0 left-0 z-30 w-72 bg-card border-r border-border transform transition-transform duration-200 md:transform-none flex flex-col",
+          showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          "md:w-64"
+        )}>
+          <div className="p-3 border-b border-border">
+            <Button 
+              onClick={createNewConversation} 
+              className="w-full gap-2"
+              variant="outline"
+            >
+              <Plus className="w-4 h-4" />
+              {t('chat.newChat')}
             </Button>
           </div>
-        </form>
+          
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {conversations.map((conv) => (
+              <div
+                key={conv.id}
+                className={cn(
+                  "group flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-muted transition-colors",
+                  currentConversationId === conv.id && "bg-muted"
+                )}
+                onClick={() => selectConversation(conv)}
+              >
+                <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate text-sm">{conv.title}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteConversation(conv.id);
+                  }}
+                >
+                  <Trash2 className="w-3 h-3 text-destructive" />
+                </Button>
+              </div>
+            ))}
+            {conversations.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground p-4">
+                {t('chat.noChats')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Main chat area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="px-4 py-4 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  onClick={() => setShowSidebar(true)}
+                >
+                  <MessageSquare className="w-5 h-5" />
+                </Button>
+                <div className="w-10 h-10 rounded-xl bg-gradient-secondary flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-secondary-foreground" />
+                </div>
+                <div>
+                  <h1 className="font-bold text-lg">{t('chat.title')}</h1>
+                  <p className="text-xs text-muted-foreground">{t('chat.subtitle')}</p>
+                </div>
+              </div>
+              <Sparkles className="w-5 h-5 text-primary animate-bounce-gentle" />
+            </div>
+            
+            {/* Pet selector */}
+            {pets.length > 0 && (
+              <Select value={selectedPetId} onValueChange={setSelectedPetId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t('chat.selectPet')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {pets.map((pet) => (
+                    <SelectItem key={pet.id} value={pet.id}>
+                      <div className="flex items-center gap-2">
+                        <PawPrint className="w-4 h-4" />
+                        {pet.name} {pet.breed && `(${pet.breed})`}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                <div className="w-20 h-20 rounded-3xl bg-gradient-secondary flex items-center justify-center mb-4 shadow-glow">
+                  <Bot className="w-10 h-10 text-secondary-foreground" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">{t('chat.welcome')}</h2>
+                <p className="text-muted-foreground mb-6 max-w-xs">
+                  {t('chat.subtitle')}
+                </p>
+                <div className="flex flex-col gap-2 w-full max-w-xs">
+                  {[
+                    t('chat.suggestion1'),
+                    t('chat.suggestion2'),
+                    t('chat.suggestion3'),
+                  ].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => {
+                        setInput(suggestion);
+                        inputRef.current?.focus();
+                      }}
+                      className="text-start p-3 rounded-xl bg-muted/50 hover:bg-muted text-sm transition-colors"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                {messages.map((message, index) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex gap-3 animate-slide-up",
+                      message.role === 'user' ? "flex-row-reverse" : ""
+                    )}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      message.role === 'user' 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-secondary text-secondary-foreground"
+                    )}>
+                      {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    </div>
+                    <div className={cn(
+                      "max-w-[80%] p-3 rounded-2xl",
+                      message.role === 'user' 
+                        ? "chat-bubble-user" 
+                        : "chat-bubble-assistant"
+                    )}>
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  </div>
+                ))}
+                {sending && (
+                  <div className="flex gap-3 animate-fade-in">
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-secondary-foreground" />
+                    </div>
+                    <div className="chat-bubble-assistant p-3">
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </>
+            )}
+          </div>
+
+          {/* Disclaimer */}
+          <div className="px-4 py-2 bg-warning/10 border-t border-warning/20">
+            <p className="text-[10px] text-warning-foreground/80 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {t('chat.disclaimer')}
+            </p>
+          </div>
+
+          {/* Input */}
+          <form onSubmit={sendMessage} className="px-4 py-4 border-t border-border bg-card/80 backdrop-blur-sm">
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={t('chat.placeholder')}
+                className="flex-1"
+                dir={isRTL ? 'rtl' : 'ltr'}
+                disabled={sending}
+              />
+              <Button type="submit" size="icon" disabled={!input.trim() || sending}>
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 rtl:rotate-180" />}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </AppLayout>
   );
