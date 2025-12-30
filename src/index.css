@@ -236,6 +236,30 @@ html[dir="rtl"] {
     border-bottom-right-radius: 0.375rem;
   }
 
+  /* Chat sidebar */
+  .chat-sidebar {
+    @apply fixed inset-y-0 z-30 w-72 flex flex-col bg-card transition-transform duration-300 ease-in-out;
+  }
+  
+  [dir="ltr"] .chat-sidebar {
+    @apply left-0 border-r border-border -translate-x-full;
+  }
+  
+  [dir="rtl"] .chat-sidebar {
+    @apply right-0 border-l border-border translate-x-full;
+  }
+  
+  .chat-sidebar[data-open="true"] {
+    @apply translate-x-0;
+  }
+  
+  @media (min-width: 768px) {
+    .chat-sidebar {
+      @apply relative;
+      transform: translateX(0) !important;
+    }
+  }
+
   /* Floating action button */
   .fab {
     @apply fixed z-50 shadow-lg;

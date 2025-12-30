@@ -316,15 +316,10 @@ const AIChat = () => {
         )}
 
         {/* Sidebar - always visible on desktop, slide-in on mobile */}
-        <aside className={cn(
-          "flex flex-col bg-card border-border h-full",
-          // Mobile: fixed, slides in from right (RTL) or left (LTR)
-          "fixed inset-y-0 z-30 w-72 transform transition-transform duration-300 ease-in-out md:transform-none",
-          "ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l",
-          showSidebar ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full",
-          // Desktop: static, always visible
-          "md:relative md:w-72 md:translate-x-0"
-        )}>
+        <aside 
+          className="chat-sidebar"
+          data-open={showSidebar}
+        >
           {/* Sidebar header */}
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h2 className="font-semibold text-sm">{t('chat.history')}</h2>
