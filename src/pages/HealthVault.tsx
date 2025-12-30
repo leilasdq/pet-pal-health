@@ -68,6 +68,9 @@ const HealthVault = () => {
   const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
   const [editForm, setEditForm] = useState({ title: '', notes: '', category: '' });
   const [saving, setSaving] = useState(false);
+  const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -225,19 +228,55 @@ const HealthVault = () => {
       notes: record.notes || '',
       category: record.category,
     });
+    setEditSelectedFile(null);
+    setEditPreviewUrl(null);
+  };
+
+  const handleEditFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({ title: t('common.error'), description: t('vault.fileTooLarge'), variant: 'destructive' });
+        return;
+      }
+      setEditSelectedFile(file);
+      setEditPreviewUrl(URL.createObjectURL(file));
+    }
   };
 
   const handleSaveEdit = async () => {
-    if (!editingRecord) return;
+    if (!editingRecord || !user) return;
 
     setSaving(true);
     try {
+      let newImagePath = editingRecord.image_path;
+
+      // If a new file was selected, upload it
+      if (editSelectedFile) {
+        const fileExt = editSelectedFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('medical-records')
+          .upload(fileName, editSelectedFile);
+
+        if (uploadError) throw uploadError;
+
+        // Delete old image
+        await supabase.storage
+          .from('medical-records')
+          .remove([editingRecord.image_path]);
+
+        newImagePath = fileName;
+      }
+
       const { error } = await supabase
         .from('medical_records')
         .update({
           title: editForm.title.trim() || null,
           notes: editForm.notes.trim() || null,
           category: editForm.category,
+          image_path: newImagePath,
         })
         .eq('id', editingRecord.id);
 
@@ -245,6 +284,8 @@ const HealthVault = () => {
 
       toast({ title: t('vault.updated') });
       setEditingRecord(null);
+      setEditSelectedFile(null);
+      setEditPreviewUrl(null);
       fetchRecords();
     } catch (error) {
       toast({ title: t('common.error'), description: t('vault.updateError'), variant: 'destructive' });
@@ -573,12 +614,59 @@ const HealthVault = () => {
         </AlertDialog>
 
         {/* Edit Record Dialog */}
-        <Dialog open={!!editingRecord} onOpenChange={() => setEditingRecord(null)}>
-          <DialogContent className="max-w-sm">
+        <Dialog open={!!editingRecord} onOpenChange={() => {
+          setEditingRecord(null);
+          setEditSelectedFile(null);
+          setEditPreviewUrl(null);
+        }}>
+          <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t('vault.editRecord')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Image Change */}
+              <div className="space-y-2">
+                <Label>{t('vault.image')}</Label>
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditFileSelect}
+                  className="hidden"
+                />
+                <div className="relative">
+                  <img 
+                    src={editPreviewUrl || (editingRecord ? getImageUrl(editingRecord.image_path) : '')} 
+                    alt="Preview" 
+                    className="w-full h-40 object-cover rounded-xl"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="absolute bottom-2 end-2"
+                    onClick={() => editFileInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4 me-2" />
+                    {t('vault.changeImage')}
+                  </Button>
+                  {editPreviewUrl && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon-sm"
+                      className="absolute top-2 end-2"
+                      onClick={() => {
+                        setEditSelectedFile(null);
+                        setEditPreviewUrl(null);
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               {/* Category */}
               <div className="space-y-2">
                 <Label>{t('vault.category')}</Label>
@@ -634,7 +722,11 @@ const HealthVault = () => {
                 <Button 
                   variant="outline" 
                   className="flex-1"
-                  onClick={() => setEditingRecord(null)}
+                  onClick={() => {
+                    setEditingRecord(null);
+                    setEditSelectedFile(null);
+                    setEditPreviewUrl(null);
+                  }}
                 >
                   {t('common.cancel')}
                 </Button>
