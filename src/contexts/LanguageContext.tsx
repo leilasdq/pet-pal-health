@@ -101,6 +101,7 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.uploading': 'Uploading...',
     'vault.uploaded': 'Record uploaded successfully!',
     'vault.uploadError': 'Failed to upload record',
+    'vault.allPets': 'All Pets',
     
     // AI Chat
     'chat.title': 'AI Vet Assistant',
@@ -238,6 +239,7 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.uploading': 'در حال آپلود...',
     'vault.uploaded': 'مدرک با موفقیت آپلود شد!',
     'vault.uploadError': 'خطا در آپلود مدرک',
+    'vault.allPets': 'همه حیوانات',
     
     // AI Chat
     'chat.title': 'دستیار هوش مصنوعی دامپزشکی',

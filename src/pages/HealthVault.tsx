@@ -57,6 +57,7 @@ const HealthVault = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const [petFilter, setPetFilter] = useState<string>('all');
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -172,9 +173,11 @@ const HealthVault = () => {
     return imageUrls[path] || '';
   };
 
-  const filteredRecords = activeTab === 'all' 
-    ? records 
-    : records.filter(r => r.category === activeTab);
+  const filteredRecords = records.filter(r => {
+    const matchesCategory = activeTab === 'all' || r.category === activeTab;
+    const matchesPet = petFilter === 'all' || r.pet_id === petFilter;
+    return matchesCategory && matchesPet;
+  });
 
   if (authLoading || loading) {
     return (
@@ -190,17 +193,30 @@ const HealthVault = () => {
     <AppLayout>
       <div className="px-4 py-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold text-foreground">{t('vault.title')}</h1>
             <p className="text-muted-foreground text-sm">{t('vault.subtitle')}</p>
           </div>
-          <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
-            <DialogTrigger asChild>
-              <Button size="icon" variant="fab" className="h-12 w-12">
-                <Plus className="w-5 h-5" />
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            {/* Pet Filter */}
+            <Select value={petFilter} onValueChange={setPetFilter}>
+              <SelectTrigger className="w-[140px] bg-background">
+                <SelectValue placeholder={t('vault.allPets')} />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">{t('vault.allPets')}</SelectItem>
+                {pets.map(pet => (
+                  <SelectItem key={pet.id} value={pet.id}>{pet.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
+              <DialogTrigger asChild>
+                <Button size="icon" variant="fab" className="h-12 w-12">
+                  <Plus className="w-5 h-5" />
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{t('vault.uploadNew')}</DialogTitle>
@@ -322,6 +338,7 @@ const HealthVault = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Category Tabs */}
