@@ -519,20 +519,20 @@ const AIChat = () => {
             </p>
           </div>
 
-          {/* Input */}
+          {/* Input - always LTR layout so send button is on right */}
           <form onSubmit={sendMessage} className="px-4 py-4 border-t border-border bg-card/80 backdrop-blur-sm">
-            <div className="flex gap-2">
+            <div className="flex gap-2" dir="ltr">
               <Input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t('chat.placeholder')}
-                className="flex-1"
+                className="flex-1 order-1"
                 dir={isRTL ? 'rtl' : 'ltr'}
                 disabled={sending}
               />
-              <Button type="submit" size="icon" disabled={!input.trim() || sending}>
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 icon-directional" />}
+              <Button type="submit" size="icon" disabled={!input.trim() || sending} className="order-2">
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
           </form>
