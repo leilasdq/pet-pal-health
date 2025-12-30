@@ -55,6 +55,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Add Pet Dialog
     'pet.addNew': 'Add New Pet',
+    'pet.edit': 'Edit Pet',
     'pet.name': 'Pet Name',
     'pet.namePlaceholder': 'e.g., Max',
     'pet.breed': 'Breed',
@@ -62,11 +63,18 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.birthDate': 'Birth Date',
     'pet.weight': 'Weight (kg)',
     'pet.weightPlaceholder': 'e.g., 25',
+    'pet.type': 'Pet Type',
+    'pet.dog': 'Dog',
+    'pet.cat': 'Cat',
+    'pet.changePhoto': 'Change Photo',
     'pet.cancel': 'Cancel',
     'pet.add': 'Add Pet',
     'pet.adding': 'Adding...',
     'pet.added': 'Pet added successfully!',
     'pet.addError': 'Failed to add pet',
+    'pet.updated': 'Pet updated successfully!',
+    'pet.updateError': 'Failed to update pet',
+    'pet.imageUploadError': 'Failed to upload image',
     
     // Add Reminder Dialog
     'reminder.addNew': 'Add Reminder',
@@ -217,6 +225,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Add Pet Dialog
     'pet.addNew': 'افزودن پت جدید',
+    'pet.edit': 'ویرایش پت',
     'pet.name': 'نام پت',
     'pet.namePlaceholder': 'مثلاً: مکس',
     'pet.breed': 'نژاد',
@@ -224,11 +233,18 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.birthDate': 'تاریخ تولد',
     'pet.weight': 'وزن (کیلوگرم)',
     'pet.weightPlaceholder': 'مثلاً: ۲۵',
+    'pet.type': 'نوع پت',
+    'pet.dog': 'سگ',
+    'pet.cat': 'گربه',
+    'pet.changePhoto': 'تغییر عکس',
     'pet.cancel': 'انصراف',
     'pet.add': 'افزودن',
     'pet.adding': 'در حال افزودن...',
     'pet.added': 'پت با موفقیت اضافه شد!',
     'pet.addError': 'خطا در افزودن پت',
+    'pet.updated': 'پت با موفقیت بروزرسانی شد!',
+    'pet.updateError': 'خطا در بروزرسانی پت',
+    'pet.imageUploadError': 'خطا در آپلود تصویر',
     
     // Add Reminder Dialog
     'reminder.addNew': 'افزودن یادآوری',

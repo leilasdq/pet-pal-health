@@ -136,6 +136,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          pet_type: string
           updated_at: string
           user_id: string
           weight: number | null
@@ -147,6 +148,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          pet_type?: string
           updated_at?: string
           user_id: string
           weight?: number | null
@@ -158,6 +160,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          pet_type?: string
           updated_at?: string
           user_id?: string
           weight?: number | null
