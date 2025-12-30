@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   format, 
   addMonths, 
+  setMonth,
+  setYear,
   getMonth,
   getYear,
   startOfMonth,
@@ -17,6 +19,13 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Persian month names
 const persianMonths = [
@@ -31,6 +40,17 @@ const persianWeekdays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
 const toPersianDigits = (num: number): string => {
   const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
   return num.toString().replace(/\d/g, (d) => persianDigits[parseInt(d)]);
+};
+
+// Generate year range for selector (e.g., 1350 to 1420)
+const generateYearRange = (currentYear: number): number[] => {
+  const startYear = currentYear - 50;
+  const endYear = currentYear + 10;
+  const years: number[] = [];
+  for (let year = endYear; year >= startYear; year--) {
+    years.push(year);
+  }
+  return years;
 };
 
 interface PersianCalendarProps {
@@ -61,11 +81,18 @@ function PersianCalendar({
     onSelect?.(date);
   };
 
+  const handleMonthChange = (monthIndex: string) => {
+    setDisplayMonth(prev => setMonth(prev, parseInt(monthIndex)));
+  };
+
+  const handleYearChange = (year: string) => {
+    setDisplayMonth(prev => setYear(prev, parseInt(year)));
+  };
+
   // Get Jalali month and year
   const jalaliMonth = getMonth(displayMonth);
   const jalaliYear = getYear(displayMonth);
-  const monthName = persianMonths[jalaliMonth];
-  const yearDisplay = toPersianDigits(jalaliYear);
+  const yearRange = generateYearRange(jalaliYear);
 
   // Generate calendar days
   const monthStart = startOfMonth(displayMonth);
@@ -87,26 +114,53 @@ function PersianCalendar({
   }
 
   return (
-    <div className={cn("p-4 bg-background rounded-lg", className)} dir="rtl">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+    <div className={cn("p-4 bg-background rounded-lg pointer-events-auto", className)} dir="rtl">
+      {/* Header with navigation and selectors */}
+      <div className="flex justify-between items-center mb-4 gap-2">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleNextMonth}
-          className="h-8 w-8 hover:bg-muted"
+          className="h-8 w-8 hover:bg-muted shrink-0"
           type="button"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <div className="text-base font-semibold font-vazirmatn">
-          {monthName} {yearDisplay}
+        
+        {/* Month and Year Selectors */}
+        <div className="flex items-center gap-1 flex-1 justify-center">
+          <Select value={jalaliMonth.toString()} onValueChange={handleMonthChange}>
+            <SelectTrigger className="w-auto h-8 px-2 text-sm font-vazirmatn border-0 bg-transparent hover:bg-muted focus:ring-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-[100] max-h-[200px]" dir="rtl">
+              {persianMonths.map((month, index) => (
+                <SelectItem key={index} value={index.toString()} className="font-vazirmatn">
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={jalaliYear.toString()} onValueChange={handleYearChange}>
+            <SelectTrigger className="w-auto h-8 px-2 text-sm font-vazirmatn border-0 bg-transparent hover:bg-muted focus:ring-0">
+              <SelectValue>{toPersianDigits(jalaliYear)}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-background z-[100] max-h-[200px]" dir="rtl">
+              {yearRange.map((year) => (
+                <SelectItem key={year} value={year.toString()} className="font-vazirmatn">
+                  {toPersianDigits(year)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+        
         <Button
           variant="ghost"
           size="icon"
           onClick={handlePreviousMonth}
-          className="h-8 w-8 hover:bg-muted"
+          className="h-8 w-8 hover:bg-muted shrink-0"
           type="button"
         >
           <ChevronLeft className="h-4 w-4" />
