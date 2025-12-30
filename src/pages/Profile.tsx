@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe } from 'lucide-react';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing } from 'lucide-react';
 import { formatNumber } from '@/lib/dateUtils';
 
 interface Profile {
@@ -17,6 +19,8 @@ interface Profile {
   email: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  push_notifications_enabled: boolean;
+  email_notifications_enabled: boolean;
 }
 
 const Profile = () => {
@@ -24,11 +28,14 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language, setLanguage, isRTL } = useLanguage();
+  const { isSupported: pushSupported, permission: pushPermission, requestPermission } = usePushNotifications();
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({ full_name: '' });
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [emailEnabled, setEmailEnabled] = useState(true);
   const [stats, setStats] = useState({ pets: 0, records: 0, reminders: 0 });
 
   useEffect(() => {
@@ -54,14 +61,18 @@ const Profile = () => {
       .maybeSingle();
     
     if (!error && data) {
-      setProfile(data);
+      setProfile(data as Profile);
       setFormData({ full_name: data.full_name || '' });
+      setPushEnabled(data.push_notifications_enabled || false);
+      setEmailEnabled(data.email_notifications_enabled ?? true);
     } else {
       setProfile({
         id: user.id,
         email: user.email || null,
         full_name: null,
         avatar_url: null,
+        push_notifications_enabled: false,
+        email_notifications_enabled: true,
       });
     }
     setLoading(false);
@@ -93,6 +104,8 @@ const Profile = () => {
         id: user.id,
         full_name: formData.full_name,
         email: user.email,
+        push_notifications_enabled: pushEnabled,
+        email_notifications_enabled: emailEnabled,
       });
     
     if (error) {
@@ -102,6 +115,21 @@ const Profile = () => {
       fetchProfile();
     }
     setSaving(false);
+  };
+
+  const handlePushToggle = async (enabled: boolean) => {
+    if (enabled && pushPermission !== 'granted') {
+      const granted = await requestPermission();
+      if (!granted) {
+        toast({ 
+          title: t('profile.pushPermissionDenied'), 
+          description: t('profile.pushPermissionDeniedDesc'),
+          variant: 'destructive' 
+        });
+        return;
+      }
+    }
+    setPushEnabled(enabled);
   };
 
   const handleSignOut = async () => {
@@ -192,6 +220,58 @@ const Profile = () => {
                 <span className="font-medium font-vazirmatn">{t('profile.persian')}</span>
               </button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Notification Settings */}
+        <Card className="card-elevated">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bell className="w-5 h-5" />
+              {t('profile.notifications')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Push Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="flex items-center gap-2">
+                  <BellRing className="w-4 h-4" />
+                  {t('profile.pushNotifications')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('profile.pushNotificationsDesc')}
+                </p>
+              </div>
+              <Switch
+                checked={pushEnabled}
+                onCheckedChange={handlePushToggle}
+                disabled={!pushSupported}
+              />
+            </div>
+            
+            {/* Email Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  {t('profile.emailNotifications')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('profile.emailNotificationsDesc')}
+                </p>
+              </div>
+              <Switch
+                checked={emailEnabled}
+                onCheckedChange={setEmailEnabled}
+              />
+            </div>
+            
+            {!pushSupported && (
+              <p className="text-xs text-muted-foreground">
+                {t('profile.pushNotSupported')}
+              </p>
+            )}
           </CardContent>
         </Card>
 
