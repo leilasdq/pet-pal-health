@@ -11,8 +11,9 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2 } from 'lucide-react';
-import { format, differenceInDays, parseISO, isWithinInterval, addDays } from 'date-fns';
+import { differenceInDays, parseISO, isWithinInterval, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { formatShortDate, calculateAge as calcAge } from '@/lib/dateUtils';
 
 interface Pet {
   id: string;
@@ -49,7 +50,7 @@ const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [pets, setPets] = useState<Pet[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,11 +162,7 @@ const Dashboard = () => {
   };
 
   const calculateAge = (birthDate: string) => {
-    const days = differenceInDays(new Date(), parseISO(birthDate));
-    const years = Math.floor(days / 365);
-    const months = Math.floor((days % 365) / 30);
-    if (years > 0) return `${years}y ${months}m`;
-    return `${months} months`;
+    return calcAge(birthDate, language);
   };
 
   const getReminderTypeLabel = (type: string) => {
@@ -436,7 +433,7 @@ const Dashboard = () => {
                   <div className="flex-1 min-w-0 text-start">
                     <p className="font-medium text-sm">{reminder.title}</p>
                     <p className="text-xs opacity-75">
-                      {reminder.pet?.name} • {format(parseISO(reminder.due_date), 'MMM d, yyyy')}
+                      {reminder.pet?.name} • {formatShortDate(reminder.due_date, language)}
                     </p>
                   </div>
                 </div>
