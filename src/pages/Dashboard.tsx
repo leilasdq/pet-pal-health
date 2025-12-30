@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -246,6 +247,25 @@ const Dashboard = () => {
       fetchReminders();
     }
     setAddingReminder(false);
+  };
+
+  const handleToggleReminderStatus = async (reminderId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
+    
+    const { error } = await supabase
+      .from('reminders')
+      .update({ status: newStatus })
+      .eq('id', reminderId);
+
+    if (error) {
+      toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' });
+    } else {
+      toast({ 
+        title: newStatus === 'completed' ? t('reminder.completed') : t('reminder.reopened'),
+        description: '' 
+      });
+      fetchReminders();
+    }
   };
 
   const getUpcomingReminders = () => {
@@ -496,9 +516,17 @@ const Dashboard = () => {
                                 )}
                                 style={isRTL ? { direction: 'rtl' } : undefined}
                               >
+                                <Checkbox
+                                  checked={reminder.status === 'completed'}
+                                  onCheckedChange={() => handleToggleReminderStatus(reminder.id, reminder.status)}
+                                  className="shrink-0"
+                                />
                                 <Icon className="w-4 h-4 shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm truncate">{reminder.title}</p>
+                                  <p className={cn(
+                                    "font-medium text-sm truncate",
+                                    reminder.status === 'completed' && "line-through opacity-60"
+                                  )}>{reminder.title}</p>
                                   <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
                                 </div>
                                 <span className={cn(
