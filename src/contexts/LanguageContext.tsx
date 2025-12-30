@@ -102,6 +102,10 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.uploaded': 'Record uploaded successfully!',
     'vault.uploadError': 'Failed to upload record',
     'vault.allPets': 'All Pets',
+    'vault.deleted': 'Record deleted successfully!',
+    'vault.deleteError': 'Failed to delete record',
+    'vault.deleteConfirmTitle': 'Delete Record',
+    'vault.deleteConfirmMessage': 'Are you sure you want to delete this record? This action cannot be undone.',
     
     // AI Chat
     'chat.title': 'AI Vet Assistant',
@@ -240,6 +244,10 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.uploaded': 'مدرک با موفقیت آپلود شد!',
     'vault.uploadError': 'خطا در آپلود مدرک',
     'vault.allPets': 'همه حیوانات',
+    'vault.deleted': 'مدرک با موفقیت حذف شد!',
+    'vault.deleteError': 'خطا در حذف مدرک',
+    'vault.deleteConfirmTitle': 'حذف مدرک',
+    'vault.deleteConfirmMessage': 'آیا مطمئن هستید که می‌خواهید این مدرک را حذف کنید؟ این عمل قابل بازگشت نیست.',
     
     // AI Chat
     'chat.title': 'دستیار هوش مصنوعی دامپزشکی',
