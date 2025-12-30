@@ -118,6 +118,7 @@ const translations: Record<Language, Record<string, string>> = {
     'chat.noChats': 'No chats yet. Start a new conversation!',
     'chat.welcome': 'Hello! 👋',
     'chat.disclaimer': 'AI advice is not a substitute for professional veterinary care.',
+    'chat.history': 'Chat History',
     
     // Profile
     'profile.title': 'Profile',
@@ -254,6 +255,7 @@ const translations: Record<Language, Record<string, string>> = {
     'chat.noChats': 'هنوز گفتگویی ندارید. یک مکالمه جدید شروع کنید!',
     'chat.welcome': 'سلام! 👋',
     'chat.disclaimer': 'مشاوره هوش مصنوعی جایگزین مراقبت‌های دامپزشکی حرفه‌ای نیست.',
+    'chat.history': 'تاریخچه گفتگو',
     
     // Profile
     'profile.title': 'پروفایل',
