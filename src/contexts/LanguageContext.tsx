@@ -183,6 +183,14 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.language': 'Language',
     'profile.english': 'English',
     'profile.persian': 'فارسی',
+    'profile.notifications': 'Notifications',
+    'profile.pushNotifications': 'Push Notifications',
+    'profile.pushNotificationsDesc': 'Get notified when reminders are due',
+    'profile.emailNotifications': 'Email Notifications',
+    'profile.emailNotificationsDesc': 'Receive daily reminder emails',
+    'profile.pushPermissionDenied': 'Permission Denied',
+    'profile.pushPermissionDeniedDesc': 'Please enable notifications in your browser settings',
+    'profile.pushNotSupported': 'Push notifications are not supported in this browser',
     
     // Common
     'common.loading': 'Loading...',
@@ -373,6 +381,14 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.language': 'زبان',
     'profile.english': 'English',
     'profile.persian': 'فارسی',
+    'profile.notifications': 'اعلان‌ها',
+    'profile.pushNotifications': 'اعلان‌های فوری',
+    'profile.pushNotificationsDesc': 'هنگام سررسید یادآوری‌ها مطلع شوید',
+    'profile.emailNotifications': 'اعلان‌های ایمیلی',
+    'profile.emailNotificationsDesc': 'ایمیل روزانه یادآوری دریافت کنید',
+    'profile.pushPermissionDenied': 'دسترسی رد شد',
+    'profile.pushPermissionDeniedDesc': 'لطفاً اعلان‌ها را در تنظیمات مرورگر فعال کنید',
+    'profile.pushNotSupported': 'اعلان‌های فوری در این مرورگر پشتیبانی نمی‌شود',
     
     // Common
     'common.loading': 'در حال بارگذاری...',
