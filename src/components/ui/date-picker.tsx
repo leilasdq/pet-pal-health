@@ -49,17 +49,15 @@ export function DatePicker({
         <Button
           variant="outline"
           disabled={disabled}
+          dir={isRTL ? "rtl" : "ltr"}
           className={cn(
-            "w-full font-normal !flex !items-center gap-2",
-            isRTL ? "!flex-row-reverse !justify-end" : "!justify-start",
+            "w-full font-normal !flex !items-center gap-2 !justify-start",
             !date && "text-muted-foreground",
             className
           )}
         >
           <CalendarIcon className="h-4 w-4 shrink-0" />
-          <span className={isRTL ? "text-right" : "text-left"}>
-            {date ? formatDisplayDate(date) : (placeholder || t('common.selectDate'))}
-          </span>
+          <span>{date ? formatDisplayDate(date) : (placeholder || t('common.selectDate'))}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 z-50 bg-background" align={isRTL ? "end" : "start"}>
