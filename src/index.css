@@ -249,7 +249,7 @@ html[dir="rtl"] {
     flex-direction: column;
     background-color: hsl(var(--card));
     border-right: 1px solid hsl(var(--border));
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out, width 0.2s ease-in-out;
     transform: translateX(-100%);
   }
   
@@ -261,6 +261,10 @@ html[dir="rtl"] {
     .chat-sidebar {
       position: relative;
       transform: translateX(0) !important;
+    }
+    
+    .chat-sidebar[data-collapsed="true"] {
+      width: 4rem;
     }
   }
 
