@@ -68,7 +68,9 @@ export const formatShortDate = (
   date: string | Date,
   language: Language
 ): string => {
-  return formatDate(date, 'MMM d', language);
+  // Use full month name for Persian to avoid truncation issues
+  const formatStr = language === 'fa' ? 'd MMMM' : 'MMM d';
+  return formatDate(date, formatStr, language);
 };
 
 /**
