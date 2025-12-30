@@ -39,10 +39,11 @@ interface Reminder {
   due_date: string;
   status: string;
   recurrence: string;
+  recurrence_interval: number;
   pet?: Pet;
 }
 
-type RecurrenceType = 'none' | 'weekly' | 'monthly' | 'yearly';
+type RecurrenceUnit = 'none' | 'week' | 'month' | 'year';
 
 const reminderTypeIcons: Record<string, typeof Syringe> = {
   vaccination: Syringe,
@@ -76,7 +77,7 @@ const Dashboard = () => {
   const [newPet, setNewPet] = useState({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' as PetType });
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [editPetData, setEditPetData] = useState({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' as PetType });
-  const [newReminder, setNewReminder] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceType });
+  const [newReminder, setNewReminder] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceUnit, recurrence_interval: 1 });
   const [addingPet, setAddingPet] = useState(false);
   const [editingPetLoading, setEditingPetLoading] = useState(false);
   const [addingReminder, setAddingReminder] = useState(false);
@@ -84,7 +85,7 @@ const Dashboard = () => {
   const [expandedPetId, setExpandedPetId] = useState<string | null>(null);
   const [editReminderOpen, setEditReminderOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
-  const [editReminderData, setEditReminderData] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceType });
+  const [editReminderData, setEditReminderData] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceUnit, recurrence_interval: 1 });
   const [savingReminder, setSavingReminder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -245,13 +246,14 @@ const Dashboard = () => {
       reminder_type: newReminder.type,
       due_date: newReminder.due_date,
       recurrence: newReminder.recurrence,
+      recurrence_interval: newReminder.recurrence_interval,
     });
 
     if (error) {
       toast({ title: t('common.error'), description: t('reminder.addError'), variant: 'destructive' });
     } else {
       toast({ title: t('reminder.added'), description: '' });
-      setNewReminder({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' });
+      setNewReminder({ title: '', type: 'vaccination', due_date: '', recurrence: 'none', recurrence_interval: 1 });
       setAddReminderOpen(false);
       fetchReminders();
     }
@@ -274,17 +276,18 @@ const Dashboard = () => {
     // If completing a recurring reminder, create the next occurrence
     if (newStatus === 'completed' && reminder.recurrence && reminder.recurrence !== 'none') {
       const currentDueDate = parseISO(reminder.due_date);
+      const interval = reminder.recurrence_interval || 1;
       let nextDueDate: Date;
 
       switch (reminder.recurrence) {
-        case 'weekly':
-          nextDueDate = addWeeks(currentDueDate, 1);
+        case 'week':
+          nextDueDate = addWeeks(currentDueDate, interval);
           break;
-        case 'monthly':
-          nextDueDate = addMonths(currentDueDate, 1);
+        case 'month':
+          nextDueDate = addMonths(currentDueDate, interval);
           break;
-        case 'yearly':
-          nextDueDate = addYears(currentDueDate, 1);
+        case 'year':
+          nextDueDate = addYears(currentDueDate, interval);
           break;
         default:
           nextDueDate = currentDueDate;
@@ -296,6 +299,7 @@ const Dashboard = () => {
         reminder_type: reminder.reminder_type,
         due_date: formatGregorian(nextDueDate, 'yyyy-MM-dd'),
         recurrence: reminder.recurrence,
+        recurrence_interval: reminder.recurrence_interval,
       });
     }
 
@@ -326,7 +330,8 @@ const Dashboard = () => {
       title: reminder.title,
       type: reminder.reminder_type,
       due_date: reminder.due_date,
-      recurrence: (reminder.recurrence || 'none') as RecurrenceType
+      recurrence: (reminder.recurrence || 'none') as RecurrenceUnit,
+      recurrence_interval: reminder.recurrence_interval || 1
     });
     setEditReminderOpen(true);
   };
@@ -342,7 +347,8 @@ const Dashboard = () => {
         title: editReminderData.title.trim(),
         reminder_type: editReminderData.type,
         due_date: editReminderData.due_date,
-        recurrence: editReminderData.recurrence
+        recurrence: editReminderData.recurrence,
+        recurrence_interval: editReminderData.recurrence_interval
       })
       .eq('id', editingReminder.id);
 
@@ -723,23 +729,31 @@ const Dashboard = () => {
                           </div>
                           <div className="space-y-2">
                             <Label>{t('reminder.recurrence')}</Label>
-                            <div className="grid grid-cols-4 gap-2">
-                              {(['none', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map((rec) => (
-                                <button
-                                  key={rec}
-                                  type="button"
-                                  onClick={() => setNewReminder({ ...newReminder, recurrence: rec })}
-                                  className={cn(
-                                    "flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all text-xs",
-                                    newReminder.recurrence === rec
-                                      ? "border-primary bg-primary-soft"
-                                      : "border-border hover:border-primary/50"
-                                  )}
-                                >
-                                  {rec !== 'none' && <Repeat className="w-3.5 h-3.5" />}
-                                  <span>{t(`reminder.${rec}`)}</span>
-                                </button>
-                              ))}
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">{t('reminder.every')}</span>
+                              <select
+                                value={newReminder.recurrence_interval}
+                                onChange={(e) => setNewReminder({ ...newReminder, recurrence_interval: parseInt(e.target.value) })}
+                                disabled={newReminder.recurrence === 'none'}
+                                className={cn(
+                                  "w-16 h-9 rounded-md border border-input bg-background px-2 text-sm",
+                                  newReminder.recurrence === 'none' && "opacity-50"
+                                )}
+                              >
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                                  <option key={n} value={n}>{n}</option>
+                                ))}
+                              </select>
+                              <select
+                                value={newReminder.recurrence}
+                                onChange={(e) => setNewReminder({ ...newReminder, recurrence: e.target.value as RecurrenceUnit })}
+                                className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
+                              >
+                                <option value="none">{t('reminder.noRepeat')}</option>
+                                <option value="week">{t('reminder.weeks')}</option>
+                                <option value="month">{t('reminder.months')}</option>
+                                <option value="year">{t('reminder.years')}</option>
+                              </select>
                             </div>
                           </div>
                           <Button type="submit" className="w-full" disabled={addingReminder}>
@@ -917,23 +931,31 @@ const Dashboard = () => {
               </div>
               <div className="space-y-2">
                 <Label>{t('reminder.recurrence')}</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {(['none', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map((rec) => (
-                    <button
-                      key={rec}
-                      type="button"
-                      onClick={() => setEditReminderData({ ...editReminderData, recurrence: rec })}
-                      className={cn(
-                        "flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all text-xs",
-                        editReminderData.recurrence === rec
-                          ? "border-primary bg-primary-soft"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      {rec !== 'none' && <Repeat className="w-3.5 h-3.5" />}
-                      <span>{t(`reminder.${rec}`)}</span>
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{t('reminder.every')}</span>
+                  <select
+                    value={editReminderData.recurrence_interval}
+                    onChange={(e) => setEditReminderData({ ...editReminderData, recurrence_interval: parseInt(e.target.value) })}
+                    disabled={editReminderData.recurrence === 'none'}
+                    className={cn(
+                      "w-16 h-9 rounded-md border border-input bg-background px-2 text-sm",
+                      editReminderData.recurrence === 'none' && "opacity-50"
+                    )}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={editReminderData.recurrence}
+                    onChange={(e) => setEditReminderData({ ...editReminderData, recurrence: e.target.value as RecurrenceUnit })}
+                    className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="none">{t('reminder.noRepeat')}</option>
+                    <option value="week">{t('reminder.weeks')}</option>
+                    <option value="month">{t('reminder.months')}</option>
+                    <option value="year">{t('reminder.years')}</option>
+                  </select>
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={savingReminder || !editReminderData.title.trim() || !editReminderData.due_date}>
