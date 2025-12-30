@@ -4,7 +4,6 @@ import { AppSidebar } from './AppSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -36,35 +35,19 @@ export const AppLayout = ({ children, showNav = true }: AppLayoutProps) => {
     );
   }
 
+  // For both LTR and RTL, keep the same DOM order
+  // The Sidebar component handles its own positioning with side prop
   return (
     <SidebarProvider defaultOpen={true}>
-      {isRTL ? (
-        // RTL Layout: Main content first, then sidebar
-        <>
-          <SidebarInset>
-            <header className="sticky top-0 z-40 flex items-center h-14 px-4 border-b border-border/50 bg-background/95 backdrop-blur-sm justify-end">
-              <SidebarTrigger className="h-8 w-8" />
-            </header>
-            <div className="flex-1">
-              {children}
-            </div>
-          </SidebarInset>
-          <AppSidebar />
-        </>
-      ) : (
-        // LTR Layout: Sidebar first, then main content
-        <>
-          <AppSidebar />
-          <SidebarInset>
-            <header className="sticky top-0 z-40 flex items-center h-14 px-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
-              <SidebarTrigger className="h-8 w-8" />
-            </header>
-            <div className="flex-1">
-              {children}
-            </div>
-          </SidebarInset>
-        </>
-      )}
+      <AppSidebar />
+      <SidebarInset>
+        <header className="sticky top-0 z-40 flex items-center h-14 px-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
+          <SidebarTrigger className="h-8 w-8" />
+        </header>
+        <div className="flex-1">
+          {children}
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 };
