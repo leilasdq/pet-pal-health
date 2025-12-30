@@ -40,11 +40,13 @@ export const AppSidebar = () => {
     >
       {/* Header with Logo */}
       <SidebarHeader className="p-4">
-        <div className={cn(
-          "flex items-center gap-3 w-full",
-          isCollapsed && "justify-center",
-          isRTL && "justify-end"
-        )}>
+        <div 
+          className={cn(
+            "flex items-center gap-3 w-full",
+            isCollapsed && "justify-center"
+          )}
+          style={isRTL ? { direction: 'rtl' } : undefined}
+        >
           <div className="relative shrink-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
               <Heart className="w-5 h-5 text-primary fill-primary/20" />
@@ -82,10 +84,10 @@ export const AppSidebar = () => {
                         isActive && "bg-primary/10 text-primary font-medium"
                       )}
                     >
-                      <div className={cn(
-                        "flex items-center gap-2 w-full",
-                        isRTL && "justify-end"
-                      )}>
+                      <div 
+                        className="flex items-center gap-2 w-full"
+                        style={isRTL ? { direction: 'rtl' } : undefined}
+                      >
                         <Icon className={cn(
                           "w-5 h-5 shrink-0",
                           isActive && "text-primary"
@@ -104,11 +106,13 @@ export const AppSidebar = () => {
       {/* Footer with User Info */}
       <SidebarFooter className="p-4 mt-auto">
         <Separator className="mb-4" />
-        <div className={cn(
-          "flex items-center gap-3 w-full",
-          isCollapsed && "justify-center",
-          isRTL && "justify-end"
-        )}>
+        <div 
+          className={cn(
+            "flex items-center gap-3 w-full",
+            isCollapsed && "justify-center"
+          )}
+          style={isRTL ? { direction: 'rtl' } : undefined}
+        >
           <Avatar className="h-9 w-9 shrink-0">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
             <AvatarFallback className="bg-primary/10 text-primary text-sm">
