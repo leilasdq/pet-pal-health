@@ -11,16 +11,28 @@ html[dir="rtl"] {
 }
 
 /* RTL flex direction fix - ensure flex items respect RTL */
-html[dir="rtl"] [data-sidebar="menu-button"] {
+html[dir="rtl"] [data-sidebar="menu-button"],
+html.rtl [data-sidebar="menu-button"],
+[dir="rtl"] [data-sidebar="menu-button"] {
   flex-direction: row-reverse !important;
+  justify-content: flex-start !important;
 }
 
-html[dir="rtl"] [data-sidebar="menu"] {
-  text-align: right;
+html[dir="rtl"] [data-sidebar="menu"],
+html.rtl [data-sidebar="menu"],
+[dir="rtl"] [data-sidebar="menu"] {
+  text-align: right !important;
+}
+
+html[dir="rtl"] [data-sidebar="content"],
+html.rtl [data-sidebar="content"],
+[dir="rtl"] [data-sidebar="content"] {
+  direction: rtl !important;
 }
 
 /* Ensure flex-row-reverse works properly */
-html[dir="rtl"] .flex-row-reverse {
+html[dir="rtl"] .flex-row-reverse,
+html.rtl .flex-row-reverse {
   flex-direction: row-reverse !important;
 }
 

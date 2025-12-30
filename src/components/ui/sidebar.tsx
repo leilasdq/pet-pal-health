@@ -443,7 +443,18 @@ const SidebarMenuButton = React.forwardRef<
 >(({ asChild = false, isActive = false, variant = "default", size = "default", tooltip, className, style, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
-  const isRTL = document.documentElement.dir === 'rtl';
+  const [isRTL, setIsRTL] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsRTL(document.documentElement.dir === 'rtl');
+    
+    const observer = new MutationObserver(() => {
+      setIsRTL(document.documentElement.dir === 'rtl');
+    });
+    
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] });
+    return () => observer.disconnect();
+  }, []);
 
   const button = (
     <Comp
@@ -452,7 +463,10 @@ const SidebarMenuButton = React.forwardRef<
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-      style={{ ...style, ...(isRTL ? { flexDirection: 'row-reverse' as const } : {}) }}
+      style={{ 
+        ...style, 
+        flexDirection: isRTL ? 'row-reverse' : 'row'
+      }}
       {...props}
     />
   );
