@@ -98,6 +98,8 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.markComplete': 'Mark as complete',
     'reminder.completed': 'Reminder completed!',
     'reminder.reopened': 'Reminder reopened',
+    'reminder.deleted': 'Reminder deleted',
+    'reminder.deleteError': 'Failed to delete reminder',
     
     // Health Vault
     'vault.title': 'Health Vault',
@@ -275,6 +277,8 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.markComplete': 'تکمیل شد',
     'reminder.completed': 'یادآوری تکمیل شد!',
     'reminder.reopened': 'یادآوری بازگشایی شد',
+    'reminder.deleted': 'یادآوری حذف شد',
+    'reminder.deleteError': 'خطا در حذف یادآوری',
     
     // Health Vault
     'vault.title': 'پرونده سلامت',
