@@ -452,15 +452,16 @@ const Dashboard = () => {
                     <div className="flex-1 min-w-0 text-start">
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-lg">{pet.name}</h3>
-                        <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{t(`pet.${pet.pet_type}`)}</span>
                       </div>
                       <p className="text-muted-foreground text-sm truncate">
-                        {pet.breed || t('dashboard.unknownBreed')}
-                        {pet.birth_date && ` • ${calculateAge(pet.birth_date)}`}
+                        {t(`pet.${pet.pet_type}`)}
+                        {pet.breed && ` • ${pet.breed}`}
                       </p>
-                      {pet.weight && (
-                        <p className="text-xs text-muted-foreground mt-1">{pet.weight} {t('dashboard.kg')}</p>
-                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {pet.birth_date && calculateAge(pet.birth_date)}
+                        {pet.birth_date && pet.weight && ' • '}
+                        {pet.weight && `${pet.weight} ${t('dashboard.kg')}`}
+                      </p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => handleEditPet(pet)} className="shrink-0">
                       <Pencil className="w-4 h-4" />
