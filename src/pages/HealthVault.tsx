@@ -123,7 +123,7 @@ const HealthVault = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast({ title: t('common.error'), description: 'File size must be less than 10MB', variant: 'destructive' });
+        toast({ title: t('common.error'), description: t('vault.fileTooLarge'), variant: 'destructive' });
         return;
       }
       setSelectedFile(file);
@@ -426,7 +426,7 @@ const HealthVault = () => {
         {/* Category Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full grid grid-cols-4 bg-muted/50">
-            <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs">{t('common.all')}</TabsTrigger>
             <TabsTrigger value="medical_test" className="text-xs">{t('vault.medicalTests')}</TabsTrigger>
             <TabsTrigger value="prescription" className="text-xs">{t('vault.prescriptions')}</TabsTrigger>
             <TabsTrigger value="passport" className="text-xs">{t('vault.passports')}</TabsTrigger>
