@@ -180,6 +180,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Vault extras
     'vault.fileTooLarge': 'File size must be less than 10MB',
+    'vault.changeImage': 'Change Image',
   },
   fa: {
     // Navigation
@@ -351,6 +352,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Vault extras
     'vault.fileTooLarge': 'حجم فایل باید کمتر از ۱۰ مگابایت باشد',
+    'vault.changeImage': 'تغییر تصویر',
   },
 };
 
