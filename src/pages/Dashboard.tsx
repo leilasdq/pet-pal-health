@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -473,43 +474,47 @@ const Dashboard = () => {
                     </Button>
                   </div>
                   
-                  {/* Expanded Reminders Section */}
-                  {hasReminders && expandedPetId === pet.id && (
-                    <div className="mt-4 pt-4 border-t border-border space-y-2">
-                      <div className="flex items-center gap-2 mb-3" style={isRTL ? { direction: 'rtl' } : undefined}>
-                        <Bell className="w-4 h-4 text-warning" />
-                        <span className="font-semibold text-sm">{t('dashboard.upcomingReminders')}</span>
-                      </div>
-                      {petReminders.map((reminder) => {
-                        const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
-                        const daysUntil = getDaysUntilReminder(reminder.due_date);
-                        
-                        return (
-                          <div
-                            key={reminder.id}
-                            className={cn(
-                              "flex items-center gap-3 p-3 rounded-xl border",
-                              reminderTypeColors[reminder.reminder_type]
-                            )}
-                            style={isRTL ? { direction: 'rtl' } : undefined}
-                          >
-                            <Icon className="w-4 h-4 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{reminder.title}</p>
-                              <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
-                            </div>
-                            <span className={cn(
-                              "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
-                              daysUntil === 0 && "bg-destructive/20 text-destructive",
-                              daysUntil === 1 && "bg-warning/20 text-warning",
-                              daysUntil > 1 && "bg-muted text-muted-foreground"
-                            )}>
-                              {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
-                            </span>
+                  {/* Expanded Reminders Section with Animation */}
+                  {hasReminders && (
+                    <Collapsible open={expandedPetId === pet.id}>
+                      <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
+                        <div className="mt-4 pt-4 border-t border-border space-y-2">
+                          <div className="flex items-center gap-2 mb-3" style={isRTL ? { direction: 'rtl' } : undefined}>
+                            <Bell className="w-4 h-4 text-warning" />
+                            <span className="font-semibold text-sm">{t('dashboard.upcomingReminders')}</span>
                           </div>
-                        );
-                      })}
-                    </div>
+                          {petReminders.map((reminder) => {
+                            const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
+                            const daysUntil = getDaysUntilReminder(reminder.due_date);
+                            
+                            return (
+                              <div
+                                key={reminder.id}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 rounded-xl border",
+                                  reminderTypeColors[reminder.reminder_type]
+                                )}
+                                style={isRTL ? { direction: 'rtl' } : undefined}
+                              >
+                                <Icon className="w-4 h-4 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{reminder.title}</p>
+                                  <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
+                                </div>
+                                <span className={cn(
+                                  "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
+                                  daysUntil === 0 && "bg-destructive/20 text-destructive",
+                                  daysUntil === 1 && "bg-warning/20 text-warning",
+                                  daysUntil > 1 && "bg-muted text-muted-foreground"
+                                )}>
+                                  {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
                   )}
                   
                   {/* Quick actions */}
