@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe } from 'lucide-react';
+import { formatNumber } from '@/lib/dateUtils';
 
 interface Profile {
   id: string;
@@ -138,21 +139,21 @@ const Profile = () => {
           <Card className="card-elevated text-center">
             <CardContent className="py-4">
               <PawPrint className="w-6 h-6 mx-auto text-primary mb-1" />
-              <p className="text-2xl font-bold">{stats.pets}</p>
+              <p className="text-2xl font-bold">{formatNumber(stats.pets, language)}</p>
               <p className="text-xs text-muted-foreground">{t('profile.pets')}</p>
             </CardContent>
           </Card>
           <Card className="card-elevated text-center">
             <CardContent className="py-4">
               <Heart className="w-6 h-6 mx-auto text-destructive mb-1" />
-              <p className="text-2xl font-bold">{stats.records}</p>
+              <p className="text-2xl font-bold">{formatNumber(stats.records, language)}</p>
               <p className="text-xs text-muted-foreground">{t('profile.records')}</p>
             </CardContent>
           </Card>
           <Card className="card-elevated text-center">
             <CardContent className="py-4">
               <PawPrint className="w-6 h-6 mx-auto text-secondary mb-1" />
-              <p className="text-2xl font-bold">{stats.reminders}</p>
+              <p className="text-2xl font-bold">{formatNumber(stats.reminders, language)}</p>
               <p className="text-xs text-muted-foreground">{t('profile.reminders')}</p>
             </CardContent>
           </Card>
