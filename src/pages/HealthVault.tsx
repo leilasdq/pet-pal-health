@@ -450,7 +450,7 @@ const HealthVault = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className={cn("grid grid-cols-2 gap-3", isRTL && "direction-rtl")}>
                 {filteredRecords.map((record, index) => {
                   const category = categories.find(c => c.value === record.category);
                   const Icon = category?.icon || FileText;
@@ -502,7 +502,7 @@ const HealthVault = () => {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                      <CardContent className="p-3">
+                      <CardContent className={cn("p-3", isRTL ? "text-right" : "text-left")}>
                         <p className="font-medium text-sm truncate">
                           {record.title || (category ? t(category.labelKey) : '')}
                         </p>
