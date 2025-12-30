@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera } from 'lucide-react';
-import { differenceInDays, parseISO, isWithinInterval, addDays, format as formatGregorian } from 'date-fns';
+import { differenceInDays, parseISO, isWithinInterval, addDays, format as formatGregorian, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -247,13 +247,19 @@ const Dashboard = () => {
   };
 
   const getUpcomingReminders = () => {
-    const today = new Date();
+    const today = startOfDay(new Date());
     const weekFromNow = addDays(today, 7);
     
     return reminders.filter(r => {
-      const dueDate = parseISO(r.due_date);
+      const dueDate = startOfDay(parseISO(r.due_date));
       return r.status === 'pending' && isWithinInterval(dueDate, { start: today, end: weekFromNow });
     });
+  };
+
+  const getDaysUntilReminder = (dueDate: string) => {
+    const today = startOfDay(new Date());
+    const due = startOfDay(parseISO(dueDate));
+    return differenceInDays(due, today);
   };
 
   const calculateAge = (birthDate: string) => {
@@ -388,7 +394,7 @@ const Dashboard = () => {
             <CardContent className="space-y-2">
               {upcomingReminders.slice(0, 3).map((reminder) => {
                 const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
-                const daysUntil = differenceInDays(parseISO(reminder.due_date), new Date());
+                const daysUntil = getDaysUntilReminder(reminder.due_date);
                 
                 return (
                   <div
@@ -397,13 +403,19 @@ const Dashboard = () => {
                       "flex items-center gap-3 p-3 rounded-xl border",
                       reminderTypeColors[reminder.reminder_type]
                     )}
+                    style={isRTL ? { direction: 'rtl' } : undefined}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate text-start">{reminder.title}</p>
-                      <p className="text-xs opacity-75 text-start">{reminder.pet?.name}</p>
+                      <p className="font-medium text-sm truncate">{reminder.title}</p>
+                      <p className="text-xs opacity-75">{reminder.pet?.name}</p>
                     </div>
-                    <span className="text-xs font-semibold whitespace-nowrap reminder-pulse">
+                    <span className={cn(
+                      "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
+                      daysUntil === 0 && "bg-destructive/20 text-destructive",
+                      daysUntil === 1 && "bg-warning/20 text-warning",
+                      daysUntil > 1 && "bg-muted text-muted-foreground"
+                    )}>
                       {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
                     </span>
                   </div>
@@ -652,32 +664,6 @@ const Dashboard = () => {
           </DialogContent>
         </Dialog>
 
-        {/* All Reminders Section */}
-        {reminders.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-start">{t('dashboard.upcomingReminders')}</h2>
-            {reminders.map((reminder) => {
-              const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
-              return (
-                <div
-                  key={reminder.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border",
-                    reminder.status === 'completed' ? 'bg-muted/50 opacity-60' : reminderTypeColors[reminder.reminder_type]
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                  <div className="flex-1 min-w-0 text-start">
-                    <p className="font-medium text-sm">{reminder.title}</p>
-                    <p className="text-xs opacity-75">
-                      {reminder.pet?.name} • {formatShortDate(reminder.due_date, language)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </AppLayout>
   );
