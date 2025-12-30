@@ -193,27 +193,15 @@ const HealthVault = () => {
     <AppLayout>
       <div className="px-4 py-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-foreground">{t('vault.title')}</h1>
-            <p className="text-muted-foreground text-sm">{t('vault.subtitle')}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Pet Filter */}
-            <Select value={petFilter} onValueChange={setPetFilter}>
-              <SelectTrigger className="w-[140px] bg-background">
-                <SelectValue placeholder={t('vault.allPets')} />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="all">{t('vault.allPets')}</SelectItem>
-                {pets.map(pet => (
-                  <SelectItem key={pet.id} value={pet.id}>{pet.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{t('vault.title')}</h1>
+              <p className="text-muted-foreground text-sm">{t('vault.subtitle')}</p>
+            </div>
             <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
               <DialogTrigger asChild>
-                <Button size="icon" variant="fab" className="h-12 w-12">
+                <Button size="icon" variant="fab" className="h-10 w-10 shrink-0">
                   <Plus className="w-5 h-5" />
                 </Button>
               </DialogTrigger>
@@ -339,6 +327,22 @@ const HealthVault = () => {
             </DialogContent>
           </Dialog>
           </div>
+        </div>
+
+        {/* Pet Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{t('reminder.selectPet')}:</span>
+          <Select value={petFilter} onValueChange={setPetFilter}>
+            <SelectTrigger className="w-[160px] bg-background h-9">
+              <SelectValue placeholder={t('vault.allPets')} />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">{t('vault.allPets')}</SelectItem>
+              {pets.map(pet => (
+                <SelectItem key={pet.id} value={pet.id}>{pet.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Category Tabs */}
