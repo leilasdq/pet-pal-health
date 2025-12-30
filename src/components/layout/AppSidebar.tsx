@@ -81,13 +81,12 @@ export const AppSidebar = () => {
                         "transition-all duration-200",
                         isActive && "bg-primary/10 text-primary font-medium"
                       )}
-                      style={isRTL ? { flexDirection: 'row-reverse' } : undefined}
                     >
                       <Icon className={cn(
                         "w-5 h-5 shrink-0",
                         isActive && "text-primary"
                       )} />
-                      <span className={cn(isRTL && "text-right")}>{t(item.labelKey)}</span>
+                      <span>{t(item.labelKey)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
