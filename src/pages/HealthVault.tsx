@@ -394,16 +394,16 @@ const HealthVault = () => {
 
         {/* Image Preview Modal */}
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 overflow-auto bg-black/90 border-none">
-            <div className="relative flex items-center justify-center min-h-[50vh]">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white"
-                onClick={() => setSelectedImage(null)}
-              >
-                <X className="w-5 h-5" />
-              </Button>
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-black/95 border-none [&>button]:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-50 bg-white/20 hover:bg-white/30 text-white rounded-full h-10 w-10"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X className="w-6 h-6" />
+            </Button>
+            <div className="flex items-center justify-center w-full h-full p-4">
               <img 
                 src={selectedImage || ''} 
                 alt="Medical record"
