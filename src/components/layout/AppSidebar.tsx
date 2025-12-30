@@ -1,4 +1,4 @@
-import { Home, FolderHeart, MessageCircle, User, PanelLeft, Heart } from 'lucide-react';
+import { Home, FolderHeart, MessageCircle, User, Heart } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,7 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,22 +37,22 @@ export const AppSidebar = () => {
     <Sidebar 
       side={isRTL ? 'right' : 'left'} 
       collapsible="icon"
-      className="border-border/50"
     >
       {/* Header with Logo */}
       <SidebarHeader className="p-4">
         <div className={cn(
           "flex items-center gap-3",
-          isCollapsed && "justify-center"
+          isCollapsed && "justify-center",
+          isRTL && "flex-row-reverse"
         )}>
-          <div className="relative">
+          <div className="relative shrink-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
               <Heart className="w-5 h-5 text-primary fill-primary/20" />
             </div>
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col">
+            <div className={cn("flex flex-col", isRTL && "items-end")}>
               <span className="font-bold text-lg text-foreground">PetCare</span>
               <span className="text-xs text-muted-foreground">{t('auth.subtitle')}</span>
             </div>
@@ -80,11 +79,12 @@ export const AppSidebar = () => {
                       tooltip={t(item.labelKey)}
                       className={cn(
                         "transition-all duration-200",
+                        isRTL && "flex-row-reverse",
                         isActive && "bg-primary/10 text-primary font-medium"
                       )}
                     >
                       <Icon className={cn(
-                        "w-5 h-5",
+                        "w-5 h-5 shrink-0",
                         isActive && "text-primary"
                       )} />
                       <span>{t(item.labelKey)}</span>
@@ -98,20 +98,21 @@ export const AppSidebar = () => {
       </SidebarContent>
 
       {/* Footer with User Info */}
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 mt-auto">
         <Separator className="mb-4" />
         <div className={cn(
           "flex items-center gap-3",
-          isCollapsed && "justify-center"
+          isCollapsed && "justify-center",
+          isRTL && "flex-row-reverse"
         )}>
-          <Avatar className="h-9 w-9">
+          <Avatar className="h-9 w-9 shrink-0">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
             <AvatarFallback className="bg-primary/10 text-primary text-sm">
               {user?.email?.charAt(0).toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
           {!isCollapsed && (
-            <div className="flex flex-col min-w-0">
+            <div className={cn("flex flex-col min-w-0", isRTL && "items-end")}>
               <span className="text-sm font-medium truncate">
                 {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
               </span>
