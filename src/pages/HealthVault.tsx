@@ -5,14 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +59,8 @@ const HealthVault = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [petFilter, setPetFilter] = useState<string>('all');
+  const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -171,6 +174,41 @@ const HealthVault = () => {
 
   const getImageUrl = (path: string) => {
     return imageUrls[path] || '';
+  };
+
+  const handleDeleteRecord = async () => {
+    if (!deleteRecordId) return;
+    
+    const recordToDelete = records.find(r => r.id === deleteRecordId);
+    if (!recordToDelete) return;
+
+    setDeleting(true);
+    try {
+      // Delete from storage first
+      const { error: storageError } = await supabase.storage
+        .from('medical-records')
+        .remove([recordToDelete.image_path]);
+      
+      if (storageError) {
+        console.error('Storage delete error:', storageError);
+      }
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('medical_records')
+        .delete()
+        .eq('id', deleteRecordId);
+
+      if (dbError) throw dbError;
+
+      toast({ title: t('vault.deleted') });
+      setDeleteRecordId(null);
+      fetchRecords();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('vault.deleteError'), variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filteredRecords = records.filter(r => {
@@ -380,11 +418,13 @@ const HealthVault = () => {
                   return (
                     <Card 
                       key={record.id} 
-                      className="card-elevated overflow-hidden cursor-pointer animate-slide-up"
+                      className="card-elevated overflow-hidden animate-slide-up group"
                       style={{ animationDelay: `${index * 50}ms` }}
-                      onClick={() => setSelectedImage(getImageUrl(record.image_path))}
                     >
-                      <div className="aspect-[4/3] bg-muted relative">
+                      <div 
+                        className="aspect-[4/3] bg-muted relative cursor-pointer"
+                        onClick={() => setSelectedImage(getImageUrl(record.image_path))}
+                      >
                         <img 
                           src={getImageUrl(record.image_path)} 
                           alt={record.title || 'Medical record'}
@@ -396,6 +436,17 @@ const HealthVault = () => {
                         )}>
                           <Icon className="w-4 h-4" />
                         </div>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 end-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteRecordId(record.id);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                       <CardContent className="p-3">
                         <p className="font-medium text-sm truncate">
@@ -433,6 +484,29 @@ const HealthVault = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deleteRecordId} onOpenChange={() => setDeleteRecordId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('vault.deleteConfirmTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('vault.deleteConfirmMessage')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteRecord}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleting}
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                {t('common.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
