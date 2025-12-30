@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Send, Bot, User, Loader2, Sparkles, PawPrint, AlertCircle, Plus, MessageSquare, Trash2, ChevronLeft } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, PawPrint, AlertCircle, Plus, MessageSquare, Trash2, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -307,7 +307,7 @@ const AIChat = () => {
   return (
     <AppLayout>
       <div className="flex h-[calc(100vh-5rem)] relative">
-        {/* Sidebar overlay */}
+        {/* Sidebar overlay for mobile */}
         {showSidebar && (
           <div 
             className="fixed inset-0 bg-black/50 z-20 md:hidden"
@@ -315,25 +315,46 @@ const AIChat = () => {
           />
         )}
 
-        {/* Sidebar */}
-        <div className={cn(
-          "fixed md:relative inset-y-0 z-30 w-72 bg-card border-border transform transition-transform duration-200 md:transform-none flex flex-col",
+        {/* Sidebar - always visible on desktop, slide-in on mobile */}
+        <aside className={cn(
+          "flex flex-col bg-card border-border h-full",
+          // Mobile: fixed, slides in from right (RTL) or left (LTR)
+          "fixed inset-y-0 z-30 w-72 transform transition-transform duration-300 ease-in-out md:transform-none",
           "ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l",
-          showSidebar ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full md:translate-x-0",
-          "md:w-64"
+          showSidebar ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full",
+          // Desktop: static, always visible
+          "md:relative md:w-72 md:translate-x-0"
         )}>
-          <div className="p-3 border-b border-border">
+          {/* Sidebar header */}
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-sm">{t('chat.history')}</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-8 w-8"
+              onClick={() => setShowSidebar(false)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* New chat button */}
+          <div className="p-3">
             <Button 
-              onClick={createNewConversation} 
+              onClick={() => {
+                createNewConversation();
+                setShowSidebar(false);
+              }} 
               className="w-full gap-2"
-              variant="outline"
+              variant="default"
             >
               <Plus className="w-4 h-4" />
               {t('chat.newChat')}
             </Button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {/* Conversations list */}
+          <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
             {conversations.map((conv) => (
               <div
                 key={conv.id}
@@ -341,7 +362,10 @@ const AIChat = () => {
                   "group flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-muted transition-colors",
                   currentConversationId === conv.id && "bg-muted"
                 )}
-                onClick={() => selectConversation(conv)}
+                onClick={() => {
+                  selectConversation(conv);
+                  setShowSidebar(false);
+                }}
               >
                 <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate text-sm">{conv.title}</span>
@@ -364,61 +388,53 @@ const AIChat = () => {
               </p>
             )}
           </div>
-        </div>
+        </aside>
 
         {/* Main chat area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="px-4 py-4 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-            <div className="flex items-center justify-between mb-3">
+          <div className="px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                {/* Hamburger menu for mobile */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden"
+                  className="md:hidden h-9 w-9"
                   onClick={() => setShowSidebar(true)}
                 >
-                  <MessageSquare className="w-5 h-5" />
+                  <Menu className="w-5 h-5" />
                 </Button>
-                <div className="w-10 h-10 rounded-xl bg-gradient-secondary flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-gradient-secondary flex items-center justify-center">
                   <Bot className="w-5 h-5 text-secondary-foreground" />
                 </div>
                 <div>
-                  <h1 className="font-bold text-lg">{t('chat.title')}</h1>
-                  <p className="text-xs text-muted-foreground">{t('chat.subtitle')}</p>
+                  <h1 className="font-bold text-base">{t('chat.title')}</h1>
+                  <p className="text-xs text-muted-foreground hidden sm:block">{t('chat.subtitle')}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="md:hidden gap-1"
-                  onClick={createNewConversation}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span className="text-xs">{t('chat.newChat')}</span>
-                </Button>
-                <Sparkles className="w-5 h-5 text-primary animate-bounce-gentle" />
-              </div>
+              <Sparkles className="w-5 h-5 text-primary animate-bounce-gentle" />
             </div>
             
             {/* Pet selector */}
             {pets.length > 0 && (
-              <Select value={selectedPetId} onValueChange={setSelectedPetId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('chat.selectPet')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {pets.map((pet) => (
-                    <SelectItem key={pet.id} value={pet.id}>
-                      <div className="flex items-center gap-2">
-                        <PawPrint className="w-4 h-4" />
-                        {pet.name} {pet.breed && `(${pet.breed})`}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-3">
+                <Select value={selectedPetId} onValueChange={setSelectedPetId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('chat.selectPet')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pets.map((pet) => (
+                      <SelectItem key={pet.id} value={pet.id}>
+                        <div className="flex items-center gap-2">
+                          <PawPrint className="w-4 h-4" />
+                          {pet.name} {pet.breed && `(${pet.breed})`}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
 
