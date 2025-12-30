@@ -66,7 +66,7 @@ const HealthVault = () => {
   const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
-  const [editForm, setEditForm] = useState({ title: '', notes: '', category: '' });
+  const [editForm, setEditForm] = useState({ title: '', notes: '', category: '', record_date: '' });
   const [saving, setSaving] = useState(false);
   const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
   const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
@@ -227,6 +227,7 @@ const HealthVault = () => {
       title: record.title || '',
       notes: record.notes || '',
       category: record.category,
+      record_date: record.record_date || formatGregorianDate(new Date(), 'yyyy-MM-dd'),
     });
     setEditSelectedFile(null);
     setEditPreviewUrl(null);
@@ -277,6 +278,7 @@ const HealthVault = () => {
           notes: editForm.notes.trim() || null,
           category: editForm.category,
           image_path: newImagePath,
+          record_date: editForm.record_date,
         })
         .eq('id', editingRecord.id);
 
@@ -702,6 +704,16 @@ const HealthVault = () => {
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   placeholder={t('vault.titlePlaceholder')}
                   dir={isRTL ? 'rtl' : 'ltr'}
+                />
+              </div>
+
+              {/* Date */}
+              <div className="space-y-2">
+                <Label>{t('vault.recordDate')}</Label>
+                <DatePicker
+                  date={editForm.record_date ? parseISO(editForm.record_date) : undefined}
+                  onDateChange={(date) => setEditForm({ ...editForm, record_date: date ? formatGregorianDate(date, 'yyyy-MM-dd') : '' })}
+                  placeholder={t('common.selectDate')}
                 />
               </div>
 
