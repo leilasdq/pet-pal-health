@@ -6,13 +6,12 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera } from 'lucide-react';
-import { differenceInDays, parseISO, isWithinInterval, addDays, format as formatGregorian, startOfDay } from 'date-fns';
+import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown } from 'lucide-react';
+import { differenceInDays, parseISO, startOfDay, format as formatGregorian } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -76,6 +75,7 @@ const Dashboard = () => {
   const [editingPetLoading, setEditingPetLoading] = useState(false);
   const [addingReminder, setAddingReminder] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [expandedPetId, setExpandedPetId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -249,11 +249,11 @@ const Dashboard = () => {
 
   const getUpcomingReminders = () => {
     const today = startOfDay(new Date());
-    const weekFromNow = addDays(today, 7);
     
+    // Show all pending reminders (today and future)
     return reminders.filter(r => {
       const dueDate = startOfDay(parseISO(r.due_date));
-      return r.status === 'pending' && isWithinInterval(dueDate, { start: today, end: weekFromNow });
+      return r.status === 'pending' && dueDate >= today;
     });
   };
 
@@ -417,74 +417,38 @@ const Dashboard = () => {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
+                  {/* Clickable card header to expand/collapse */}
+                  <div 
+                    className={cn(
+                      "flex items-center gap-4 cursor-pointer",
+                      hasReminders && "hover:opacity-80 transition-opacity"
+                    )}
+                    onClick={() => hasReminders && setExpandedPetId(expandedPetId === pet.id ? null : pet.id)}
+                  >
                     {/* Pet Avatar with Notification Dot */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="w-16 h-16 rounded-2xl bg-primary-soft flex items-center justify-center shrink-0 relative cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all">
-                          {pet.image_url ? (
-                            <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover rounded-2xl" />
-                          ) : (
-                            <PetIcon className="w-7 h-7 text-primary" />
-                          )}
-                          {/* Notification Dot */}
-                          {hasReminders && (
-                            <span className="absolute -top-1 -end-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                              {petReminders.length}
-                            </span>
-                          )}
-                        </button>
-                      </PopoverTrigger>
-                      {hasReminders && (
-                        <PopoverContent 
-                          className="w-72 p-0 bg-popover border border-border shadow-lg z-50" 
-                          align={isRTL ? "end" : "start"}
-                          sideOffset={8}
-                        >
-                          <div className="p-3 border-b border-border bg-muted/50">
-                            <h4 className="font-semibold text-sm flex items-center gap-2" style={isRTL ? { direction: 'rtl' } : undefined}>
-                              <Bell className="w-4 h-4 text-warning" />
-                              {t('dashboard.upcomingReminders')} - {pet.name}
-                            </h4>
-                          </div>
-                          <div className="max-h-64 overflow-y-auto p-2 space-y-2">
-                            {petReminders.map((reminder) => {
-                              const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
-                              const daysUntil = getDaysUntilReminder(reminder.due_date);
-                              
-                              return (
-                                <div
-                                  key={reminder.id}
-                                  className={cn(
-                                    "flex items-center gap-3 p-2.5 rounded-lg border",
-                                    reminderTypeColors[reminder.reminder_type]
-                                  )}
-                                  style={isRTL ? { direction: 'rtl' } : undefined}
-                                >
-                                  <Icon className="w-4 h-4 shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm truncate">{reminder.title}</p>
-                                    <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
-                                  </div>
-                                  <span className={cn(
-                                    "text-xs font-semibold whitespace-nowrap px-2 py-0.5 rounded-full",
-                                    daysUntil === 0 && "bg-destructive/20 text-destructive",
-                                    daysUntil === 1 && "bg-warning/20 text-warning",
-                                    daysUntil > 1 && "bg-muted text-muted-foreground"
-                                  )}>
-                                    {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </PopoverContent>
+                    <div className="w-16 h-16 rounded-2xl bg-primary-soft flex items-center justify-center shrink-0 relative">
+                      {pet.image_url ? (
+                        <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover rounded-2xl" />
+                      ) : (
+                        <PetIcon className="w-7 h-7 text-primary" />
                       )}
-                    </Popover>
+                      {/* Notification Dot */}
+                      {hasReminders && (
+                        <span className="absolute -top-1 -end-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                          {petReminders.length}
+                        </span>
+                      )}
+                    </div>
                     
                     <div className="flex-1 min-w-0 text-start">
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-lg">{pet.name}</h3>
+                        {hasReminders && (
+                          <ChevronDown className={cn(
+                            "w-4 h-4 text-muted-foreground transition-transform",
+                            expandedPetId === pet.id && "rotate-180"
+                          )} />
+                        )}
                       </div>
                       <p className="text-muted-foreground text-sm truncate">
                         {t(`pet.${pet.pet_type}`)}
@@ -496,10 +460,57 @@ const Dashboard = () => {
                         {pet.weight && `${formatNumber(pet.weight, language)} ${t('dashboard.kg')}`}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleEditPet(pet)} className="shrink-0">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditPet(pet);
+                      }} 
+                      className="shrink-0"
+                    >
                       <Pencil className="w-4 h-4" />
                     </Button>
                   </div>
+                  
+                  {/* Expanded Reminders Section */}
+                  {hasReminders && expandedPetId === pet.id && (
+                    <div className="mt-4 pt-4 border-t border-border space-y-2">
+                      <div className="flex items-center gap-2 mb-3" style={isRTL ? { direction: 'rtl' } : undefined}>
+                        <Bell className="w-4 h-4 text-warning" />
+                        <span className="font-semibold text-sm">{t('dashboard.upcomingReminders')}</span>
+                      </div>
+                      {petReminders.map((reminder) => {
+                        const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
+                        const daysUntil = getDaysUntilReminder(reminder.due_date);
+                        
+                        return (
+                          <div
+                            key={reminder.id}
+                            className={cn(
+                              "flex items-center gap-3 p-3 rounded-xl border",
+                              reminderTypeColors[reminder.reminder_type]
+                            )}
+                            style={isRTL ? { direction: 'rtl' } : undefined}
+                          >
+                            <Icon className="w-4 h-4 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{reminder.title}</p>
+                              <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
+                            </div>
+                            <span className={cn(
+                              "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
+                              daysUntil === 0 && "bg-destructive/20 text-destructive",
+                              daysUntil === 1 && "bg-warning/20 text-warning",
+                              daysUntil > 1 && "bg-muted text-muted-foreground"
+                            )}>
+                              {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   
                   {/* Quick actions */}
                   <div className="flex gap-2 mt-4">
