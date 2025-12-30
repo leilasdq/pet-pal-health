@@ -388,7 +388,18 @@ const AIChat = () => {
                   <p className="text-xs text-muted-foreground">{t('chat.subtitle')}</p>
                 </div>
               </div>
-              <Sparkles className="w-5 h-5 text-primary animate-bounce-gentle" />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="md:hidden gap-1"
+                  onClick={createNewConversation}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="text-xs">{t('chat.newChat')}</span>
+                </Button>
+                <Sparkles className="w-5 h-5 text-primary animate-bounce-gentle" />
+              </div>
             </div>
             
             {/* Pet selector */}
