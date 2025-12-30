@@ -10,6 +10,15 @@ html[dir="rtl"] {
   font-family: 'Vazirmatn', 'Nunito', sans-serif;
 }
 
+/* RTL flex direction fix - ensure flex items respect RTL */
+html[dir="rtl"] [data-sidebar="menu-button"] {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] [data-sidebar="menu"] {
+  text-align: right;
+}
+
 /* Icons that need flipping in RTL */
 [dir="rtl"] .icon-directional {
   transform: scaleX(-1);
