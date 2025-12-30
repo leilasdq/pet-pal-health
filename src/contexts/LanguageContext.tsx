@@ -129,6 +129,9 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.updateError': 'Failed to update record',
     'vault.notes': 'Notes',
     'vault.notesPlaceholder': 'Add any notes...',
+    'vault.pet': 'Pet',
+    'vault.untitledRecord': 'Untitled Record',
+    'vault.viewFullImage': 'View full image',
     
     // AI Chat
     'chat.title': 'AI Vet Assistant',
@@ -301,6 +304,9 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.updateError': 'خطا در بروزرسانی مدرک',
     'vault.notes': 'یادداشت',
     'vault.notesPlaceholder': 'یادداشت اضافه کنید...',
+    'vault.pet': 'حیوان',
+    'vault.untitledRecord': 'مدرک بدون عنوان',
+    'vault.viewFullImage': 'مشاهده تصویر کامل',
     
     // AI Chat
     'chat.title': 'دستیار هوش مصنوعی دامپزشکی',
