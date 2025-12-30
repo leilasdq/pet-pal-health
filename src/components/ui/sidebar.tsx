@@ -440,9 +440,10 @@ const SidebarMenuButton = React.forwardRef<
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
   } & VariantProps<typeof sidebarMenuButtonVariants>
->(({ asChild = false, isActive = false, variant = "default", size = "default", tooltip, className, ...props }, ref) => {
+>(({ asChild = false, isActive = false, variant = "default", size = "default", tooltip, className, style, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
+  const isRTL = document.documentElement.dir === 'rtl';
 
   const button = (
     <Comp
@@ -451,6 +452,7 @@ const SidebarMenuButton = React.forwardRef<
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      style={{ ...style, ...(isRTL ? { flexDirection: 'row-reverse' as const } : {}) }}
       {...props}
     />
   );
