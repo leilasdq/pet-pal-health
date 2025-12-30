@@ -191,6 +191,11 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.pushPermissionDenied': 'Permission Denied',
     'profile.pushPermissionDeniedDesc': 'Please enable notifications in your browser settings',
     'profile.pushNotSupported': 'Push notifications are not supported in this browser',
+    'profile.testEmail': 'Send Test Email',
+    'profile.testEmailDesc': 'Send a test reminder email to check if it works',
+    'profile.testEmailSent': 'Test Email Sent',
+    'profile.testEmailSentDesc': 'Check your inbox for the reminder email',
+    'profile.testEmailError': 'Failed to send test email',
     
     // Common
     'common.loading': 'Loading...',
@@ -389,6 +394,11 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.pushPermissionDenied': 'دسترسی رد شد',
     'profile.pushPermissionDeniedDesc': 'لطفاً اعلان‌ها را در تنظیمات مرورگر فعال کنید',
     'profile.pushNotSupported': 'اعلان‌های فوری در این مرورگر پشتیبانی نمی‌شود',
+    'profile.testEmail': 'ارسال ایمیل آزمایشی',
+    'profile.testEmailDesc': 'یک ایمیل یادآوری آزمایشی ارسال کنید',
+    'profile.testEmailSent': 'ایمیل آزمایشی ارسال شد',
+    'profile.testEmailSentDesc': 'صندوق ورودی خود را برای ایمیل یادآوری بررسی کنید',
+    'profile.testEmailError': 'خطا در ارسال ایمیل آزمایشی',
     
     // Common
     'common.loading': 'در حال بارگذاری...',

@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing } from 'lucide-react';
+import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send } from 'lucide-react';
 import { formatNumber } from '@/lib/dateUtils';
 
 interface Profile {
@@ -36,6 +36,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({ full_name: '' });
   const [pushEnabled, setPushEnabled] = useState(false);
   const [emailEnabled, setEmailEnabled] = useState(true);
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [stats, setStats] = useState({ pets: 0, records: 0, reminders: 0 });
 
   useEffect(() => {
@@ -130,6 +131,36 @@ const Profile = () => {
       }
     }
     setPushEnabled(enabled);
+  };
+
+  const handleTestEmail = async () => {
+    setSendingTestEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-reminder-email');
+      
+      if (error) {
+        console.error('Error sending test email:', error);
+        toast({ 
+          title: t('common.error'), 
+          description: t('profile.testEmailError'),
+          variant: 'destructive' 
+        });
+      } else {
+        console.log('Test email result:', data);
+        toast({ 
+          title: t('profile.testEmailSent'), 
+          description: data?.message || t('profile.testEmailSentDesc')
+        });
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      toast({ 
+        title: t('common.error'), 
+        description: t('profile.testEmailError'),
+        variant: 'destructive' 
+      });
+    }
+    setSendingTestEmail(false);
   };
 
   const handleSignOut = async () => {
@@ -272,6 +303,27 @@ const Profile = () => {
                 {t('profile.pushNotSupported')}
               </p>
             )}
+
+            {/* Test Email Button */}
+            <div className="pt-2 border-t border-border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestEmail}
+                disabled={sendingTestEmail}
+                className="w-full"
+              >
+                {sendingTestEmail ? (
+                  <Loader2 className="w-4 h-4 animate-spin me-2" />
+                ) : (
+                  <Send className="w-4 h-4 me-2" />
+                )}
+                {t('profile.testEmail')}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                {t('profile.testEmailDesc')}
+              </p>
+            </div>
           </CardContent>
         </Card>
 
