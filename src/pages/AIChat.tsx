@@ -477,10 +477,10 @@ const AIChat = () => {
                   <Bot className="w-10 h-10 text-secondary-foreground" />
                 </div>
                 <h2 className="text-xl font-bold mb-2">{t('chat.welcome')}</h2>
-                <p className="text-muted-foreground mb-6 max-w-xs">
+                <p className={cn("text-muted-foreground mb-6 max-w-xs", isRTL ? "text-right" : "text-left")}>
                   {t('chat.subtitle')}
                 </p>
-                <div className="flex flex-col gap-2 w-full max-w-xs">
+                <div className={cn("flex flex-col gap-2 w-full max-w-xs", isRTL && "items-end")}>
                   {[
                     t('chat.suggestion1'),
                     t('chat.suggestion2'),
@@ -492,7 +492,7 @@ const AIChat = () => {
                         setInput(suggestion);
                         inputRef.current?.focus();
                       }}
-                      className="text-start p-3 rounded-xl bg-muted/50 hover:bg-muted text-sm transition-colors"
+                      className={cn("p-3 rounded-xl bg-muted/50 hover:bg-muted text-sm transition-colors", isRTL ? "text-right" : "text-left")}
                     >
                       {suggestion}
                     </button>

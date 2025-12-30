@@ -207,7 +207,7 @@ const Profile = () => {
                   id="full-name"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder="John Doe"
+                  placeholder={isRTL ? "مثلاً: علی احمدی" : "John Doe"}
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
               </div>

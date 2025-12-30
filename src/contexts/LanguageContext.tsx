@@ -48,6 +48,10 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.allCaughtUp': 'All caught up! 🎉',
     'dashboard.yearsOld': 'years old',
     'dashboard.kg': 'kg',
+    'dashboard.unknownBreed': 'Unknown breed',
+    'dashboard.today': 'Today',
+    'dashboard.tomorrow': 'Tomorrow',
+    'dashboard.daysLeft': 'days',
     
     // Add Pet Dialog
     'pet.addNew': 'Add New Pet',
@@ -205,6 +209,10 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.allCaughtUp': 'همه چیز مرتب است! 🎉',
     'dashboard.yearsOld': 'ساله',
     'dashboard.kg': 'کیلوگرم',
+    'dashboard.unknownBreed': 'نژاد نامشخص',
+    'dashboard.today': 'امروز',
+    'dashboard.tomorrow': 'فردا',
+    'dashboard.daysLeft': 'روز',
     
     // Add Pet Dialog
     'pet.addNew': 'افزودن پت جدید',
