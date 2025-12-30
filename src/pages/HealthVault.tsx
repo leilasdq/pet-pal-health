@@ -13,12 +13,12 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { parseISO, format as formatGregorianDate } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { formatShortDate } from '@/lib/dateUtils';
+import { formatShortDate, formatDisplayDate } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
 
 interface Pet {
@@ -61,6 +61,7 @@ const HealthVault = () => {
   });
   const [activeTab, setActiveTab] = useState('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [viewingRecord, setViewingRecord] = useState<MedicalRecord | null>(null);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [petFilter, setPetFilter] = useState<string>('all');
   const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
@@ -507,7 +508,7 @@ const HealthVault = () => {
                     >
                       <div 
                         className="aspect-[4/3] bg-muted relative cursor-pointer"
-                        onClick={() => setSelectedImage(getImageUrl(record.image_path))}
+                        onClick={() => setViewingRecord(record)}
                       >
                         <img 
                           src={getImageUrl(record.image_path)} 
@@ -571,7 +572,119 @@ const HealthVault = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Image Preview Modal */}
+        {/* Record Detail View Modal */}
+        <Dialog open={!!viewingRecord} onOpenChange={() => setViewingRecord(null)}>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+            {viewingRecord && (() => {
+              const category = categories.find(c => c.value === viewingRecord.category);
+              const CategoryIcon = category?.icon || FileText;
+              return (
+                <>
+                  {/* Image with full-screen option */}
+                  <div className="relative aspect-[4/3] bg-muted">
+                    <img 
+                      src={getImageUrl(viewingRecord.image_path)} 
+                      alt={viewingRecord.title || 'Medical record'}
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-3 end-3 bg-black/50 hover:bg-black/70 text-white rounded-full h-9 w-9"
+                      onClick={() => setSelectedImage(getImageUrl(viewingRecord.image_path))}
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </Button>
+                    <div className={cn(
+                      "absolute bottom-3 start-3 px-3 py-1.5 rounded-full flex items-center gap-2",
+                      category?.color,
+                      "bg-opacity-90 backdrop-blur-sm"
+                    )}>
+                      <CategoryIcon className="w-4 h-4" />
+                      <span className="text-sm font-medium">{category ? t(category.labelKey) : ''}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Details */}
+                  <div className="p-4 space-y-4">
+                    <div>
+                      <h2 className="text-lg font-semibold">
+                        {viewingRecord.title || (category ? t(category.labelKey) : t('vault.untitledRecord'))}
+                      </h2>
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* Pet */}
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <PawPrint className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t('vault.pet')}</p>
+                          <p className="font-medium">{viewingRecord.pet?.name}</p>
+                        </div>
+                      </div>
+
+                      {/* Date */}
+                      {viewingRecord.record_date && (
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center">
+                            <Calendar className="w-4 h-4 text-secondary" />
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-xs">{t('vault.recordDate')}</p>
+                            <p className="font-medium">{formatDisplayDate(viewingRecord.record_date, language)}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Notes */}
+                      {viewingRecord.notes && (
+                        <div className="flex items-start gap-3 text-sm">
+                          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                            <StickyNote className="w-4 h-4 text-accent-foreground" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-muted-foreground text-xs">{t('vault.notes')}</p>
+                            <p className="font-medium whitespace-pre-wrap">{viewingRecord.notes}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => {
+                          handleEditRecord(viewingRecord);
+                          setViewingRecord(null);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4 me-2" />
+                        {t('common.edit')}
+                      </Button>
+                      <Button 
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => {
+                          setDeleteRecordId(viewingRecord.id);
+                          setViewingRecord(null);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 me-2" />
+                        {t('common.delete')}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
+
+        {/* Full Image Preview Modal */}
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
           <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-black/95 border-none [&>button]:hidden">
             <Button
