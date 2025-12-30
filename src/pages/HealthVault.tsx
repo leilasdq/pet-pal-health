@@ -16,9 +16,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
-import { parseISO, format as formatGregorian } from 'date-fns';
+import { parseISO, format as formatGregorianDate } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate } from '@/lib/dateUtils';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface Pet {
   id: string;
@@ -56,7 +57,7 @@ const HealthVault = () => {
     category: 'medical_test',
     title: '',
     notes: '',
-    record_date: formatGregorian(new Date(), 'yyyy-MM-dd'),
+    record_date: formatGregorianDate(new Date(), 'yyyy-MM-dd'),
   });
   const [activeTab, setActiveTab] = useState('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -168,7 +169,7 @@ const HealthVault = () => {
         category: 'medical_test',
         title: '',
         notes: '',
-        record_date: formatGregorian(new Date(), 'yyyy-MM-dd'),
+        record_date: formatGregorianDate(new Date(), 'yyyy-MM-dd'),
       });
       fetchRecords();
     } catch (error) {
@@ -385,12 +386,11 @@ const HealthVault = () => {
 
                 {/* Date */}
                 <div className="space-y-2">
-                  <Label htmlFor="record-date">{t('vault.recordDate')}</Label>
-                  <Input
-                    id="record-date"
-                    type="date"
-                    value={newRecord.record_date}
-                    onChange={(e) => setNewRecord({ ...newRecord, record_date: e.target.value })}
+                  <Label>{t('vault.recordDate')}</Label>
+                  <DatePicker
+                    date={newRecord.record_date ? parseISO(newRecord.record_date) : undefined}
+                    onDateChange={(date) => setNewRecord({ ...newRecord, record_date: date ? formatGregorianDate(date, 'yyyy-MM-dd') : '' })}
+                    placeholder={t('common.selectDate')}
                   />
                 </div>
 

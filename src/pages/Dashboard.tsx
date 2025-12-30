@@ -11,9 +11,10 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2 } from 'lucide-react';
-import { differenceInDays, parseISO, isWithinInterval, addDays } from 'date-fns';
+import { differenceInDays, parseISO, isWithinInterval, addDays, format as formatGregorian } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge } from '@/lib/dateUtils';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface Pet {
   id: string;
@@ -229,12 +230,11 @@ const Dashboard = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="pet-birth">{t('pet.birthDate')}</Label>
-                    <Input
-                      id="pet-birth"
-                      type="date"
-                      value={newPet.birth_date}
-                      onChange={(e) => setNewPet({ ...newPet, birth_date: e.target.value })}
+                    <Label>{t('pet.birthDate')}</Label>
+                    <DatePicker
+                      date={newPet.birth_date ? parseISO(newPet.birth_date) : undefined}
+                      onDateChange={(date) => setNewPet({ ...newPet, birth_date: date ? formatGregorian(date, 'yyyy-MM-dd') : '' })}
+                      placeholder={t('common.selectDate')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -392,13 +392,11 @@ const Dashboard = () => {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="reminder-date">{t('reminder.dueDate')}</Label>
-                            <Input
-                              id="reminder-date"
-                              type="date"
-                              value={newReminder.due_date}
-                              onChange={(e) => setNewReminder({ ...newReminder, due_date: e.target.value })}
-                              required
+                            <Label>{t('reminder.dueDate')}</Label>
+                            <DatePicker
+                              date={newReminder.due_date ? parseISO(newReminder.due_date) : undefined}
+                              onDateChange={(date) => setNewReminder({ ...newReminder, due_date: date ? formatGregorian(date, 'yyyy-MM-dd') : '' })}
+                              placeholder={t('common.selectDate')}
                             />
                           </div>
                           <Button type="submit" className="w-full" disabled={addingReminder}>
