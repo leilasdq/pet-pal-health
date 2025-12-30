@@ -29,6 +29,12 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.creatingAccount': 'Creating account...',
     'auth.noAccount': 'Don\'t have an account?',
     'auth.hasAccount': 'Already have an account?',
+    'auth.welcomeBack': 'Welcome back!',
+    'auth.signInSuccess': 'You have successfully signed in.',
+    'auth.invalidCredentials': 'Invalid email or password. Please try again.',
+    'auth.accountCreated': 'Account created!',
+    'auth.signUpSuccess': 'Welcome to PetCare! You can now sign in.',
+    'auth.emailAlreadyRegistered': 'This email is already registered. Please sign in instead.',
     
     // Dashboard
     'dashboard.title': 'Dashboard',
@@ -156,6 +162,10 @@ const translations: Record<Language, Record<string, string>> = {
     'common.cancel': 'Cancel',
     'common.delete': 'Delete',
     'common.edit': 'Edit',
+    'common.all': 'All',
+    
+    // Vault extras
+    'vault.fileTooLarge': 'File size must be less than 10MB',
   },
   fa: {
     // Navigation
@@ -176,12 +186,18 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.creatingAccount': 'در حال ساخت حساب...',
     'auth.noAccount': 'حساب کاربری ندارید؟',
     'auth.hasAccount': 'قبلاً ثبت نام کرده‌اید؟',
+    'auth.welcomeBack': 'خوش آمدید!',
+    'auth.signInSuccess': 'با موفقیت وارد شدید.',
+    'auth.invalidCredentials': 'ایمیل یا رمز عبور اشتباه است. لطفاً دوباره تلاش کنید.',
+    'auth.accountCreated': 'حساب ایجاد شد!',
+    'auth.signUpSuccess': 'به پت‌پل خوش آمدید! اکنون می‌توانید وارد شوید.',
+    'auth.emailAlreadyRegistered': 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.',
     
     // Dashboard
     'dashboard.title': 'داشبورد',
-    'dashboard.myPets': 'حیوانات من',
+    'dashboard.myPets': 'پت‌های من',
     'dashboard.addPet': 'افزودن',
-    'dashboard.noPets': 'هنوز حیوانی ندارید',
+    'dashboard.noPets': 'هنوز پتی ندارید',
     'dashboard.addFirstPet': 'اولین دوست پشمالوی خود را اضافه کنید!',
     'dashboard.upcomingReminders': 'یادآوری‌های پیش رو',
     'dashboard.next7Days': '۷ روز آینده',
@@ -248,7 +264,7 @@ const translations: Record<Language, Record<string, string>> = {
     'vault.uploading': 'در حال آپلود...',
     'vault.uploaded': 'مدرک با موفقیت آپلود شد!',
     'vault.uploadError': 'خطا در آپلود مدرک',
-    'vault.allPets': 'همه حیوانات',
+    'vault.allPets': 'همه پت‌ها',
     'vault.deleted': 'مدرک با موفقیت حذف شد!',
     'vault.deleteError': 'خطا در حذف مدرک',
     'vault.deleteConfirmTitle': 'حذف مدرک',
@@ -261,16 +277,16 @@ const translations: Record<Language, Record<string, string>> = {
     
     // AI Chat
     'chat.title': 'دستیار هوش مصنوعی دامپزشکی',
-    'chat.subtitle': 'هر سوالی درباره سلامت حیوان بپرسید',
-    'chat.selectPet': 'انتخاب حیوان برای مشاوره',
-    'chat.allPets': 'همه حیوانات',
-    'chat.placeholder': 'سوال خود را درباره سلامت حیوان بپرسید...',
+    'chat.subtitle': 'هر سوالی درباره سلامت پت بپرسید',
+    'chat.selectPet': 'انتخاب پت برای مشاوره',
+    'chat.allPets': 'همه پت‌ها',
+    'chat.placeholder': 'سوال خود را درباره سلامت پت بپرسید...',
     'chat.send': 'ارسال',
     'chat.thinking': 'در حال فکر کردن...',
     'chat.error': 'خطا در دریافت پاسخ',
-    'chat.suggestion1': 'حیوان من به چه واکسن‌هایی نیاز دارد؟',
-    'chat.suggestion2': 'علائم بیماری‌های رایج حیوانات',
-    'chat.suggestion3': 'نکات تغذیه‌ای برای حیوان من',
+    'chat.suggestion1': 'پت من به چه واکسن‌هایی نیاز دارد؟',
+    'chat.suggestion2': 'علائم بیماری‌های رایج پت‌ها',
+    'chat.suggestion3': 'نکات تغذیه‌ای برای پت من',
     'chat.newChat': 'گفتگوی جدید',
     'chat.noChats': 'هنوز گفتگویی ندارید. یک مکالمه جدید شروع کنید!',
     'chat.welcome': 'سلام! 👋',
@@ -288,7 +304,7 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.saveError': 'خطا در بروزرسانی پروفایل',
     'profile.signOut': 'خروج',
     'profile.signingOut': 'در حال خروج...',
-    'profile.pets': 'حیوانات',
+    'profile.pets': 'پت‌ها',
     'profile.reminders': 'یادآوری‌ها',
     'profile.records': 'مدارک',
     'profile.language': 'زبان',
@@ -303,6 +319,10 @@ const translations: Record<Language, Record<string, string>> = {
     'common.cancel': 'انصراف',
     'common.delete': 'حذف',
     'common.edit': 'ویرایش',
+    'common.all': 'همه',
+    
+    // Vault extras
+    'vault.fileTooLarge': 'حجم فایل باید کمتر از ۱۰ مگابایت باشد',
   },
 };
 

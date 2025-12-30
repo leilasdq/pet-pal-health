@@ -68,14 +68,14 @@ const Auth = () => {
       toast({
         title: t('auth.signIn'),
         description: error.message === 'Invalid login credentials' 
-          ? 'Invalid email or password. Please try again.'
+          ? t('auth.invalidCredentials')
           : error.message,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
+        title: t('auth.welcomeBack'),
+        description: t('auth.signInSuccess'),
       });
     }
   };
@@ -90,7 +90,7 @@ const Auth = () => {
     
     if (error) {
       const errorMessage = error.message.includes('already registered')
-        ? 'This email is already registered. Please sign in instead.'
+        ? t('auth.emailAlreadyRegistered')
         : error.message;
       
       toast({
@@ -100,8 +100,8 @@ const Auth = () => {
       });
     } else {
       toast({
-        title: 'Account created!',
-        description: 'Welcome to PetCare! You can now sign in.',
+        title: t('auth.accountCreated'),
+        description: t('auth.signUpSuccess'),
       });
     }
   };
