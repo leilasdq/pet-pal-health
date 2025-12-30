@@ -686,20 +686,27 @@ const HealthVault = () => {
 
         {/* Full Image Preview Modal */}
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-black/95 border-none [&>button]:hidden">
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-black/95 border-none">
+            <DialogHeader className="sr-only">
+              <DialogTitle>{t('vault.viewFullImage')}</DialogTitle>
+            </DialogHeader>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 z-50 bg-white/20 hover:bg-white/30 text-white rounded-full h-10 w-10"
+              className="absolute top-4 end-4 z-50 bg-white/20 hover:bg-white/30 text-white rounded-full h-12 w-12"
               onClick={() => setSelectedImage(null)}
             >
-              <X className="w-6 h-6" />
+              <X className="w-7 h-7" />
             </Button>
-            <div className="flex items-center justify-center w-full h-full p-4">
+            <div 
+              className="flex items-center justify-center w-full h-full p-4 cursor-pointer"
+              onClick={() => setSelectedImage(null)}
+            >
               <img 
                 src={selectedImage || ''} 
                 alt="Medical record"
                 className="max-w-full max-h-[85vh] object-contain"
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
           </DialogContent>
