@@ -382,7 +382,7 @@ const Dashboard = () => {
           </Dialog>
         </div>
 
-        {/* Upcoming Reminders */}
+        {/* Upcoming Reminders - Grouped by Pet */}
         {upcomingReminders.length > 0 && (
           <Card className="card-elevated border-warning/30 bg-warning/5">
             <CardHeader className="pb-3">
@@ -391,33 +391,60 @@ const Dashboard = () => {
                 {t('dashboard.upcomingReminders')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {upcomingReminders.slice(0, 3).map((reminder) => {
-                const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
-                const daysUntil = getDaysUntilReminder(reminder.due_date);
+            <CardContent className="space-y-4">
+              {/* Group reminders by pet */}
+              {pets.filter(pet => upcomingReminders.some(r => r.pet_id === pet.id)).map((pet) => {
+                const petReminders = upcomingReminders.filter(r => r.pet_id === pet.id);
+                const PetIcon = pet.pet_type === 'cat' ? Cat : Dog;
                 
                 return (
-                  <div
-                    key={reminder.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border",
-                      reminderTypeColors[reminder.reminder_type]
-                    )}
-                    style={isRTL ? { direction: 'rtl' } : undefined}
-                  >
-                    <Icon className="w-5 h-5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{reminder.title}</p>
-                      <p className="text-xs opacity-75">{reminder.pet?.name}</p>
+                  <div key={pet.id} className="space-y-2">
+                    {/* Pet Header */}
+                    <div 
+                      className="flex items-center gap-2 pb-1 border-b border-border/50"
+                      style={isRTL ? { direction: 'rtl' } : undefined}
+                    >
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <PetIcon className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <span className="font-semibold text-sm">{pet.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        ({formatNumber(petReminders.length, language)})
+                      </span>
                     </div>
-                    <span className={cn(
-                      "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
-                      daysUntil === 0 && "bg-destructive/20 text-destructive",
-                      daysUntil === 1 && "bg-warning/20 text-warning",
-                      daysUntil > 1 && "bg-muted text-muted-foreground"
-                    )}>
-                      {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
-                    </span>
+                    
+                    {/* Pet's Reminders */}
+                    <div className="space-y-2">
+                      {petReminders.map((reminder) => {
+                        const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
+                        const daysUntil = getDaysUntilReminder(reminder.due_date);
+                        
+                        return (
+                          <div
+                            key={reminder.id}
+                            className={cn(
+                              "flex items-center gap-3 p-3 rounded-xl border",
+                              reminderTypeColors[reminder.reminder_type]
+                            )}
+                            style={isRTL ? { direction: 'rtl' } : undefined}
+                          >
+                            <Icon className="w-5 h-5 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{reminder.title}</p>
+                              <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
+                            </div>
+                            <span className={cn(
+                              "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
+                              daysUntil === 0 && "bg-destructive/20 text-destructive",
+                              daysUntil === 1 && "bg-warning/20 text-warning",
+                              daysUntil > 1 && "bg-muted text-muted-foreground"
+                            )}>
+                              {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
