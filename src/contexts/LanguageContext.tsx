@@ -104,6 +104,12 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.save': 'Save Changes',
     'reminder.updated': 'Reminder updated!',
     'reminder.updateError': 'Failed to update reminder',
+    'reminder.recurrence': 'Repeat',
+    'reminder.none': 'Once',
+    'reminder.weekly': 'Weekly',
+    'reminder.monthly': 'Monthly',
+    'reminder.yearly': 'Yearly',
+    'reminder.nextCreated': 'Next reminder created',
     
     // Health Vault
     'vault.title': 'Health Vault',
@@ -287,6 +293,12 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.save': 'ذخیره تغییرات',
     'reminder.updated': 'یادآوری بروزرسانی شد!',
     'reminder.updateError': 'خطا در بروزرسانی یادآوری',
+    'reminder.recurrence': 'تکرار',
+    'reminder.none': 'یکبار',
+    'reminder.weekly': 'هفتگی',
+    'reminder.monthly': 'ماهانه',
+    'reminder.yearly': 'سالانه',
+    'reminder.nextCreated': 'یادآوری بعدی ایجاد شد',
     
     // Health Vault
     'vault.title': 'پرونده سلامت',

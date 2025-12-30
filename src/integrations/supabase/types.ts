@@ -201,6 +201,7 @@ export type Database = {
           id: string
           notes: string | null
           pet_id: string
+          recurrence: string
           reminder_type: string
           status: string
           title: string
@@ -212,6 +213,7 @@ export type Database = {
           id?: string
           notes?: string | null
           pet_id: string
+          recurrence?: string
           reminder_type: string
           status?: string
           title: string
@@ -223,6 +225,7 @@ export type Database = {
           id?: string
           notes?: string | null
           pet_id?: string
+          recurrence?: string
           reminder_type?: string
           status?: string
           title?: string
