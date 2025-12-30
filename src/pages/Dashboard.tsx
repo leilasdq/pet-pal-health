@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown } from 'lucide-react';
+import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2 } from 'lucide-react';
 import { differenceInDays, parseISO, startOfDay, format as formatGregorian } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
@@ -589,14 +589,24 @@ const Dashboard = () => {
                                     )}>{reminder.title}</p>
                                     <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
                                   </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="shrink-0 h-8 w-8"
-                                    onClick={() => handleEditReminder(reminder)}
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </Button>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => handleEditReminder(reminder)}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => handleDeleteReminder(reminder.id)}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
                                   <span className={cn(
                                     "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
                                     daysUntil === 0 && "bg-destructive/20 text-destructive",
