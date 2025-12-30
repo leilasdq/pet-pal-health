@@ -12,11 +12,16 @@ html[dir="rtl"] {
 
 /* RTL flex direction fix - ensure flex items respect RTL */
 html[dir="rtl"] [data-sidebar="menu-button"] {
-  flex-direction: row-reverse;
+  flex-direction: row-reverse !important;
 }
 
 html[dir="rtl"] [data-sidebar="menu"] {
   text-align: right;
+}
+
+/* Ensure flex-row-reverse works properly */
+html[dir="rtl"] .flex-row-reverse {
+  flex-direction: row-reverse !important;
 }
 
 /* Icons that need flipping in RTL */
