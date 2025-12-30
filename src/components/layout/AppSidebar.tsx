@@ -43,7 +43,7 @@ export const AppSidebar = () => {
         <div className={cn(
           "flex items-center gap-3 w-full",
           isCollapsed && "justify-center",
-          isRTL && "flex-row-reverse justify-end"
+          isRTL && "justify-end"
         )}>
           <div className="relative shrink-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -84,7 +84,7 @@ export const AppSidebar = () => {
                     >
                       <div className={cn(
                         "flex items-center gap-2 w-full",
-                        isRTL && "flex-row-reverse justify-end"
+                        isRTL && "justify-end"
                       )}>
                         <Icon className={cn(
                           "w-5 h-5 shrink-0",
@@ -107,7 +107,7 @@ export const AppSidebar = () => {
         <div className={cn(
           "flex items-center gap-3 w-full",
           isCollapsed && "justify-center",
-          isRTL && "flex-row-reverse justify-end"
+          isRTL && "justify-end"
         )}>
           <Avatar className="h-9 w-9 shrink-0">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
