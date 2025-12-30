@@ -13,7 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Textarea } from '@/components/ui/textarea';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -61,6 +63,9 @@ const HealthVault = () => {
   const [petFilter, setPetFilter] = useState<string>('all');
   const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', notes: '', category: '' });
+  const [saving, setSaving] = useState(false);
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -208,6 +213,41 @@ const HealthVault = () => {
       toast({ title: t('common.error'), description: t('vault.deleteError'), variant: 'destructive' });
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleEditRecord = (record: MedicalRecord) => {
+    setEditingRecord(record);
+    setEditForm({
+      title: record.title || '',
+      notes: record.notes || '',
+      category: record.category,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRecord) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('medical_records')
+        .update({
+          title: editForm.title.trim() || null,
+          notes: editForm.notes.trim() || null,
+          category: editForm.category,
+        })
+        .eq('id', editingRecord.id);
+
+      if (error) throw error;
+
+      toast({ title: t('vault.updated') });
+      setEditingRecord(null);
+      fetchRecords();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('vault.updateError'), variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -436,17 +476,31 @@ const HealthVault = () => {
                         )}>
                           <Icon className="w-4 h-4" />
                         </div>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 end-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteRecordId(record.id);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="absolute top-2 end-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-background z-50">
+                            <DropdownMenuItem onClick={() => handleEditRecord(record)}>
+                              <Pencil className="w-4 h-4 me-2" />
+                              {t('common.edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setDeleteRecordId(record.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 me-2" />
+                              {t('common.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                       <CardContent className="p-3">
                         <p className="font-medium text-sm truncate">
@@ -507,6 +561,85 @@ const HealthVault = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Edit Record Dialog */}
+        <Dialog open={!!editingRecord} onOpenChange={() => setEditingRecord(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t('vault.editRecord')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Category */}
+              <div className="space-y-2">
+                <Label>{t('vault.category')}</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {categories.map((cat) => {
+                    const CatIcon = cat.icon;
+                    return (
+                      <button
+                        key={cat.value}
+                        type="button"
+                        onClick={() => setEditForm({ ...editForm, category: cat.value })}
+                        className={cn(
+                          "flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all",
+                          editForm.category === cat.value 
+                            ? "border-primary bg-primary/5" 
+                            : "border-transparent bg-muted/50 hover:bg-muted"
+                        )}
+                      >
+                        <CatIcon className="w-5 h-5" />
+                        <span className="text-xs text-center leading-tight">{t(cat.labelKey)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">{t('vault.recordTitle')}</Label>
+                <Input
+                  id="edit-title"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  placeholder={t('vault.titlePlaceholder')}
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                />
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">{t('vault.notes')}</Label>
+                <Textarea
+                  id="edit-notes"
+                  value={editForm.notes}
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  placeholder={t('vault.notesPlaceholder')}
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setEditingRecord(null)}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={handleSaveEdit}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                  {t('common.save')}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
