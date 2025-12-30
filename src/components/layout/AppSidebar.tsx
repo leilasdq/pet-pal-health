@@ -79,15 +79,15 @@ export const AppSidebar = () => {
                       tooltip={t(item.labelKey)}
                       className={cn(
                         "transition-all duration-200",
-                        isRTL && "flex-row-reverse",
                         isActive && "bg-primary/10 text-primary font-medium"
                       )}
+                      style={isRTL ? { flexDirection: 'row-reverse' } : undefined}
                     >
                       <Icon className={cn(
                         "w-5 h-5 shrink-0",
                         isActive && "text-primary"
                       )} />
-                      <span>{t(item.labelKey)}</span>
+                      <span className={cn(isRTL && "text-right")}>{t(item.labelKey)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
