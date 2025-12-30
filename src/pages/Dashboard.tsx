@@ -17,6 +17,7 @@ import { differenceInDays, parseISO, startOfDay, format as formatGregorian } fro
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
+import { SwipeableReminder } from '@/components/SwipeableReminder';
 
 type PetType = 'dog' | 'cat';
 
@@ -268,6 +269,20 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteReminder = async (reminderId: string) => {
+    const { error } = await supabase
+      .from('reminders')
+      .delete()
+      .eq('id', reminderId);
+
+    if (error) {
+      toast({ title: t('common.error'), description: t('reminder.deleteError'), variant: 'destructive' });
+    } else {
+      toast({ title: t('reminder.deleted'), description: '' });
+      fetchReminders();
+    }
+  };
+
   const getUpcomingReminders = () => {
     const today = startOfDay(new Date());
     
@@ -508,36 +523,40 @@ const Dashboard = () => {
                             const daysUntil = getDaysUntilReminder(reminder.due_date);
                             
                             return (
-                              <div
+                              <SwipeableReminder 
                                 key={reminder.id}
-                                className={cn(
-                                  "flex items-center gap-3 p-3 rounded-xl border",
-                                  reminderTypeColors[reminder.reminder_type]
-                                )}
-                                style={isRTL ? { direction: 'rtl' } : undefined}
+                                onDelete={() => handleDeleteReminder(reminder.id)}
                               >
-                                <Checkbox
-                                  checked={reminder.status === 'completed'}
-                                  onCheckedChange={() => handleToggleReminderStatus(reminder.id, reminder.status)}
-                                  className="shrink-0"
-                                />
-                                <Icon className="w-4 h-4 shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className={cn(
-                                    "font-medium text-sm truncate",
-                                    reminder.status === 'completed' && "line-through opacity-60"
-                                  )}>{reminder.title}</p>
-                                  <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
+                                <div
+                                  className={cn(
+                                    "flex items-center gap-3 p-3 border",
+                                    reminderTypeColors[reminder.reminder_type]
+                                  )}
+                                  style={isRTL ? { direction: 'rtl' } : undefined}
+                                >
+                                  <Checkbox
+                                    checked={reminder.status === 'completed'}
+                                    onCheckedChange={() => handleToggleReminderStatus(reminder.id, reminder.status)}
+                                    className="shrink-0"
+                                  />
+                                  <Icon className="w-4 h-4 shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className={cn(
+                                      "font-medium text-sm truncate",
+                                      reminder.status === 'completed' && "line-through opacity-60"
+                                    )}>{reminder.title}</p>
+                                    <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
+                                  </div>
+                                  <span className={cn(
+                                    "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
+                                    daysUntil === 0 && "bg-destructive/20 text-destructive",
+                                    daysUntil === 1 && "bg-warning/20 text-warning",
+                                    daysUntil > 1 && "bg-muted text-muted-foreground"
+                                  )}>
+                                    {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
+                                  </span>
                                 </div>
-                                <span className={cn(
-                                  "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
-                                  daysUntil === 0 && "bg-destructive/20 text-destructive",
-                                  daysUntil === 1 && "bg-warning/20 text-warning",
-                                  daysUntil > 1 && "bg-muted text-muted-foreground"
-                                )}>
-                                  {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
-                                </span>
-                              </div>
+                              </SwipeableReminder>
                             );
                           })}
                         </div>
