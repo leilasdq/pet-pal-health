@@ -306,7 +306,7 @@ const AIChat = () => {
 
   return (
     <AppLayout>
-      <div className="flex h-[calc(100vh-5rem)] relative">
+      <div className="flex h-[calc(100vh-5rem)] relative" dir="ltr">
         {/* Sidebar overlay for mobile */}
         {showSidebar && (
           <div 
