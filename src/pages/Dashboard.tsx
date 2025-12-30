@@ -79,6 +79,10 @@ const Dashboard = () => {
   const [addingReminder, setAddingReminder] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [expandedPetId, setExpandedPetId] = useState<string | null>(null);
+  const [editReminderOpen, setEditReminderOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const [editReminderData, setEditReminderData] = useState({ title: '', type: 'vaccination', due_date: '' });
+  const [savingReminder, setSavingReminder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -281,6 +285,41 @@ const Dashboard = () => {
       toast({ title: t('reminder.deleted'), description: '' });
       fetchReminders();
     }
+  };
+
+  const handleEditReminder = (reminder: Reminder) => {
+    setEditingReminder(reminder);
+    setEditReminderData({
+      title: reminder.title,
+      type: reminder.reminder_type,
+      due_date: reminder.due_date
+    });
+    setEditReminderOpen(true);
+  };
+
+  const handleUpdateReminder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReminder || !editReminderData.title.trim() || !editReminderData.due_date) return;
+
+    setSavingReminder(true);
+    const { error } = await supabase
+      .from('reminders')
+      .update({
+        title: editReminderData.title.trim(),
+        reminder_type: editReminderData.type,
+        due_date: editReminderData.due_date
+      })
+      .eq('id', editingReminder.id);
+
+    if (error) {
+      toast({ title: t('common.error'), description: t('reminder.updateError'), variant: 'destructive' });
+    } else {
+      toast({ title: t('reminder.updated'), description: '' });
+      setEditReminderOpen(false);
+      setEditingReminder(null);
+      fetchReminders();
+    }
+    setSavingReminder(false);
   };
 
   const getUpcomingReminders = () => {
@@ -540,13 +579,24 @@ const Dashboard = () => {
                                     className="shrink-0"
                                   />
                                   <Icon className="w-4 h-4 shrink-0" />
-                                  <div className="flex-1 min-w-0">
+                                  <div 
+                                    className="flex-1 min-w-0 cursor-pointer"
+                                    onClick={() => handleEditReminder(reminder)}
+                                  >
                                     <p className={cn(
                                       "font-medium text-sm truncate",
                                       reminder.status === 'completed' && "line-through opacity-60"
                                     )}>{reminder.title}</p>
                                     <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
                                   </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0 h-8 w-8"
+                                    onClick={() => handleEditReminder(reminder)}
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
                                   <span className={cn(
                                     "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
                                     daysUntil === 0 && "bg-destructive/20 text-destructive",
@@ -745,6 +795,60 @@ const Dashboard = () => {
                 </Button>
               </form>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Reminder Dialog */}
+        <Dialog open={editReminderOpen} onOpenChange={setEditReminderOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t('reminder.edit')}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateReminder} className="space-y-4">
+              <div className="space-y-2">
+                <Label>{t('reminder.type')}</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(reminderTypeIcons).map(([type, Icon]) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setEditReminderData({ ...editReminderData, type })}
+                      className={cn(
+                        "flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all",
+                        editReminderData.type === type
+                          ? "border-primary bg-primary-soft"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="text-xs">{getReminderTypeLabel(type)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-reminder-title">{t('reminder.title')}</Label>
+                <Input
+                  id="edit-reminder-title"
+                  value={editReminderData.title}
+                  onChange={(e) => setEditReminderData({ ...editReminderData, title: e.target.value })}
+                  placeholder={t('reminder.titlePlaceholder')}
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('reminder.dueDate')}</Label>
+                <DatePicker
+                  date={editReminderData.due_date ? parseISO(editReminderData.due_date) : undefined}
+                  onDateChange={(date) => setEditReminderData({ ...editReminderData, due_date: date ? formatGregorian(date, 'yyyy-MM-dd') : '' })}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={savingReminder || !editReminderData.title.trim() || !editReminderData.due_date}>
+                {savingReminder ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                {savingReminder ? t('common.saving') : t('reminder.save')}
+              </Button>
+            </form>
           </DialogContent>
         </Dialog>
 

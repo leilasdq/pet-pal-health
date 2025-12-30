@@ -100,6 +100,10 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.reopened': 'Reminder reopened',
     'reminder.deleted': 'Reminder deleted',
     'reminder.deleteError': 'Failed to delete reminder',
+    'reminder.edit': 'Edit Reminder',
+    'reminder.save': 'Save Changes',
+    'reminder.updated': 'Reminder updated!',
+    'reminder.updateError': 'Failed to update reminder',
     
     // Health Vault
     'vault.title': 'Health Vault',
@@ -279,6 +283,10 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.reopened': 'یادآوری بازگشایی شد',
     'reminder.deleted': 'یادآوری حذف شد',
     'reminder.deleteError': 'خطا در حذف یادآوری',
+    'reminder.edit': 'ویرایش یادآوری',
+    'reminder.save': 'ذخیره تغییرات',
+    'reminder.updated': 'یادآوری بروزرسانی شد!',
+    'reminder.updateError': 'خطا در بروزرسانی یادآوری',
     
     // Health Vault
     'vault.title': 'پرونده سلامت',
