@@ -176,7 +176,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Auth
     'auth.welcome': 'به پت‌کر خوش آمدید',
-    'auth.subtitle': 'همراه سلامت حیوان خانگی شما',
+    'auth.subtitle': 'همراه سلامت پت شما',
     'auth.signIn': 'ورود',
     'auth.signUp': 'ثبت نام',
     'auth.email': 'ایمیل',
@@ -207,8 +207,8 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.kg': 'کیلوگرم',
     
     // Add Pet Dialog
-    'pet.addNew': 'افزودن حیوان جدید',
-    'pet.name': 'نام حیوان',
+    'pet.addNew': 'افزودن پت جدید',
+    'pet.name': 'نام پت',
     'pet.namePlaceholder': 'مثلاً: مکس',
     'pet.breed': 'نژاد',
     'pet.breedPlaceholder': 'مثلاً: گلدن رتریور',
@@ -218,8 +218,8 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.cancel': 'انصراف',
     'pet.add': 'افزودن',
     'pet.adding': 'در حال افزودن...',
-    'pet.added': 'حیوان با موفقیت اضافه شد!',
-    'pet.addError': 'خطا در افزودن حیوان',
+    'pet.added': 'پت با موفقیت اضافه شد!',
+    'pet.addError': 'خطا در افزودن پت',
     
     // Add Reminder Dialog
     'reminder.addNew': 'افزودن یادآوری',
@@ -231,8 +231,8 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.antiparasitic': 'ضد انگل',
     'reminder.checkup': 'معاینه',
     'reminder.dueDate': 'تاریخ سررسید',
-    'reminder.selectPet': 'انتخاب حیوان',
-    'reminder.choosePet': 'یک حیوان انتخاب کنید',
+    'reminder.selectPet': 'انتخاب پت',
+    'reminder.choosePet': 'یک پت انتخاب کنید',
     'reminder.notes': 'یادداشت (اختیاری)',
     'reminder.notesPlaceholder': 'توضیحات اضافی...',
     'reminder.cancel': 'انصراف',

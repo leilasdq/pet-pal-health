@@ -425,7 +425,7 @@ const HealthVault = () => {
 
         {/* Category Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-4 bg-muted/50">
+          <TabsList className={cn("w-full grid grid-cols-4 bg-muted/50", isRTL && "direction-rtl")}>
             <TabsTrigger value="all" className="text-xs">{t('common.all')}</TabsTrigger>
             <TabsTrigger value="medical_test" className="text-xs">{t('vault.medicalTests')}</TabsTrigger>
             <TabsTrigger value="prescription" className="text-xs">{t('vault.prescriptions')}</TabsTrigger>
