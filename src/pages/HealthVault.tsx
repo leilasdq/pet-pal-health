@@ -56,6 +56,7 @@ const HealthVault = () => {
   });
   const [activeTab, setActiveTab] = useState('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -93,6 +94,18 @@ const HealthVault = () => {
         pet: r.pets as Pet | undefined,
       }));
       setRecords(mappedRecords);
+      
+      // Generate signed URLs for all images
+      const urls: Record<string, string> = {};
+      for (const record of mappedRecords) {
+        const { data: signedData } = await supabase.storage
+          .from('medical-records')
+          .createSignedUrl(record.image_path, 3600); // 1 hour expiry
+        if (signedData?.signedUrl) {
+          urls[record.image_path] = signedData.signedUrl;
+        }
+      }
+      setImageUrls(urls);
     }
     setLoading(false);
   };
@@ -156,8 +169,7 @@ const HealthVault = () => {
   };
 
   const getImageUrl = (path: string) => {
-    const { data } = supabase.storage.from('medical-records').getPublicUrl(path);
-    return data.publicUrl;
+    return imageUrls[path] || '';
   };
 
   const filteredRecords = activeTab === 'all' 
@@ -382,12 +394,22 @@ const HealthVault = () => {
 
         {/* Image Preview Modal */}
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-lg p-0 overflow-hidden">
-            <img 
-              src={selectedImage || ''} 
-              alt="Medical record"
-              className="w-full h-auto"
-            />
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 overflow-auto bg-black/90 border-none">
+            <div className="relative flex items-center justify-center min-h-[50vh]">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white"
+                onClick={() => setSelectedImage(null)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              <img 
+                src={selectedImage || ''} 
+                alt="Medical record"
+                className="max-w-full max-h-[85vh] object-contain"
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
