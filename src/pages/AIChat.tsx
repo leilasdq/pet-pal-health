@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Send, Bot, User, Loader2, Sparkles, PawPrint, AlertCircle, Plus, MessageSquare, Trash2, Menu, X } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, PawPrint, AlertCircle, Plus, MessageSquare, Trash2, Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -51,6 +51,7 @@ const AIChat = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -317,20 +318,39 @@ const AIChat = () => {
 
         {/* Sidebar - always visible on desktop, slide-in on mobile */}
         <aside 
-          className="chat-sidebar"
+          className={cn(
+            "chat-sidebar",
+            sidebarCollapsed && "md:w-16"
+          )}
           data-open={showSidebar}
+          data-collapsed={sidebarCollapsed}
         >
           {/* Sidebar header */}
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <h2 className="font-semibold text-sm">{t('chat.history')}</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden h-8 w-8"
-              onClick={() => setShowSidebar(false)}
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            {!sidebarCollapsed && (
+              <h2 className="font-semibold text-sm">{t('chat.history')}</h2>
+            )}
+            <div className="flex items-center gap-1">
+              {/* Collapse button - desktop only */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden md:flex h-8 w-8"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                title={sidebarCollapsed ? "Expand" : "Collapse"}
+              >
+                {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              </Button>
+              {/* Close button - mobile only */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-8 w-8"
+                onClick={() => setShowSidebar(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           {/* New chat button */}
@@ -340,11 +360,12 @@ const AIChat = () => {
                 createNewConversation();
                 setShowSidebar(false);
               }} 
-              className="w-full gap-2"
+              className={cn("gap-2", sidebarCollapsed ? "w-10 p-0" : "w-full")}
               variant="default"
+              title={sidebarCollapsed ? t('chat.newChat') : undefined}
             >
               <Plus className="w-4 h-4" />
-              {t('chat.newChat')}
+              {!sidebarCollapsed && t('chat.newChat')}
             </Button>
           </div>
           
@@ -355,29 +376,35 @@ const AIChat = () => {
                 key={conv.id}
                 className={cn(
                   "group flex items-center gap-2 p-3 rounded-lg cursor-pointer hover:bg-muted transition-colors",
-                  currentConversationId === conv.id && "bg-muted"
+                  currentConversationId === conv.id && "bg-muted",
+                  sidebarCollapsed && "justify-center p-2"
                 )}
                 onClick={() => {
                   selectConversation(conv);
                   setShowSidebar(false);
                 }}
+                title={sidebarCollapsed ? conv.title : undefined}
               >
                 <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate text-sm">{conv.title}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteConversation(conv.id);
-                  }}
-                >
-                  <Trash2 className="w-3 h-3 text-destructive" />
-                </Button>
+                {!sidebarCollapsed && (
+                  <>
+                    <span className="flex-1 truncate text-sm">{conv.title}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteConversation(conv.id);
+                      }}
+                    >
+                      <Trash2 className="w-3 h-3 text-destructive" />
+                    </Button>
+                  </>
+                )}
               </div>
             ))}
-            {conversations.length === 0 && (
+            {conversations.length === 0 && !sidebarCollapsed && (
               <p className="text-center text-sm text-muted-foreground p-4">
                 {t('chat.noChats')}
               </p>
