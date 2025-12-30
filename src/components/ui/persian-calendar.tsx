@@ -1,22 +1,31 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker } from "react-day-picker";
-import { faIR } from "date-fns-jalali/locale";
 import { 
   format, 
   addMonths, 
   getMonth,
   getYear,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  isSameMonth,
+  isSameDay,
+  isToday,
 } from "date-fns-jalali";
 
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 // Persian month names
 const persianMonths = [
   'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
   'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
 ];
+
+// Persian weekday names (short)
+const persianWeekdays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
 
 // Convert to Persian numerals
 const toPersianDigits = (num: number): string => {
@@ -28,7 +37,6 @@ interface PersianCalendarProps {
   selected?: Date;
   onSelect?: (date: Date | undefined) => void;
   mode?: "single";
-  initialFocus?: boolean;
   className?: string;
 }
 
@@ -36,7 +44,6 @@ function PersianCalendar({
   selected,
   onSelect,
   className,
-  ...props
 }: PersianCalendarProps) {
   const [displayMonth, setDisplayMonth] = React.useState(() => 
     selected instanceof Date ? selected : new Date()
@@ -50,81 +57,104 @@ function PersianCalendar({
     setDisplayMonth(prev => addMonths(prev, 1));
   };
 
+  const handleDateClick = (date: Date) => {
+    onSelect?.(date);
+  };
+
   // Get Jalali month and year
   const jalaliMonth = getMonth(displayMonth);
   const jalaliYear = getYear(displayMonth);
   const monthName = persianMonths[jalaliMonth];
   const yearDisplay = toPersianDigits(jalaliYear);
 
+  // Generate calendar days
+  const monthStart = startOfMonth(displayMonth);
+  const monthEnd = endOfMonth(displayMonth);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 6 }); // Saturday
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 6 });
+
+  const days: Date[] = [];
+  let day = calendarStart;
+  while (day <= calendarEnd) {
+    days.push(day);
+    day = addDays(day, 1);
+  }
+
+  // Split days into weeks
+  const weeks: Date[][] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+
   return (
-    <div className={cn("p-3 pointer-events-auto", className)} dir="rtl">
-      {/* Custom Header */}
+    <div className={cn("p-4 bg-background rounded-lg", className)} dir="rtl">
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleNextMonth}
-          className={cn(
-            buttonVariants({ variant: "outline" }),
-            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-          )}
+          className="h-8 w-8 hover:bg-muted"
           type="button"
         >
           <ChevronRight className="h-4 w-4" />
-        </button>
-        <div className="text-sm font-medium font-vazirmatn">
+        </Button>
+        <div className="text-base font-semibold font-vazirmatn">
           {monthName} {yearDisplay}
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handlePreviousMonth}
-          className={cn(
-            buttonVariants({ variant: "outline" }),
-            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-          )}
+          className="h-8 w-8 hover:bg-muted"
           type="button"
         >
           <ChevronLeft className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
 
-      <DayPicker
-        mode="single"
-        selected={selected}
-        onSelect={onSelect}
-        month={displayMonth}
-        onMonthChange={setDisplayMonth}
-        showOutsideDays={true}
-        locale={faIR}
-        dir="rtl"
-        weekStartsOn={6}
-        classNames={{
-          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-          month: "space-y-4",
-          caption: "hidden",
-          caption_label: "hidden",
-          nav: "hidden",
-          nav_button: "hidden",
-          nav_button_previous: "hidden",
-          nav_button_next: "hidden",
-          table: "w-full border-collapse space-y-1",
-          head_row: "flex",
-          head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] font-vazirmatn",
-          row: "flex w-full mt-2",
-          cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-          day: cn(buttonVariants({ variant: "ghost" }), "h-9 w-9 p-0 font-normal aria-selected:opacity-100 font-vazirmatn"),
-          day_range_end: "day-range-end",
-          day_selected:
-            "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-          day_today: "bg-accent text-accent-foreground",
-          day_outside:
-            "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-          day_disabled: "text-muted-foreground opacity-50",
-          day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-          day_hidden: "invisible",
-        }}
-        formatters={{
-          formatDay: (date) => toPersianDigits(parseInt(format(date, 'd'))),
-          formatWeekdayName: (date) => format(date, 'EEEEEE'),
-        }}
-      />
+      {/* Weekday Headers */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {persianWeekdays.map((weekday, index) => (
+          <div
+            key={index}
+            className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground font-vazirmatn"
+          >
+            {weekday}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {weeks.map((week, weekIndex) =>
+          week.map((date, dayIndex) => {
+            const isCurrentMonth = isSameMonth(date, displayMonth);
+            const isSelected = selected && isSameDay(date, selected);
+            const isTodayDate = isToday(date);
+            const jalaliDay = parseInt(format(date, 'd'));
+
+            return (
+              <button
+                key={`${weekIndex}-${dayIndex}`}
+                type="button"
+                onClick={() => handleDateClick(date)}
+                disabled={!isCurrentMonth}
+                className={cn(
+                  "h-9 w-full rounded-md text-sm font-vazirmatn transition-colors",
+                  "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
+                  !isCurrentMonth && "text-muted-foreground/30 cursor-not-allowed hover:bg-transparent",
+                  isCurrentMonth && !isSelected && "text-foreground",
+                  isTodayDate && !isSelected && "bg-accent text-accent-foreground",
+                  isSelected && "bg-primary text-primary-foreground hover:bg-primary"
+                )}
+              >
+                {toPersianDigits(jalaliDay)}
+              </button>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
