@@ -479,22 +479,22 @@ const HealthVault = () => {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
-                              variant="secondary"
+                              variant="ghost"
                               size="icon"
-                              className="absolute top-2 end-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
+                              className="absolute top-2 end-2 h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 text-white rounded-full shadow-lg backdrop-blur-sm"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-background z-50">
-                            <DropdownMenuItem onClick={() => handleEditRecord(record)}>
+                          <DropdownMenuContent align="end" className="bg-background z-50 min-w-[140px]">
+                            <DropdownMenuItem onClick={() => handleEditRecord(record)} className="cursor-pointer">
                               <Pencil className="w-4 h-4 me-2" />
                               {t('common.edit')}
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => setDeleteRecordId(record.id)}
-                              className="text-destructive focus:text-destructive"
+                              className="text-destructive focus:text-destructive cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4 me-2" />
                               {t('common.delete')}
