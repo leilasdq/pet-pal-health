@@ -105,10 +105,11 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.updated': 'Reminder updated!',
     'reminder.updateError': 'Failed to update reminder',
     'reminder.recurrence': 'Repeat',
-    'reminder.none': 'Once',
-    'reminder.weekly': 'Weekly',
-    'reminder.monthly': 'Monthly',
-    'reminder.yearly': 'Yearly',
+    'reminder.every': 'Every',
+    'reminder.noRepeat': 'No repeat',
+    'reminder.weeks': 'Week(s)',
+    'reminder.months': 'Month(s)',
+    'reminder.years': 'Year(s)',
     'reminder.nextCreated': 'Next reminder created',
     
     // Health Vault
@@ -294,10 +295,11 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.updated': 'یادآوری بروزرسانی شد!',
     'reminder.updateError': 'خطا در بروزرسانی یادآوری',
     'reminder.recurrence': 'تکرار',
-    'reminder.none': 'یکبار',
-    'reminder.weekly': 'هفتگی',
-    'reminder.monthly': 'ماهانه',
-    'reminder.yearly': 'سالانه',
+    'reminder.every': 'هر',
+    'reminder.noRepeat': 'بدون تکرار',
+    'reminder.weeks': 'هفته',
+    'reminder.months': 'ماه',
+    'reminder.years': 'سال',
     'reminder.nextCreated': 'یادآوری بعدی ایجاد شد',
     
     // Health Vault
