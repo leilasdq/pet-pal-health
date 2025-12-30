@@ -13,7 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera } from 'lucide-react';
 import { differenceInDays, parseISO, isWithinInterval, addDays, format as formatGregorian } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { formatShortDate, calculateAge as calcAge } from '@/lib/dateUtils';
+import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
 
 type PetType = 'dog' | 'cat';
@@ -404,7 +404,7 @@ const Dashboard = () => {
                       <p className="text-xs opacity-75 text-start">{reminder.pet?.name}</p>
                     </div>
                     <span className="text-xs font-semibold whitespace-nowrap reminder-pulse">
-                      {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${daysUntil} ${t('dashboard.daysLeft')}`}
+                      {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${formatNumber(daysUntil, language)} ${t('dashboard.daysLeft')}`}
                     </span>
                   </div>
                 );
@@ -460,7 +460,7 @@ const Dashboard = () => {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {pet.birth_date && calculateAge(pet.birth_date)}
                         {pet.birth_date && pet.weight && ' • '}
-                        {pet.weight && `${pet.weight} ${t('dashboard.kg')}`}
+                        {pet.weight && `${formatNumber(pet.weight, language)} ${t('dashboard.kg')}`}
                       </p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => handleEditPet(pet)} className="shrink-0">
