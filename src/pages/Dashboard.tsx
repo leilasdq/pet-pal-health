@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2 } from 'lucide-react';
-import { differenceInDays, parseISO, startOfDay, format as formatGregorian } from 'date-fns';
+import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2, Repeat } from 'lucide-react';
+import { differenceInDays, parseISO, startOfDay, format as formatGregorian, addWeeks, addMonths, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -38,8 +38,11 @@ interface Reminder {
   reminder_type: string;
   due_date: string;
   status: string;
+  recurrence: string;
   pet?: Pet;
 }
+
+type RecurrenceType = 'none' | 'weekly' | 'monthly' | 'yearly';
 
 const reminderTypeIcons: Record<string, typeof Syringe> = {
   vaccination: Syringe,
@@ -73,7 +76,7 @@ const Dashboard = () => {
   const [newPet, setNewPet] = useState({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' as PetType });
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [editPetData, setEditPetData] = useState({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' as PetType });
-  const [newReminder, setNewReminder] = useState({ title: '', type: 'vaccination', due_date: '' });
+  const [newReminder, setNewReminder] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceType });
   const [addingPet, setAddingPet] = useState(false);
   const [editingPetLoading, setEditingPetLoading] = useState(false);
   const [addingReminder, setAddingReminder] = useState(false);
@@ -81,7 +84,7 @@ const Dashboard = () => {
   const [expandedPetId, setExpandedPetId] = useState<string | null>(null);
   const [editReminderOpen, setEditReminderOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
-  const [editReminderData, setEditReminderData] = useState({ title: '', type: 'vaccination', due_date: '' });
+  const [editReminderData, setEditReminderData] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceType });
   const [savingReminder, setSavingReminder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -241,36 +244,66 @@ const Dashboard = () => {
       title: newReminder.title,
       reminder_type: newReminder.type,
       due_date: newReminder.due_date,
+      recurrence: newReminder.recurrence,
     });
 
     if (error) {
       toast({ title: t('common.error'), description: t('reminder.addError'), variant: 'destructive' });
     } else {
       toast({ title: t('reminder.added'), description: '' });
-      setNewReminder({ title: '', type: 'vaccination', due_date: '' });
+      setNewReminder({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' });
       setAddReminderOpen(false);
       fetchReminders();
     }
     setAddingReminder(false);
   };
 
-  const handleToggleReminderStatus = async (reminderId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
+  const handleToggleReminderStatus = async (reminder: Reminder) => {
+    const newStatus = reminder.status === 'pending' ? 'completed' : 'pending';
     
     const { error } = await supabase
       .from('reminders')
       .update({ status: newStatus })
-      .eq('id', reminderId);
+      .eq('id', reminder.id);
 
     if (error) {
       toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' });
-    } else {
-      toast({ 
-        title: newStatus === 'completed' ? t('reminder.completed') : t('reminder.reopened'),
-        description: '' 
-      });
-      fetchReminders();
+      return;
     }
+
+    // If completing a recurring reminder, create the next occurrence
+    if (newStatus === 'completed' && reminder.recurrence && reminder.recurrence !== 'none') {
+      const currentDueDate = parseISO(reminder.due_date);
+      let nextDueDate: Date;
+
+      switch (reminder.recurrence) {
+        case 'weekly':
+          nextDueDate = addWeeks(currentDueDate, 1);
+          break;
+        case 'monthly':
+          nextDueDate = addMonths(currentDueDate, 1);
+          break;
+        case 'yearly':
+          nextDueDate = addYears(currentDueDate, 1);
+          break;
+        default:
+          nextDueDate = currentDueDate;
+      }
+
+      await supabase.from('reminders').insert({
+        pet_id: reminder.pet_id,
+        title: reminder.title,
+        reminder_type: reminder.reminder_type,
+        due_date: formatGregorian(nextDueDate, 'yyyy-MM-dd'),
+        recurrence: reminder.recurrence,
+      });
+    }
+
+    toast({ 
+      title: newStatus === 'completed' ? t('reminder.completed') : t('reminder.reopened'),
+      description: reminder.recurrence !== 'none' && newStatus === 'completed' ? t('reminder.nextCreated') : ''
+    });
+    fetchReminders();
   };
 
   const handleDeleteReminder = async (reminderId: string) => {
@@ -292,7 +325,8 @@ const Dashboard = () => {
     setEditReminderData({
       title: reminder.title,
       type: reminder.reminder_type,
-      due_date: reminder.due_date
+      due_date: reminder.due_date,
+      recurrence: (reminder.recurrence || 'none') as RecurrenceType
     });
     setEditReminderOpen(true);
   };
@@ -307,7 +341,8 @@ const Dashboard = () => {
       .update({
         title: editReminderData.title.trim(),
         reminder_type: editReminderData.type,
-        due_date: editReminderData.due_date
+        due_date: editReminderData.due_date,
+        recurrence: editReminderData.recurrence
       })
       .eq('id', editingReminder.id);
 
@@ -575,7 +610,7 @@ const Dashboard = () => {
                                 >
                                   <Checkbox
                                     checked={reminder.status === 'completed'}
-                                    onCheckedChange={() => handleToggleReminderStatus(reminder.id, reminder.status)}
+                                    onCheckedChange={() => handleToggleReminderStatus(reminder)}
                                     className="shrink-0"
                                   />
                                   <Icon className="w-4 h-4 shrink-0" />
@@ -583,10 +618,15 @@ const Dashboard = () => {
                                     className="flex-1 min-w-0 cursor-pointer"
                                     onClick={() => handleEditReminder(reminder)}
                                   >
-                                    <p className={cn(
-                                      "font-medium text-sm truncate",
-                                      reminder.status === 'completed' && "line-through opacity-60"
-                                    )}>{reminder.title}</p>
+                                    <div className="flex items-center gap-1">
+                                      <p className={cn(
+                                        "font-medium text-sm truncate",
+                                        reminder.status === 'completed' && "line-through opacity-60"
+                                      )}>{reminder.title}</p>
+                                      {reminder.recurrence && reminder.recurrence !== 'none' && (
+                                        <Repeat className="w-3 h-3 text-muted-foreground shrink-0" />
+                                      )}
+                                    </div>
                                     <p className="text-xs opacity-75">{formatShortDate(reminder.due_date, language)}</p>
                                   </div>
                                   <div className="flex items-center gap-1 shrink-0">
@@ -680,6 +720,27 @@ const Dashboard = () => {
                               onDateChange={(date) => setNewReminder({ ...newReminder, due_date: date ? formatGregorian(date, 'yyyy-MM-dd') : '' })}
                               placeholder={t('common.selectDate')}
                             />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>{t('reminder.recurrence')}</Label>
+                            <div className="grid grid-cols-4 gap-2">
+                              {(['none', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map((rec) => (
+                                <button
+                                  key={rec}
+                                  type="button"
+                                  onClick={() => setNewReminder({ ...newReminder, recurrence: rec })}
+                                  className={cn(
+                                    "flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all text-xs",
+                                    newReminder.recurrence === rec
+                                      ? "border-primary bg-primary-soft"
+                                      : "border-border hover:border-primary/50"
+                                  )}
+                                >
+                                  {rec !== 'none' && <Repeat className="w-3.5 h-3.5" />}
+                                  <span>{t(`reminder.${rec}`)}</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
                           <Button type="submit" className="w-full" disabled={addingReminder}>
                             {addingReminder ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
@@ -853,6 +914,27 @@ const Dashboard = () => {
                   date={editReminderData.due_date ? parseISO(editReminderData.due_date) : undefined}
                   onDateChange={(date) => setEditReminderData({ ...editReminderData, due_date: date ? formatGregorian(date, 'yyyy-MM-dd') : '' })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('reminder.recurrence')}</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {(['none', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map((rec) => (
+                    <button
+                      key={rec}
+                      type="button"
+                      onClick={() => setEditReminderData({ ...editReminderData, recurrence: rec })}
+                      className={cn(
+                        "flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all text-xs",
+                        editReminderData.recurrence === rec
+                          ? "border-primary bg-primary-soft"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      {rec !== 'none' && <Repeat className="w-3.5 h-3.5" />}
+                      <span>{t(`reminder.${rec}`)}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={savingReminder || !editReminderData.title.trim() || !editReminderData.due_date}>
                 {savingReminder ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
