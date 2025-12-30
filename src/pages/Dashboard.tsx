@@ -194,7 +194,7 @@ const Dashboard = () => {
       <div className="px-4 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
+          <div className="text-start">
             <h1 className="text-2xl font-bold text-foreground">{t('dashboard.myPets')}</h1>
             <p className="text-muted-foreground text-sm">{t('dashboard.next7Days')}</p>
           </div>
@@ -285,11 +285,11 @@ const Dashboard = () => {
                   >
                     <Icon className="w-5 h-5" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{reminder.title}</p>
-                      <p className="text-xs opacity-75">{reminder.pet?.name}</p>
+                      <p className="font-medium text-sm truncate text-start">{reminder.title}</p>
+                      <p className="text-xs opacity-75 text-start">{reminder.pet?.name}</p>
                     </div>
                     <span className="text-xs font-semibold whitespace-nowrap reminder-pulse">
-                      {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
+                      {daysUntil === 0 ? t('dashboard.today') : daysUntil === 1 ? t('dashboard.tomorrow') : `${daysUntil} ${t('dashboard.daysLeft')}`}
                     </span>
                   </div>
                 );
@@ -332,10 +332,10 @@ const Dashboard = () => {
                         <PawPrint className="w-7 h-7 text-primary" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-start">
                       <h3 className="font-bold text-lg">{pet.name}</h3>
                       <p className="text-muted-foreground text-sm truncate">
-                        {pet.breed || 'Unknown breed'}
+                        {pet.breed || t('dashboard.unknownBreed')}
                         {pet.birth_date && ` • ${calculateAge(pet.birth_date)}`}
                       </p>
                       {pet.weight && (
@@ -421,7 +421,7 @@ const Dashboard = () => {
         {/* All Reminders Section */}
         {reminders.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold">{t('dashboard.upcomingReminders')}</h2>
+            <h2 className="text-lg font-semibold text-start">{t('dashboard.upcomingReminders')}</h2>
             {reminders.map((reminder) => {
               const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
               return (
@@ -433,7 +433,7 @@ const Dashboard = () => {
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-start">
                     <p className="font-medium text-sm">{reminder.title}</p>
                     <p className="text-xs opacity-75">
                       {reminder.pet?.name} • {format(parseISO(reminder.due_date), 'MMM d, yyyy')}
