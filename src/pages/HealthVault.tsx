@@ -16,8 +16,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
-import { format, parseISO } from 'date-fns';
+import { parseISO, format as formatGregorian } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { formatShortDate } from '@/lib/dateUtils';
 
 interface Pet {
   id: string;
@@ -40,7 +41,7 @@ const HealthVault = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [pets, setPets] = useState<Pet[]>([]);
@@ -55,7 +56,7 @@ const HealthVault = () => {
     category: 'medical_test',
     title: '',
     notes: '',
-    record_date: format(new Date(), 'yyyy-MM-dd'),
+    record_date: formatGregorian(new Date(), 'yyyy-MM-dd'),
   });
   const [activeTab, setActiveTab] = useState('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -167,7 +168,7 @@ const HealthVault = () => {
         category: 'medical_test',
         title: '',
         notes: '',
-        record_date: format(new Date(), 'yyyy-MM-dd'),
+        record_date: formatGregorian(new Date(), 'yyyy-MM-dd'),
       });
       fetchRecords();
     } catch (error) {
@@ -507,7 +508,7 @@ const HealthVault = () => {
                           {record.title || (category ? t(category.labelKey) : '')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {record.pet?.name} • {record.record_date && format(parseISO(record.record_date), 'MMM d, yyyy')}
+                          {record.pet?.name} • {record.record_date && formatShortDate(record.record_date, language)}
                         </p>
                       </CardContent>
                     </Card>
