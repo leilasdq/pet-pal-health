@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import HealthVault from "./pages/HealthVault";
 import AIChat from "./pages/AIChat";
 import Profile from "./pages/Profile";
+import Reminders from "./pages/Reminders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/vault" element={<HealthVault />} />
               <Route path="/chat" element={<AIChat />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/reminders" element={<Reminders />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

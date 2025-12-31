@@ -218,7 +218,7 @@ const Profile = () => {
           </Card>
           <Card 
             className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
-            onClick={() => navigate('/health-vault')}
+            onClick={() => navigate('/vault')}
           >
             <CardContent className="py-4">
               <Heart className="w-6 h-6 mx-auto text-destructive mb-1" />
@@ -228,7 +228,7 @@ const Profile = () => {
           </Card>
           <Card 
             className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
-            onClick={() => navigate('/dashboard?showAllReminders=true')}
+            onClick={() => navigate('/reminders')}
           >
             <CardContent className="py-4">
               <Bell className="w-6 h-6 mx-auto text-secondary mb-1" />

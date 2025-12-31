@@ -116,6 +116,16 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.today': 'Today',
     'reminder.tomorrow': 'Tomorrow',
     'reminder.days': 'days',
+    'reminder.overdue': 'Overdue',
+    
+    // Reminders Page
+    'reminders.title': 'Reminders',
+    'reminders.subtitle': 'Manage all your pet reminders',
+    'reminders.all': 'All',
+    'reminders.pending': 'Pending',
+    'reminders.completed': 'Completed',
+    'reminders.noCompleted': 'No completed reminders yet',
+    'reminders.noPending': 'No pending reminders',
     
     // Health Vault
     'vault.title': 'Health Vault',
@@ -325,6 +335,16 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.today': 'امروز',
     'reminder.tomorrow': 'فردا',
     'reminder.days': 'روز',
+    'reminder.overdue': 'گذشته',
+    
+    // Reminders Page
+    'reminders.title': 'یادآوری‌ها',
+    'reminders.subtitle': 'مدیریت تمام یادآوری‌های حیوان خانگی',
+    'reminders.all': 'همه',
+    'reminders.pending': 'در انتظار',
+    'reminders.completed': 'انجام شده',
+    'reminders.noCompleted': 'هنوز یادآوری انجام شده‌ای نیست',
+    'reminders.noPending': 'یادآوری در انتظاری وجود ندارد',
     
     // Health Vault
     'vault.title': 'پرونده سلامت',
