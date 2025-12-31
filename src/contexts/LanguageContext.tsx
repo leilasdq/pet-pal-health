@@ -45,7 +45,8 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.upcomingReminders': 'Upcoming Reminders',
     'dashboard.next7Days': 'Next 7 days',
     'dashboard.noReminders': 'No upcoming reminders',
-    'dashboard.allCaughtUp': 'All caught up! 🎉',
+    'dashboard.allReminders': 'All Reminders',
+    'dashboard.allRemindersDesc': 'View all your reminders',
     'dashboard.yearsOld': 'years old',
     'dashboard.kg': 'kg',
     'dashboard.unknownBreed': 'Unknown breed',
@@ -111,6 +112,10 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.months': 'Month(s)',
     'reminder.years': 'Year(s)',
     'reminder.nextCreated': 'Next reminder created',
+    'reminder.done': 'Done',
+    'reminder.today': 'Today',
+    'reminder.tomorrow': 'Tomorrow',
+    'reminder.days': 'days',
     
     // Health Vault
     'vault.title': 'Health Vault',
@@ -248,6 +253,8 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.upcomingReminders': 'یادآوری‌های پیش رو',
     'dashboard.next7Days': '۷ روز آینده',
     'dashboard.noReminders': 'یادآوری‌ای وجود ندارد',
+    'dashboard.allReminders': 'همه یادآوری‌ها',
+    'dashboard.allRemindersDesc': 'مشاهده تمام یادآوری‌های شما',
     'dashboard.allCaughtUp': 'همه چیز مرتب است! 🎉',
     'dashboard.yearsOld': 'ساله',
     'dashboard.kg': 'کیلوگرم',
@@ -314,6 +321,10 @@ const translations: Record<Language, Record<string, string>> = {
     'reminder.months': 'ماه',
     'reminder.years': 'سال',
     'reminder.nextCreated': 'یادآوری بعدی ایجاد شد',
+    'reminder.done': 'انجام شد',
+    'reminder.today': 'امروز',
+    'reminder.tomorrow': 'فردا',
+    'reminder.days': 'روز',
     
     // Health Vault
     'vault.title': 'پرونده سلامت',
