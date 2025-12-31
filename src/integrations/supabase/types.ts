@@ -175,6 +175,7 @@ export type Database = {
           email_notifications_enabled: boolean
           full_name: string | null
           id: string
+          preferred_language: string
           push_notifications_enabled: boolean
           updated_at: string
         }
@@ -185,6 +186,7 @@ export type Database = {
           email_notifications_enabled?: boolean
           full_name?: string | null
           id: string
+          preferred_language?: string
           push_notifications_enabled?: boolean
           updated_at?: string
         }
@@ -195,6 +197,7 @@ export type Database = {
           email_notifications_enabled?: boolean
           full_name?: string | null
           id?: string
+          preferred_language?: string
           push_notifications_enabled?: boolean
           updated_at?: string
         }

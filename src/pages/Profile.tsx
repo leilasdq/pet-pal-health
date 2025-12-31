@@ -107,6 +107,7 @@ const Profile = () => {
         email: user.email,
         push_notifications_enabled: pushEnabled,
         email_notifications_enabled: emailEnabled,
+        preferred_language: language,
       });
     
     if (error) {
@@ -161,6 +162,16 @@ const Profile = () => {
       });
     }
     setSendingTestEmail(false);
+  };
+
+  const handleLanguageChange = async (lang: 'en' | 'fa') => {
+    setLanguage(lang);
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ preferred_language: lang })
+        .eq('id', user.id);
+    }
   };
 
   const handleSignOut = async () => {
@@ -229,7 +240,7 @@ const Profile = () => {
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setLanguage('en')}
+                onClick={() => handleLanguageChange('en')}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   language === 'en'
                     ? 'border-primary bg-primary-soft'
@@ -240,7 +251,7 @@ const Profile = () => {
                 <span className="font-medium">{t('profile.english')}</span>
               </button>
               <button
-                onClick={() => setLanguage('fa')}
+                onClick={() => handleLanguageChange('fa')}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   language === 'fa'
                     ? 'border-primary bg-primary-soft'
