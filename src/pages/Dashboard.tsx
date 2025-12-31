@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2, Repeat } from 'lucide-react';
+import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2, Repeat, CheckCircle2, X } from 'lucide-react';
 import { differenceInDays, parseISO, startOfDay, format as formatGregorian, addWeeks, addMonths, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
@@ -65,6 +65,7 @@ const petTypeIcons: Record<PetType, typeof Dog> = {
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
   const [pets, setPets] = useState<Pet[]>([]);
@@ -88,6 +89,8 @@ const Dashboard = () => {
   const [editReminderData, setEditReminderData] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceUnit, recurrence_interval: 1 });
   const [savingReminder, setSavingReminder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const showAllReminders = searchParams.get('showAllReminders') === 'true';
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -366,11 +369,20 @@ const Dashboard = () => {
   const getUpcomingReminders = () => {
     const today = startOfDay(new Date());
     
+    if (showAllReminders) {
+      // Show all reminders (pending and completed)
+      return reminders;
+    }
+    
     // Show all pending reminders (today and future)
     return reminders.filter(r => {
       const dueDate = startOfDay(parseISO(r.due_date));
       return r.status === 'pending' && dueDate >= today;
     });
+  };
+
+  const closeAllRemindersView = () => {
+    setSearchParams({});
   };
 
   const getDaysUntilReminder = (dueDate: string) => {
@@ -410,9 +422,18 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="text-start">
-            <h1 className="text-2xl font-bold text-foreground">{t('dashboard.myPets')}</h1>
-            <p className="text-muted-foreground text-sm">{t('dashboard.next7Days')}</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              {showAllReminders ? t('dashboard.allReminders') : t('dashboard.myPets')}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {showAllReminders ? t('dashboard.allRemindersDesc') : t('dashboard.next7Days')}
+            </p>
           </div>
+          {showAllReminders ? (
+            <Button size="icon" variant="outline" onClick={closeAllRemindersView} className="h-10 w-10">
+              <X className="w-5 h-5" />
+            </Button>
+          ) : (
           <Dialog open={addPetOpen} onOpenChange={setAddPetOpen}>
             <DialogTrigger asChild>
               <Button size="icon" variant="fab" className="h-12 w-12">
@@ -497,9 +518,123 @@ const Dashboard = () => {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
 
 
+        {/* All Reminders View */}
+        {showAllReminders ? (
+          <Card className="card-elevated">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Bell className="w-5 h-5 text-primary" />
+                {t('dashboard.allReminders')}
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({formatNumber(upcomingReminders.length, language)})
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {upcomingReminders.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">{t('dashboard.noReminders')}</p>
+              ) : (
+                upcomingReminders.map((reminder) => {
+                  const Icon = reminderTypeIcons[reminder.reminder_type] || Calendar;
+                  const daysUntil = getDaysUntilReminder(reminder.due_date);
+                  const isCompleted = reminder.status === 'completed';
+                  
+                  return (
+                    <SwipeableReminder 
+                      key={reminder.id}
+                      onDelete={() => handleDeleteReminder(reminder.id)}
+                    >
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-xl border",
+                          isCompleted ? "bg-muted/50 border-border" : reminderTypeColors[reminder.reminder_type]
+                        )}
+                        style={isRTL ? { direction: 'rtl' } : undefined}
+                      >
+                        <Checkbox
+                          checked={isCompleted}
+                          onCheckedChange={() => handleToggleReminderStatus(reminder)}
+                          className="shrink-0"
+                        />
+                        {isCompleted ? (
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <Icon className="w-4 h-4 shrink-0" />
+                        )}
+                        <div 
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => handleEditReminder(reminder)}
+                        >
+                          <div className="flex items-center gap-1">
+                            <p className={cn(
+                              "font-medium text-sm truncate",
+                              isCompleted && "line-through opacity-60"
+                            )}>{reminder.title}</p>
+                            {reminder.recurrence && reminder.recurrence !== 'none' && (
+                              <Repeat className="w-3 h-3 text-muted-foreground shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs opacity-75">
+                            <span>{formatShortDate(reminder.due_date, language)}</span>
+                            {reminder.pet && (
+                              <>
+                                <span>•</span>
+                                <span>{reminder.pet.name}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleEditReminder(reminder)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteReminder(reminder.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                        {!isCompleted && (
+                          <span className={cn(
+                            "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
+                            daysUntil === 0 && "bg-destructive/20 text-destructive",
+                            daysUntil === 1 && "bg-warning/20 text-warning",
+                            daysUntil > 1 && "bg-muted text-muted-foreground"
+                          )}>
+                            {daysUntil === 0 
+                              ? t('reminder.today') 
+                              : daysUntil === 1 
+                                ? t('reminder.tomorrow')
+                                : `${formatNumber(daysUntil, language)} ${t('reminder.days')}`
+                            }
+                          </span>
+                        )}
+                        {isCompleted && (
+                          <span className="text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full bg-primary/20 text-primary">
+                            {t('reminder.done')}
+                          </span>
+                        )}
+                      </div>
+                    </SwipeableReminder>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <>
         {/* Pets Grid */}
         {pets.length === 0 ? (
           <Card className="card-elevated">
@@ -966,6 +1101,8 @@ const Dashboard = () => {
           </DialogContent>
         </Dialog>
 
+          </>
+        )}
       </div>
     </AppLayout>
   );

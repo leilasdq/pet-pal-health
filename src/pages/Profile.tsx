@@ -206,23 +206,32 @@ const Profile = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <Card className="card-elevated text-center">
+          <Card 
+            className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
+            onClick={() => navigate('/dashboard')}
+          >
             <CardContent className="py-4">
               <PawPrint className="w-6 h-6 mx-auto text-primary mb-1" />
               <p className="text-2xl font-bold">{formatNumber(stats.pets, language)}</p>
               <p className="text-xs text-muted-foreground">{t('profile.pets')}</p>
             </CardContent>
           </Card>
-          <Card className="card-elevated text-center">
+          <Card 
+            className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
+            onClick={() => navigate('/health-vault')}
+          >
             <CardContent className="py-4">
               <Heart className="w-6 h-6 mx-auto text-destructive mb-1" />
               <p className="text-2xl font-bold">{formatNumber(stats.records, language)}</p>
               <p className="text-xs text-muted-foreground">{t('profile.records')}</p>
             </CardContent>
           </Card>
-          <Card className="card-elevated text-center">
+          <Card 
+            className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
+            onClick={() => navigate('/dashboard?showAllReminders=true')}
+          >
             <CardContent className="py-4">
-              <PawPrint className="w-6 h-6 mx-auto text-secondary mb-1" />
+              <Bell className="w-6 h-6 mx-auto text-secondary mb-1" />
               <p className="text-2xl font-bold">{formatNumber(stats.reminders, language)}</p>
               <p className="text-xs text-muted-foreground">{t('profile.reminders')}</p>
             </CardContent>
