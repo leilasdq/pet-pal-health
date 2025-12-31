@@ -91,9 +91,8 @@ const Reminders = () => {
   const fetchReminders = async () => {
     const { data, error } = await supabase
       .from('reminders')
-      .select('*, pets(id, name, pet_type)')
-      .order('due_date', { ascending: true });
-    
+      .select('*, pets(id, name, pet_type)');
+
     if (!error && data) {
       const mappedReminders = data.map(r => ({
         ...r,
@@ -104,14 +103,31 @@ const Reminders = () => {
     setLoading(false);
   };
 
-  const getFilteredReminders = () => {
+  const getFilteredAndSortedReminders = () => {
+    let filtered: Reminder[] = [];
+
     switch (filter) {
       case 'pending':
-        return reminders.filter(r => r.status === 'pending');
+        filtered = reminders.filter(r => r.status === 'pending');
+        break;
       case 'completed':
-        return reminders.filter(r => r.status === 'completed');
+        filtered = reminders.filter(r => r.status === 'completed');
+        break;
       default:
-        return reminders;
+        filtered = reminders;
+        break;
+    }
+
+    if (filter === 'all') {
+      const pending = filtered.filter(r => r.status === 'pending')
+        .sort((a, b) => parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime());
+      const completed = filtered.filter(r => r.status === 'completed')
+        .sort((a, b) => parseISO(b.due_date).getTime() - parseISO(a.due_date).getTime());
+      return [...pending, ...completed];
+    } else if (filter === 'pending') {
+      return filtered.sort((a, b) => parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime());
+    } else {
+      return filtered.sort((a, b) => parseISO(b.due_date).getTime() - parseISO(a.due_date).getTime());
     }
   };
 
@@ -233,7 +249,7 @@ const Reminders = () => {
     }
   };
 
-  const filteredReminders = getFilteredReminders();
+  const filteredReminders = getFilteredAndSortedReminders();
   const pendingCount = reminders.filter(r => r.status === 'pending').length;
   const completedCount = reminders.filter(r => r.status === 'completed').length;
 
