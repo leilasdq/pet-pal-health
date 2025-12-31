@@ -26,7 +26,36 @@ interface Profile {
   email: string | null;
   full_name: string | null;
   email_notifications_enabled: boolean;
+  preferred_language: string;
 }
+
+// Translations for email content
+const translations = {
+  en: {
+    title: 'PetCare Reminder',
+    greeting: (name: string) => `Hi ${name},`,
+    upcomingReminders: 'You have upcoming reminders for your pets:',
+    openApp: 'Open PetCare to view details and mark them as complete.',
+    footer: 'You received this email because you have email notifications enabled in your PetCare profile.',
+    today: 'Today',
+    tomorrow: 'Tomorrow',
+    subject: (count: number) => `🐾 Pet Reminder: ${count} upcoming task${count > 1 ? 's' : ''}`,
+  },
+  fa: {
+    title: 'یادآوری مراقبت از حیوان خانگی',
+    greeting: (name: string) => `سلام ${name}،`,
+    upcomingReminders: 'شما یادآوری‌هایی برای حیوانات خانگی خود دارید:',
+    openApp: 'برای مشاهده جزئیات و تکمیل، اپلیکیشن را باز کنید.',
+    footer: 'شما این ایمیل را دریافت کردید چون اعلان‌های ایمیل در پروفایل شما فعال است.',
+    today: 'امروز',
+    tomorrow: 'فردا',
+    subject: (count: number) => `🐾 یادآوری حیوان خانگی: ${count} کار پیش رو`,
+  },
+};
+
+const getTranslation = (lang: string) => {
+  return translations[lang as keyof typeof translations] || translations.fa;
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -91,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
     const userIds = Array.from(remindersByUser.keys());
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, email, full_name, email_notifications_enabled')
+      .select('id, email, full_name, email_notifications_enabled, preferred_language')
       .in('id', userIds)
       .eq('email_notifications_enabled', true);
 
@@ -111,25 +140,29 @@ const handler = async (req: Request): Promise<Response> => {
       const userData = remindersByUser.get(profile.id);
       if (!userData) continue;
 
-      const userName = profile.full_name || 'Pet Parent';
+      const lang = profile.preferred_language || 'fa';
+      const t = getTranslation(lang);
+      const isRtl = lang === 'fa';
+      
+      const userName = profile.full_name || (lang === 'fa' ? 'دوست عزیز' : 'Pet Parent');
       const reminderList = userData.reminders.map(r => {
         const isToday = r.due_date === today;
-        const dateLabel = isToday ? 'Today' : 'Tomorrow';
-        return `• ${r.title} for ${r.pets.name} (${dateLabel})`;
+        const dateLabel = isToday ? t.today : t.tomorrow;
+        return `• ${r.title} - ${r.pets.name} (${dateLabel})`;
       }).join('\n');
 
       const html = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #10b981; margin-bottom: 20px;">🐾 PetCare Reminder</h1>
-          <p style="font-size: 16px; color: #374151;">Hi ${userName},</p>
-          <p style="font-size: 16px; color: #374151;">You have upcoming reminders for your pets:</p>
+        <div style="font-family: ${isRtl ? 'Tahoma, Arial' : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto"}, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; direction: ${isRtl ? 'rtl' : 'ltr'}; text-align: ${isRtl ? 'right' : 'left'};">
+          <h1 style="color: #10b981; margin-bottom: 20px;">🐾 ${t.title}</h1>
+          <p style="font-size: 16px; color: #374151;">${t.greeting(userName)}</p>
+          <p style="font-size: 16px; color: #374151;">${t.upcomingReminders}</p>
           <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
             <pre style="margin: 0; white-space: pre-wrap; font-family: inherit; color: #1f2937;">${reminderList}</pre>
           </div>
-          <p style="font-size: 14px; color: #6b7280;">Open PetCare to view details and mark them as complete.</p>
+          <p style="font-size: 14px; color: #6b7280;">${t.openApp}</p>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
           <p style="font-size: 12px; color: #9ca3af;">
-            You received this email because you have email notifications enabled in your PetCare profile.
+            ${t.footer}
           </p>
         </div>
       `;
@@ -138,7 +171,7 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResponse = await resend.emails.send({
           from: "PetCare <onboarding@resend.dev>",
           to: [profile.email],
-          subject: `🐾 Pet Reminder: ${userData.reminders.length} upcoming task${userData.reminders.length > 1 ? 's' : ''}`,
+          subject: t.subject(userData.reminders.length),
           html,
         });
 
