@@ -692,19 +692,21 @@ const HealthVault = () => {
 
                     {/* AI Analysis Section */}
                     <div className="space-y-3 pt-2 border-t border-border">
-                      <Button 
-                        variant="secondary" 
-                        className="w-full"
-                        onClick={() => handleAiAnalysis(viewingRecord)}
-                        disabled={analyzing}
-                      >
-                        {analyzing ? (
-                          <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                        ) : (
-                          <Sparkles className="w-4 h-4 me-2" />
-                        )}
-                        {analyzing ? t('vault.aiAnalyzing') : t('vault.aiAnalyze')}
-                      </Button>
+                      {!aiAnalysis && (
+                        <Button 
+                          variant="secondary" 
+                          className="w-full"
+                          onClick={() => handleAiAnalysis(viewingRecord)}
+                          disabled={analyzing}
+                        >
+                          {analyzing ? (
+                            <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-4 h-4 me-2" />
+                          )}
+                          {analyzing ? t('vault.aiAnalyzing') : t('vault.aiAnalyze')}
+                        </Button>
+                      )}
                       
                       {aiAnalysis && (
                         <div className="space-y-2">
