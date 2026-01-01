@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Download, UserPlus, Trash2, Edit, Shield, Users, Database } from 'lucide-react';
+import { EditRecordDialog } from '@/components/admin/EditRecordDialog';
 
 type TableName = 'profiles' | 'pets' | 'reminders' | 'medical_records' | 'conversations' | 'user_roles' | 'admin_invites';
 
@@ -47,6 +48,8 @@ const Admin = () => {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [admins, setAdmins] = useState<UserRole[]>([]);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<Record<string, any> | null>(null);
 
   // Fetch table data
   const fetchTableData = async (tableName: TableName) => {
@@ -178,6 +181,29 @@ const Admin = () => {
       if (error) throw error;
       fetchTableData(activeTable);
       toast({ title: t('admin.recordDeleted') });
+    } catch (error: any) {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    }
+  };
+
+  // Edit record
+  const handleEditRecord = (record: Record<string, any>) => {
+    setEditingRecord(record);
+    setEditDialogOpen(true);
+  };
+
+  // Update record
+  const handleUpdateRecord = async (id: string, data: Record<string, any>) => {
+    if (Object.keys(data).length === 0) {
+      toast({ title: t('admin.noChanges') });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from(activeTable).update(data).eq('id', id);
+      if (error) throw error;
+      fetchTableData(activeTable);
+      toast({ title: t('admin.recordUpdated') });
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     }
@@ -325,7 +351,15 @@ const Admin = () => {
                                   {typeof row[col] === 'object' ? JSON.stringify(row[col]) : String(row[col] ?? '-')}
                                 </TableCell>
                               ))}
-                              <TableCell>
+                              <TableCell className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEditRecord(row)}
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -492,6 +526,14 @@ const Admin = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        <EditRecordDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          record={editingRecord}
+          tableName={activeTable}
+          onSave={handleUpdateRecord}
+        />
       </div>
     </AppLayout>
   );
