@@ -233,6 +233,10 @@ const translations: Record<Language, Record<string, string>> = {
     // Vault extras
     'vault.fileTooLarge': 'File size must be less than 10MB',
     'vault.changeImage': 'Change Image',
+    'vault.aiAnalyze': 'AI Analysis',
+    'vault.aiAnalyzing': 'Analyzing...',
+    'vault.aiDisclaimer': '⚠️ This AI analysis is for educational purposes only and does NOT replace professional veterinary advice. Always consult your vet for accurate diagnosis.',
+    'vault.aiAnalysisTitle': 'AI Analysis',
   },
   fa: {
     // Navigation
@@ -458,6 +462,10 @@ const translations: Record<Language, Record<string, string>> = {
     // Vault extras
     'vault.fileTooLarge': 'حجم فایل باید کمتر از ۱۰ مگابایت باشد',
     'vault.changeImage': 'تغییر تصویر',
+    'vault.aiAnalyze': 'تحلیل هوش مصنوعی',
+    'vault.aiAnalyzing': 'در حال تحلیل...',
+    'vault.aiDisclaimer': '⚠️ این تحلیل صرفاً جنبه آموزشی دارد و جایگزین مشاوره دامپزشک نیست! برای تشخیص دقیق حتماً به دامپزشک مراجعه کنید.',
+    'vault.aiAnalysisTitle': 'تحلیل هوش مصنوعی',
   },
 };
 

@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2 } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { parseISO, format as formatGregorianDate } from 'date-fns';
@@ -72,6 +72,8 @@ const HealthVault = () => {
   const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
   const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -294,6 +296,38 @@ const HealthVault = () => {
       toast({ title: t('common.error'), description: t('vault.updateError'), variant: 'destructive' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAiAnalysis = async (record: MedicalRecord) => {
+    setAnalyzing(true);
+    setAiAnalysis(null);
+    
+    try {
+      const pet = pets.find(p => p.id === record.pet_id);
+      
+      const { data, error } = await supabase.functions.invoke('analyze-medical-record', {
+        body: {
+          record_title: record.title,
+          record_category: record.category,
+          record_notes: record.notes,
+          pet_name: pet?.name,
+          language: language,
+        },
+      });
+
+      if (error) throw error;
+      
+      setAiAnalysis(data.analysis);
+    } catch (error) {
+      console.error('AI Analysis error:', error);
+      toast({ 
+        title: t('common.error'), 
+        description: language === 'fa' ? 'خطا در تحلیل هوش مصنوعی' : 'AI analysis failed',
+        variant: 'destructive' 
+      });
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -573,7 +607,7 @@ const HealthVault = () => {
         </Tabs>
 
         {/* Record Detail View Modal */}
-        <Dialog open={!!viewingRecord} onOpenChange={() => setViewingRecord(null)}>
+        <Dialog open={!!viewingRecord} onOpenChange={() => { setViewingRecord(null); setAiAnalysis(null); }}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
             {viewingRecord && (() => {
               const category = categories.find(c => c.value === viewingRecord.category);
@@ -652,6 +686,41 @@ const HealthVault = () => {
                       )}
                     </div>
 
+                    {/* AI Analysis Section */}
+                    <div className="space-y-3 pt-2 border-t border-border">
+                      <Button 
+                        variant="secondary" 
+                        className="w-full"
+                        onClick={() => handleAiAnalysis(viewingRecord)}
+                        disabled={analyzing}
+                      >
+                        {analyzing ? (
+                          <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 me-2" />
+                        )}
+                        {analyzing ? t('vault.aiAnalyzing') : t('vault.aiAnalyze')}
+                      </Button>
+                      
+                      {aiAnalysis && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            {t('vault.aiAnalysisTitle')}
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                            <p className="text-sm whitespace-pre-wrap">{aiAnalysis}</p>
+                          </div>
+                          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <p className="text-xs text-amber-700 dark:text-amber-400">
+                              {t('vault.aiDisclaimer')}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Actions */}
                     <div className="flex gap-2 pt-2">
                       <Button 
@@ -660,6 +729,7 @@ const HealthVault = () => {
                         onClick={() => {
                           handleEditRecord(viewingRecord);
                           setViewingRecord(null);
+                          setAiAnalysis(null);
                         }}
                       >
                         <Pencil className="w-4 h-4 me-2" />
@@ -671,6 +741,7 @@ const HealthVault = () => {
                         onClick={() => {
                           setDeleteRecordId(viewingRecord.id);
                           setViewingRecord(null);
+                          setAiAnalysis(null);
                         }}
                       >
                         <Trash2 className="w-4 h-4 me-2" />
