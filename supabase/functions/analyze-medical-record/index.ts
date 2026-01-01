@@ -22,6 +22,15 @@ serve(async (req) => {
     const isPassport = record_category === 'passport';
     const isPrescription = record_category === 'prescription';
     const useToolCalling = isPassport || isPrescription;
+    
+    // Get current date in both formats for context
+    const now = new Date();
+    const gregorianDate = now.toISOString().split('T')[0];
+    // Approximate Jalali date (rough conversion: Jalali year = Gregorian year - 621 or 622)
+    const jalaliYear = now.getMonth() < 2 ? now.getFullYear() - 622 : now.getFullYear() - 621;
+    const jalaliMonth = ((now.getMonth() + 10) % 12) + 1; // Rough approximation
+    const jalaliDay = now.getDate();
+    const jalaliDate = `${jalaliYear}/${String(jalaliMonth).padStart(2, '0')}/${String(jalaliDay).padStart(2, '0')}`;
 
     let systemPrompt: string;
     let textPrompt: string;
@@ -32,11 +41,21 @@ serve(async (req) => {
       systemPrompt = isFarsi 
         ? `تحلیلگر دفترچه واکسن و شناسنامه حیوانات.
 
+تاریخ امروز: ${jalaliDate} شمسی (${gregorianDate} میلادی)
+
+نکات مهم برای خواندن تاریخ:
+- تاریخ‌های ایرانی معمولاً به صورت ۱۴۰۳/۰۵/۲۰ یا ۱۴۰۳-۰۵-۲۰ نوشته می‌شوند
+- اگر سال با ۱۴ شروع شود، تاریخ شمسی است
+- اگر سال با ۲۰ شروع شود، تاریخ میلادی است
+- اعداد فارسی: ۰۱۲۳۴۵۶۷۸۹
+- دقت کن ارقام را درست بخوانی، مخصوصاً ۲ و ۳ یا ۵ و ۶
+
 قوانین:
-1. تاریخ آخرین واکسن یا ضدانگل را پیدا کن
-2. بگو چه مدت گذشته و آیا نیاز به تمدید دارد
-3. یک توصیه کوتاه بده
-4. حداکثر ۸۰ کلمه
+1. تاریخ آخرین واکسن یا ضدانگل را پیدا کن و دقیقاً بنویس
+2. با توجه به تاریخ امروز، بگو چه مدت گذشته
+3. آیا نیاز به تمدید دارد؟
+4. یک توصیه کوتاه بده
+5. حداکثر ۸۰ کلمه
 
 مثال:
 **آخرین واکسن:** ۱۴۰۳/۰۹/۱۵ (۳ ماه پیش)
@@ -44,15 +63,24 @@ serve(async (req) => {
 **توصیه:** واکسن سالانه در ۳ ماه آینده باید تمدید شود.`
         : `Pet vaccination passport analyzer.
 
+Today's date: ${gregorianDate} (Jalali: ${jalaliDate})
+
+Date reading tips:
+- Persian dates are usually in format 1403/05/20 or 1403-05-20
+- Years starting with 14xx are Jalali/Persian dates
+- Years starting with 20xx are Gregorian dates
+- Persian numerals: ۰۱۲۳۴۵۶۷۸۹
+
 Rules:
-1. Find dates of last vaccines or deworming
-2. Say how long ago and if renewal needed
-3. One short advice
-4. Maximum 80 words`;
+1. Find dates of last vaccines or deworming - write them exactly
+2. Based on today's date, calculate how long ago
+3. Say if renewal is needed
+4. One short advice
+5. Maximum 80 words`;
 
       textPrompt = isFarsi
-        ? `تاریخ‌های واکسن و ضدانگل را پیدا کن و توصیه بده. اگر نیاز به یادآوری برای واکسن یا ضدانگل هست، بگو.`
-        : `Find vaccine/deworming dates and give advice. If a reminder is needed, mention it.`;
+        ? `تاریخ امروز ${jalaliDate} است. تاریخ‌های واکسن و ضدانگل را دقیقاً از تصویر بخوان و توصیه بده. اگر نیاز به یادآوری هست، بگو.`
+        : `Today is ${gregorianDate}. Read vaccine/deworming dates exactly from the image and give advice. If a reminder is needed, mention it.`;
     } else if (isPrescription) {
       toolName = 'analyze_prescription';
       systemPrompt = isFarsi 
