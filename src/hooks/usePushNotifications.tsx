@@ -27,9 +27,11 @@ export const usePushNotifications = () => {
     }
   }, [isSupported]);
 
-  const showNotification = useCallback((title: string, options?: NotificationOptions): boolean => {
+  const showNotification = useCallback(async (title: string, options?: NotificationOptions): Promise<boolean> => {
     // Check actual browser permission, not just React state
     const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    
+    console.log('showNotification called:', { isSupported, currentPermission, title });
     
     if (!isSupported || currentPermission !== 'granted') {
       console.log('Notification blocked:', { isSupported, currentPermission });
@@ -37,11 +39,26 @@ export const usePushNotifications = () => {
     }
     
     try {
+      // Try Service Worker first (required for mobile browsers)
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, {
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          ...options,
+        });
+        console.log('Notification sent via Service Worker');
+        return true;
+      }
+      
+      // Fallback to regular Notification API (works on desktop)
       const notification = new Notification(title, {
         icon: '/favicon.ico',
         badge: '/favicon.ico',
         ...options,
       });
+      
+      console.log('Notification sent via Notification API');
       
       // Update state if it was out of sync
       if (permission !== currentPermission) {
