@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send } from 'lucide-react';
+import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send, Crown } from 'lucide-react';
 import { formatNumber } from '@/lib/dateUtils';
 
 interface Profile {
@@ -297,6 +297,29 @@ const Profile = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Subscription */}
+        <Card 
+          className="card-elevated cursor-pointer hover:border-primary/50 transition-all"
+          onClick={() => navigate('/subscription')}
+        >
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-primary/10">
+                <Crown className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">{language === 'fa' ? 'اشتراک و پلن‌ها' : 'Subscription & Plans'}</p>
+                <p className="text-xs text-muted-foreground">
+                  {language === 'fa' ? 'مدیریت اشتراک و سقف استفاده AI' : 'Manage subscription & AI limits'}
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon">
+              <span className={language === 'fa' ? 'rotate-180' : ''}>→</span>
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Language Toggle */}
         <Card className="card-elevated">
