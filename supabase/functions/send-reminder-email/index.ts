@@ -32,24 +32,28 @@ interface Profile {
 // Translations for email content
 const translations = {
   en: {
-    title: 'PetCare Reminder',
-    greeting: (name: string) => `Hi ${name},`,
-    upcomingReminders: 'You have upcoming reminders for your pets:',
-    openApp: 'Open PetCare to view details and mark them as complete.',
-    footer: 'You received this email because you have email notifications enabled in your PetCare profile.',
-    today: 'Today',
-    tomorrow: 'Tomorrow',
-    subject: (count: number) => `🐾 Pet Reminder: ${count} upcoming task${count > 1 ? 's' : ''}`,
+    title: 'Your Furry Friends Need You! 🐾',
+    greeting: (name: string) => `Hey ${name}! 👋`,
+    upcomingReminders: "Here's what's coming up for your beloved pets:",
+    openApp: "We know you're busy, but your pets are counting on you! Open PetCare to check details and mark them done when ready. 💪",
+    footer: 'You received this email because you love your pets and have email notifications enabled. We promise to only send you the important stuff! 🐕',
+    today: "⚡ Today",
+    tomorrow: "📅 Tomorrow",
+    subject: (count: number) => `🐾 Hey! ${count} pet care reminder${count > 1 ? 's' : ''} waiting for you`,
+    todayIntro: "🚨 These need your attention TODAY:",
+    tomorrowIntro: "📅 Coming up TOMORROW:",
   },
   fa: {
-    title: 'یادآوری مراقبت از حیوان خانگی',
-    greeting: (name: string) => `سلام ${name}،`,
-    upcomingReminders: 'شما یادآوری‌هایی برای حیوانات خانگی خود دارید:',
-    openApp: 'برای مشاهده جزئیات و تکمیل، اپلیکیشن را باز کنید.',
-    footer: 'شما این ایمیل را دریافت کردید چون اعلان‌های ایمیل در پروفایل شما فعال است.',
-    today: 'امروز',
-    tomorrow: 'فردا',
-    subject: (count: number) => `🐾 یادآوری حیوان خانگی: ${count} کار پیش رو`,
+    title: 'دوستان پشمالوت منتظرتن! 🐾',
+    greeting: (name: string) => `سلام ${name} عزیز! 👋`,
+    upcomingReminders: 'این برنامه‌های مهم رو برای حیوانات خانگیت داری:',
+    openApp: 'می‌دونیم سرت شلوغه، ولی رفقای کوچولوت بهت نیاز دارن! وارد اپ شو و کارها رو تیک بزن. 💪',
+    footer: 'این ایمیل رو دریافت کردی چون عاشق حیوانتی و اعلان‌ها رو فعال کردی. قول می‌دیم فقط چیزای مهم رو بفرستیم! 🐕',
+    today: '⚡ امروز',
+    tomorrow: '📅 فردا',
+    subject: (count: number) => `🐾 سلام! ${count} یادآوری مهم برای حیوان خانگیت`,
+    todayIntro: '🚨 این‌ها امروز باید انجام بشن:',
+    tomorrowIntro: '📅 فردا این برنامه‌ها رو داری:',
   },
 };
 
@@ -145,23 +149,49 @@ const handler = async (req: Request): Promise<Response> => {
       const isRtl = lang === 'fa';
       
       const userName = profile.full_name || (lang === 'fa' ? 'دوست عزیز' : 'Pet Parent');
-      const reminderList = userData.reminders.map(r => {
-        const isToday = r.due_date === today;
-        const dateLabel = isToday ? t.today : t.tomorrow;
-        return `• ${r.title} - ${r.pets.name} (${dateLabel})`;
-      }).join('\n');
+      
+      // Separate today and tomorrow reminders
+      const todayReminders = userData.reminders.filter(r => r.due_date === today);
+      const tomorrowReminders = userData.reminders.filter(r => r.due_date === tomorrow);
+      
+      let reminderHtml = '';
+      
+      if (todayReminders.length > 0) {
+        reminderHtml += `<p style="font-weight: bold; color: #dc2626; margin-bottom: 8px;">${(t as any).todayIntro || t.today}</p>`;
+        reminderHtml += todayReminders.map(r => 
+          `<div style="background: #fef2f2; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #dc2626;">
+            <strong>${r.pets.name}</strong>: ${r.title}
+          </div>`
+        ).join('');
+      }
+      
+      if (tomorrowReminders.length > 0) {
+        reminderHtml += `<p style="font-weight: bold; color: #2563eb; margin-bottom: 8px; margin-top: 16px;">${(t as any).tomorrowIntro || t.tomorrow}</p>`;
+        reminderHtml += tomorrowReminders.map(r => 
+          `<div style="background: #eff6ff; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #2563eb;">
+            <strong>${r.pets.name}</strong>: ${r.title}
+          </div>`
+        ).join('');
+      }
 
       const html = `
-        <div style="font-family: ${isRtl ? 'Tahoma, Arial' : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto"}, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; direction: ${isRtl ? 'rtl' : 'ltr'}; text-align: ${isRtl ? 'right' : 'left'};">
-          <h1 style="color: #10b981; margin-bottom: 20px;">🐾 ${t.title}</h1>
-          <p style="font-size: 16px; color: #374151;">${t.greeting(userName)}</p>
-          <p style="font-size: 16px; color: #374151;">${t.upcomingReminders}</p>
-          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
-            <pre style="margin: 0; white-space: pre-wrap; font-family: inherit; color: #1f2937;">${reminderList}</pre>
+        <div style="font-family: ${isRtl ? 'Tahoma, Arial' : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto"}, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; direction: ${isRtl ? 'rtl' : 'ltr'}; text-align: ${isRtl ? 'right' : 'left'}; background: #ffffff; border-radius: 12px;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h1 style="color: #10b981; margin-bottom: 8px; font-size: 24px;">${t.title}</h1>
           </div>
-          <p style="font-size: 14px; color: #6b7280;">${t.openApp}</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-          <p style="font-size: 12px; color: #9ca3af;">
+          <p style="font-size: 18px; color: #374151; margin-bottom: 16px;">${t.greeting(userName)}</p>
+          <p style="font-size: 16px; color: #6b7280; margin-bottom: 20px;">${t.upcomingReminders}</p>
+          
+          <div style="margin: 24px 0;">
+            ${reminderHtml}
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 16px; border-radius: 8px; text-align: center; margin: 24px 0;">
+            <p style="color: white; margin: 0; font-size: 14px;">${t.openApp}</p>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">
             ${t.footer}
           </p>
         </div>

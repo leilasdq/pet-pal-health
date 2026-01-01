@@ -116,10 +116,15 @@ export const usePushNotifications = () => {
       if (todayReminders && todayReminders.length > 0) {
         for (const reminder of todayReminders) {
           const petName = (reminder.pets as any)?.name || '';
-          const title = language === 'fa' ? '🐾 یادآوری امروز' : '🐾 Today\'s Reminder';
+          const reminderTypeText = getReminderTypeText(reminder.reminder_type, language);
+          
+          const title = language === 'fa' 
+            ? `🐾 امروز وقت ${reminderTypeText} ${petName} است!` 
+            : `🐾 ${petName}'s ${reminderTypeText} is today!`;
+          
           const body = language === 'fa' 
-            ? `فراموش نکنید: ${reminder.title}${petName ? ` برای ${petName}` : ''}`
-            : `Don't forget: ${reminder.title}${petName ? ` for ${petName}` : ''}`;
+            ? `سلام! یادت نره که امروز باید ${reminder.title} رو انجام بدی. ${petName} منتظرته! 💕`
+            : `Hey! Don't forget to complete "${reminder.title}" today. ${petName} is counting on you! 💕`;
           
           await showNotification(title, {
             body,
@@ -133,10 +138,14 @@ export const usePushNotifications = () => {
         for (const reminder of tomorrowReminders) {
           const petName = (reminder.pets as any)?.name || '';
           const reminderTypeText = getReminderTypeText(reminder.reminder_type, language);
-          const title = language === 'fa' ? '📅 یادآوری فردا' : '📅 Tomorrow\'s Reminder';
+          
+          const title = language === 'fa' 
+            ? `📅 آماده باش! فردا ${reminderTypeText} داری` 
+            : `📅 Heads up! ${reminderTypeText} tomorrow`;
+          
           const body = language === 'fa' 
-            ? `فردا ${reminderTypeText} دارید${petName ? ` برای ${petName}` : ''}: ${reminder.title}`
-            : `Tomorrow you have ${reminderTypeText}${petName ? ` for ${petName}` : ''}: ${reminder.title}`;
+            ? `فردا نوبت ${reminder.title} برای ${petName} عزیزته. از الان برنامه‌ریزی کن! 🗓️`
+            : `Tomorrow is ${petName}'s "${reminder.title}" day. Plan ahead! 🗓️`;
           
           await showNotification(title, {
             body,
