@@ -36,6 +36,8 @@ interface MedicalRecord {
   record_date: string | null;
   created_at: string;
   pet?: Pet;
+  ai_analysis: string | null;
+  ai_analyzed_at: string | null;
 }
 
 const HealthVault = () => {
@@ -310,7 +312,13 @@ const HealthVault = () => {
     }
   };
 
-  const handleAiAnalysis = async (record: MedicalRecord) => {
+  const handleAiAnalysis = async (record: MedicalRecord, forceRegenerate: boolean = false) => {
+    // If we have a saved analysis and not forcing regenerate, use it
+    if (record.ai_analysis && !forceRegenerate) {
+      setAiAnalysis(record.ai_analysis);
+      return;
+    }
+
     setAnalyzing(true);
     setAiAnalysis(null);
     setReminderSuggestion(null);
@@ -328,15 +336,36 @@ const HealthVault = () => {
           record_notes: record.notes,
           pet_name: pet?.name,
           language: language,
-          image_url: imageUrl, // Pass the image URL for vision analysis
+          image_url: imageUrl,
         },
       });
 
       if (error) throw error;
       
-      setAiAnalysis(data.analysis);
+      const analysisText = data.analysis;
+      setAiAnalysis(analysisText);
+      
       if (data.reminderSuggestion) {
         setReminderSuggestion(data.reminderSuggestion);
+      }
+
+      // Save the analysis to the database
+      await supabase
+        .from('medical_records')
+        .update({
+          ai_analysis: analysisText,
+          ai_analyzed_at: new Date().toISOString(),
+        })
+        .eq('id', record.id);
+
+      // Update local state
+      setRecords(prev => prev.map(r => 
+        r.id === record.id 
+          ? { ...r, ai_analysis: analysisText, ai_analyzed_at: new Date().toISOString() }
+          : r
+      ));
+      if (viewingRecord?.id === record.id) {
+        setViewingRecord({ ...record, ai_analysis: analysisText, ai_analyzed_at: new Date().toISOString() });
       }
     } catch (error) {
       console.error('AI Analysis error:', error);
@@ -767,7 +796,7 @@ const HealthVault = () => {
 
                     {/* AI Analysis Section */}
                     <div className="space-y-3 pt-2 border-t border-border">
-                      {!aiAnalysis && (
+                      {!aiAnalysis && !viewingRecord.ai_analysis && (
                         <Button 
                           variant="secondary" 
                           className="w-full"
@@ -783,7 +812,7 @@ const HealthVault = () => {
                         </Button>
                       )}
                       
-                      {aiAnalysis && (
+                      {(aiAnalysis || viewingRecord.ai_analysis) && (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-sm font-medium">
@@ -793,7 +822,7 @@ const HealthVault = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleAiAnalysis(viewingRecord)}
+                              onClick={() => handleAiAnalysis(viewingRecord, true)}
                               disabled={analyzing}
                               className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                             >
@@ -806,7 +835,7 @@ const HealthVault = () => {
                             </Button>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                            <p className="text-sm whitespace-pre-wrap">{aiAnalysis}</p>
+                            <p className="text-sm whitespace-pre-wrap">{aiAnalysis || viewingRecord.ai_analysis}</p>
                           </div>
                           <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
