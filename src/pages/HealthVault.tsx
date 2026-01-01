@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell, Flag } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell, Flag, RefreshCw } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { parseISO, format as formatGregorianDate } from 'date-fns';
@@ -785,9 +785,25 @@ const HealthVault = () => {
                       
                       {aiAnalysis && (
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <Sparkles className="w-4 h-4 text-primary" />
-                            {t('vault.aiAnalysisTitle')}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Sparkles className="w-4 h-4 text-primary" />
+                              {t('vault.aiAnalysisTitle')}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAiAnalysis(viewingRecord)}
+                              disabled={analyzing}
+                              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              {analyzing ? (
+                                <Loader2 className="w-3 h-3 me-1 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-3 h-3 me-1" />
+                              )}
+                              {language === 'fa' ? 'تحلیل مجدد' : 'Regenerate'}
+                            </Button>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
                             <p className="text-sm whitespace-pre-wrap">{aiAnalysis}</p>
