@@ -43,10 +43,10 @@ serve(async (req) => {
 
     console.log(`Verifying payment with authority: ${authority}, status: ${status}`);
 
-    // Find payment by authority
+    // Find payment by authority with promo code info
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
-      .select('*, subscription_tiers(*)')
+      .select('*, subscription_tiers(*), promo_codes(*)')
       .eq('authority', authority)
       .maybeSingle();
 
@@ -57,6 +57,9 @@ serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Get duration from promo code (default 1 month)
+    const durationMonths = payment.promo_codes?.duration_months || 1;
 
     // Check if already processed
     if (payment.status === 'completed') {
@@ -100,9 +103,10 @@ serve(async (req) => {
         .update({ status: 'completed', transaction_id: 'DEMO-' + Date.now() })
         .eq('id', payment.id);
 
-      // Create subscription
+      // Create subscription with duration from promo code
       const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
+      expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+      console.log(`Creating subscription for ${durationMonths} month(s), expires: ${expiresAt.toISOString()}`);
 
       await supabase
         .from('user_subscriptions')
@@ -192,9 +196,10 @@ serve(async (req) => {
       .update({ status: 'completed', transaction_id: refId.toString() })
       .eq('id', payment.id);
 
-    // Create subscription
+    // Create subscription with duration from promo code
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + 1);
+    expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+    console.log(`Creating subscription for ${durationMonths} month(s), expires: ${expiresAt.toISOString()}`);
 
     await supabase
       .from('user_subscriptions')

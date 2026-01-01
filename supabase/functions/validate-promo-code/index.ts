@@ -156,6 +156,7 @@ serve(async (req) => {
         discountAmount,
         finalAmount,
         freeTierInfo,
+        durationMonths: promoCode.duration_months || 1,
         message: 'Code applied successfully',
         messageFa: 'کد تخفیف با موفقیت اعمال شد',
       }),

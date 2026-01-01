@@ -33,6 +33,7 @@ interface PromoDiscount {
   valid: boolean;
   message?: string;
   messageFa?: string;
+  durationMonths: number;
   tierDiscounts: Record<string, { discountAmount: number; finalPrice: number }>;
 }
 
@@ -140,6 +141,7 @@ const Subscription = () => {
       }
       
       if (validPromo) {
+        const durationMonths = validPromo.durationMonths || 1;
         setPromoApplied({
           promoCodeId: validPromo.promoCodeId,
           discountType: validPromo.discountType,
@@ -147,11 +149,17 @@ const Subscription = () => {
           valid: true,
           message: validPromo.message,
           messageFa: validPromo.messageFa,
+          durationMonths,
           tierDiscounts,
         });
+        
+        const durationText = durationMonths > 1 
+          ? (isFarsi ? `(${durationMonths} ماه)` : `(${durationMonths} months)`)
+          : '';
+        
         toast({
           title: isFarsi ? 'کد تخفیف با موفقیت اعمال شد' : 'Promo code applied',
-          description: validPromo.messageFa || validPromo.message,
+          description: `${validPromo.messageFa || validPromo.message} ${durationText}`,
         });
       } else {
         toast({
@@ -329,9 +337,18 @@ const Subscription = () => {
               </Button>
             </div>
             {promoApplied?.valid && (
-              <p className="text-sm text-success mt-2">
-                ✓ {promoApplied.messageFa || promoApplied.message}
-              </p>
+              <div className="mt-2 space-y-1">
+                <p className="text-sm text-success">
+                  ✓ {promoApplied.messageFa || promoApplied.message}
+                </p>
+                {promoApplied.durationMonths > 1 && (
+                  <p className="text-sm text-primary font-medium">
+                    🎁 {isFarsi 
+                      ? `اشتراک ${promoApplied.durationMonths} ماهه` 
+                      : `${promoApplied.durationMonths}-month subscription`}
+                  </p>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
