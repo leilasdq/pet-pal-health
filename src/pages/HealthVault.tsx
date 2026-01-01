@@ -306,6 +306,9 @@ const HealthVault = () => {
     try {
       const pet = pets.find(p => p.id === record.pet_id);
       
+      // Get the signed URL for the image
+      const imageUrl = imageUrls[record.image_path];
+      
       const { data, error } = await supabase.functions.invoke('analyze-medical-record', {
         body: {
           record_title: record.title,
@@ -313,6 +316,7 @@ const HealthVault = () => {
           record_notes: record.notes,
           pet_name: pet?.name,
           language: language,
+          image_url: imageUrl, // Pass the image URL for vision analysis
         },
       });
 
