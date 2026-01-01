@@ -55,20 +55,12 @@ const Admin = () => {
   const fetchTableData = async (tableName: TableName) => {
     setLoading(true);
     try {
-      let query = supabase.from(tableName).select('*');
-      
-      // For user_roles, also fetch profile info
-      if (tableName === 'user_roles') {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('*, profiles:user_id(email, full_name)');
-        if (error) throw error;
-        setTableData(data || []);
-      } else {
-        const { data, error } = await query.order('created_at', { ascending: false });
-        if (error) throw error;
-        setTableData(data || []);
-      }
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setTableData(data || []);
     } catch (error: any) {
       console.error('Error fetching table data:', error);
       toast({
