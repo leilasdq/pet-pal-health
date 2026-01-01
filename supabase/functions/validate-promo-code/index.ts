@@ -30,8 +30,14 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnon = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Use service role for reading promo codes (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Use anon key with auth header for user authentication
+    const supabase = createClient(supabaseUrl, supabaseAnon, {
       global: { headers: { Authorization: authHeader } }
     });
 
@@ -49,8 +55,8 @@ serve(async (req) => {
 
     console.log(`Validating promo code ${normalizedCode} for user ${userId}`);
 
-    // Get promo code
-    const { data: promoCode, error: promoError } = await supabase
+    // Get promo code using admin client (bypasses RLS since promo_codes is now protected)
+    const { data: promoCode, error: promoError } = await supabaseAdmin
       .from('promo_codes')
       .select('*')
       .eq('code', normalizedCode)
@@ -112,10 +118,10 @@ serve(async (req) => {
       );
     }
 
-    // Get tier info for free_tier type
+    // Get tier info for free_tier type (use admin client)
     let freeTierInfo = null;
     if (promoCode.discount_type === 'free_tier' && promoCode.free_tier_id) {
-      const { data: tier } = await supabase
+      const { data: tier } = await supabaseAdmin
         .from('subscription_tiers')
         .select('*')
         .eq('id', promoCode.free_tier_id)
@@ -128,7 +134,7 @@ serve(async (req) => {
     let finalAmount = 0;
 
     if (tier_id && promoCode.discount_type !== 'free_tier') {
-      const { data: tier } = await supabase
+      const { data: tier } = await supabaseAdmin
         .from('subscription_tiers')
         .select('price_toman')
         .eq('id', tier_id)
