@@ -84,32 +84,104 @@ Rules:
     } else if (isPrescription) {
       toolName = 'analyze_prescription';
       systemPrompt = isFarsi 
-        ? `تحلیلگر نسخه دارویی حیوانات خانگی.
+        ? `تحلیلگر تخصصی نسخه دارویی دامپزشکی.
+
+تاریخ امروز: ${jalaliDate} شمسی (${gregorianDate} میلادی)
+
+## داروهای رایج دامپزشکی (فارسی/انگلیسی):
+- آمیکاسین / Amikacin - آنتی‌بیوتیک تزریقی
+- متوکلوپرامید / Metoclopramide - ضد تهوع
+- رانیتیدین / Ranitidine - ضد اسید معده
+- اندانسترون / Ondansetron - ضد استفراغ
+- آموکسی‌سیلین / Amoxicillin - آنتی‌بیوتیک خوراکی
+- سفالکسین / Cephalexin - آنتی‌بیوتیک
+- پردنیزولون / Prednisolone - کورتون
+- متروکسی‌کم / Meloxicam - ضد درد
+- ترامادول / Tramadol - مسکن
+- گاباپنتین / Gabapentin - ضد درد عصبی
+- فاموتیدین / Famotidine - ضد اسید
+- سوکرالفیت / Sucralfate - محافظ معده
+- مارفلوکساسین / Marbofloxacin - آنتی‌بیوتیک
+- فورازولیدون / Furazolidone - ضد عفونت روده
+
+## مخففات رایج:
+- Amp/آمپ = آمپول (تزریقی)
+- Tab/قرص = قرص/تبلت
+- Cap/کپ = کپسول
+- Inj/تز = تزریق
+- SC/زیرجلد = زیرجلدی
+- IM/عضله = عضلانی
+- IV/وریدی = داخل وریدی
+- cc/سی‌سی = میلی‌لیتر
+- mg/میلی = میلی‌گرم
+- BID/دوبار = روزی ۲ بار
+- TID/سه‌بار = روزی ۳ بار
+- SID/یکبار = روزی ۱ بار
+- PRN = در صورت نیاز
+
+## راهنمای خواندن نسخه دست‌نویس:
+1. دنبال شماره‌گذاری بگرد: ۱) ۲) ۳) یا 1. 2. 3. یا ① ② ③
+2. فلش (←) معمولاً نشان‌دهنده دوز است
+3. اعداد کسری: ½ یا 0.5 یا نصف | ¼ یا 0.25 یا یک‌چهارم
+4. خط تیره (-) جدا کننده بخش‌های مختلف است
+5. اگر خوانا نیست، بهترین حدس را بزن و [نامطمئن] بنویس
 
 قوانین:
-1. نام داروها، دوز و مدت مصرف را پیدا کن
-2. تاریخ شروع/پایان دارو را اگر هست بنویس
-3. بگو چه زمانی دارو تمام می‌شود و نیاز به تهیه مجدد دارد
-4. یک توصیه کوتاه بده
-5. حداکثر ۱۰۰ کلمه
+1. هر دارو را جدا بنویس با: نام | دوز | تعداد در روز | مدت | نحوه مصرف
+2. سطح اطمینان: بالا/متوسط/پایین
+3. پیشنهاد یادآوری برای تهیه مجدد
+4. حداکثر ۱۵۰ کلمه`
+        : `Veterinary prescription analyzer specialist.
 
-مثال:
-**داروها:**
-• آموکسی‌سیلین ۵۰۰mg - روزی ۲ بار - ۷ روز
-**پایان دوره:** ۱۴۰۳/۱۰/۲۰
-**توصیه:** ۲ روز دیگر دارو تمام می‌شود. اگر علائم ادامه دارد، به دامپزشک مراجعه کنید.`
-        : `Pet prescription analyzer.
+Today's date: ${gregorianDate} (Jalali: ${jalaliDate})
+
+## Common Veterinary Medications (English/Persian):
+- Amikacin / آمیکاسین - Injectable antibiotic
+- Metoclopramide / متوکلوپرامید - Anti-nausea
+- Ranitidine / رانیتیدین - Antacid
+- Ondansetron / اندانسترون - Anti-vomiting
+- Amoxicillin / آموکسی‌سیلین - Oral antibiotic
+- Cephalexin / سفالکسین - Antibiotic
+- Prednisolone / پردنیزولون - Corticosteroid
+- Meloxicam / متروکسی‌کم - Pain reliever
+- Tramadol / ترامادول - Painkiller
+- Gabapentin / گاباپنتین - Nerve pain
+- Famotidine / فاموتیدین - Antacid
+- Sucralfate / سوکرالفیت - Stomach protector
+- Marbofloxacin / مارفلوکساسین - Antibiotic
+- Furazolidone / فورازولیدون - Intestinal anti-infective
+
+## Common Abbreviations:
+- Amp = Ampule (injectable)
+- Tab = Tablet
+- Cap = Capsule
+- Inj = Injection
+- SC = Subcutaneous
+- IM = Intramuscular
+- IV = Intravenous
+- cc/mL = Milliliter
+- mg = Milligram
+- BID = Twice daily
+- TID = Three times daily
+- SID = Once daily
+- PRN = As needed
+
+## Handwritten Prescription Reading Guide:
+1. Look for numbered sections: 1) 2) 3) or ① ② ③
+2. Arrows (←) usually indicate dosage
+3. Fractions: ½ or 0.5 or "half" | ¼ or 0.25 or "quarter"
+4. Dashes (-) separate different parts
+5. If unclear, give best guess and mark [uncertain]
 
 Rules:
-1. Find medication names, dosages, and duration
-2. Note start/end dates if present
-3. Say when medication will run out and if refill needed
-4. One short advice
-5. Maximum 100 words`;
+1. List each medication separately: Name | Dose | Frequency | Duration | Route
+2. Confidence level: high/medium/low
+3. Suggest refill reminder
+4. Maximum 150 words`;
 
       textPrompt = isFarsi
-        ? `داروها، دوز و مدت مصرف را پیدا کن. اگر نیاز به تهیه مجدد یا یادآوری هست، بگو.`
-        : `Find medications, dosages, and duration. If a refill reminder is needed, mention it.`;
+        ? `این نسخه دامپزشکی را بخوان. داروها، دوز، تعداد دفعات و مدت مصرف را استخراج کن. اگر دست‌نویس است و بخشی نامشخص است، بهترین حدس را بزن. سطح اطمینان را هم بگو.`
+        : `Read this veterinary prescription. Extract medications, dosages, frequency, and duration. If handwritten and parts are unclear, give your best interpretation. Indicate confidence level.`;
     } else {
       systemPrompt = isFarsi 
         ? `تحلیلگر مختصر مدارک پزشکی حیوانات.
@@ -202,13 +274,49 @@ Rules:
           type: "function",
           function: {
             name: "analyze_prescription",
-            description: "Analyze pet prescription and extract medication schedule with refill reminder suggestions",
+            description: "Analyze veterinary prescription and extract structured medication data with refill reminders",
             parameters: {
               type: "object",
               properties: {
                 analysis_text: {
                   type: "string",
-                  description: "The analysis text to show to user (max 100 words)"
+                  description: "Human-readable summary of the prescription (max 150 words)"
+                },
+                medications: {
+                  type: "array",
+                  description: "List of extracted medications",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: {
+                        type: "string",
+                        description: "Medication name (include both Persian and English if known, e.g., 'Amikacin / آمیکاسین')"
+                      },
+                      dosage: {
+                        type: "string",
+                        description: "Dosage amount (e.g., '0.3cc', '250mg', '½ tablet')"
+                      },
+                      frequency: {
+                        type: "string",
+                        description: "How often (e.g., 'once daily', 'twice daily', 'every 8 hours', 'روزی ۲ بار')"
+                      },
+                      duration: {
+                        type: "string",
+                        description: "How long (e.g., '7 days', '۵ روز', 'until finished')"
+                      },
+                      route: {
+                        type: "string",
+                        enum: ["oral", "injection_sc", "injection_im", "injection_iv", "topical", "eye_drops", "ear_drops", "other"],
+                        description: "Route of administration"
+                      }
+                    },
+                    required: ["name", "dosage", "frequency"]
+                  }
+                },
+                confidence: {
+                  type: "string",
+                  enum: ["high", "medium", "low"],
+                  description: "Confidence level in reading the prescription (high=clear print, medium=readable handwriting, low=difficult handwriting)"
                 },
                 reminder_suggestion: {
                   type: "object",
@@ -224,7 +332,7 @@ Rules:
                     },
                     title: {
                       type: "string",
-                      description: "Suggested title for the reminder (e.g., 'Refill Amoxicillin' or 'تهیه مجدد آموکسی‌سیلین')"
+                      description: "Suggested title for the reminder (e.g., 'Refill Amikacin' or 'تهیه مجدد آمیکاسین')"
                     },
                     days_until_due: {
                       type: "number",
@@ -234,7 +342,7 @@ Rules:
                   required: ["needed"]
                 }
               },
-              required: ["analysis_text", "reminder_suggestion"]
+              required: ["analysis_text", "medications", "confidence", "reminder_suggestion"]
             }
           }
         }
@@ -247,7 +355,7 @@ Rules:
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ],
-      max_tokens: 512,
+      max_tokens: 800,
       temperature: 0.1,
     };
 
@@ -291,6 +399,8 @@ Rules:
     
     let analysis: string;
     let reminderSuggestion: any = null;
+    let medications: any[] = [];
+    let confidence: string = '';
 
     // Check if response used tool calling
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
@@ -299,7 +409,20 @@ Rules:
         const args = JSON.parse(toolCall.function.arguments);
         analysis = args.analysis_text;
         reminderSuggestion = args.reminder_suggestion;
-        console.log('Parsed tool response:', { analysis: analysis?.length, reminderSuggestion });
+        
+        // Extract prescription-specific fields
+        if (toolCall.function?.name === 'analyze_prescription') {
+          medications = args.medications || [];
+          confidence = args.confidence || 'medium';
+          console.log('Parsed prescription:', { 
+            analysis: analysis?.length, 
+            medicationCount: medications.length,
+            confidence,
+            reminderSuggestion 
+          });
+        } else {
+          console.log('Parsed passport response:', { analysis: analysis?.length, reminderSuggestion });
+        }
       } catch (e) {
         console.error('Failed to parse tool response:', e);
         analysis = data.choices?.[0]?.message?.content || '';
@@ -320,6 +443,12 @@ Rules:
     const responseData: any = { analysis };
     if (reminderSuggestion?.needed) {
       responseData.reminderSuggestion = reminderSuggestion;
+    }
+    if (medications.length > 0) {
+      responseData.medications = medications;
+    }
+    if (confidence) {
+      responseData.confidence = confidence;
     }
 
     return new Response(
