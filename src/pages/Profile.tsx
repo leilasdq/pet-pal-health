@@ -216,7 +216,7 @@ const Profile = () => {
       return;
     }
     
-    const success = showNotification('🐾 PetCare Test', {
+    const success = await showNotification('🐾 PetCare Test', {
       body: t('profile.testPushSent'),
       tag: 'petcare-test',
     });
