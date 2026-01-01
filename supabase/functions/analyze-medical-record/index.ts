@@ -20,11 +20,15 @@ serve(async (req) => {
 
     const isFarsi = language === 'fa';
     const isPassport = record_category === 'passport';
+    const isPrescription = record_category === 'prescription';
+    const useToolCalling = isPassport || isPrescription;
 
     let systemPrompt: string;
     let textPrompt: string;
+    let toolName: string = '';
 
     if (isPassport) {
+      toolName = 'analyze_passport';
       systemPrompt = isFarsi 
         ? `تحلیلگر دفترچه واکسن و شناسنامه حیوانات.
 
@@ -49,6 +53,35 @@ Rules:
       textPrompt = isFarsi
         ? `تاریخ‌های واکسن و ضدانگل را پیدا کن و توصیه بده. اگر نیاز به یادآوری برای واکسن یا ضدانگل هست، بگو.`
         : `Find vaccine/deworming dates and give advice. If a reminder is needed, mention it.`;
+    } else if (isPrescription) {
+      toolName = 'analyze_prescription';
+      systemPrompt = isFarsi 
+        ? `تحلیلگر نسخه دارویی حیوانات خانگی.
+
+قوانین:
+1. نام داروها، دوز و مدت مصرف را پیدا کن
+2. تاریخ شروع/پایان دارو را اگر هست بنویس
+3. بگو چه زمانی دارو تمام می‌شود و نیاز به تهیه مجدد دارد
+4. یک توصیه کوتاه بده
+5. حداکثر ۱۰۰ کلمه
+
+مثال:
+**داروها:**
+• آموکسی‌سیلین ۵۰۰mg - روزی ۲ بار - ۷ روز
+**پایان دوره:** ۱۴۰۳/۱۰/۲۰
+**توصیه:** ۲ روز دیگر دارو تمام می‌شود. اگر علائم ادامه دارد، به دامپزشک مراجعه کنید.`
+        : `Pet prescription analyzer.
+
+Rules:
+1. Find medication names, dosages, and duration
+2. Note start/end dates if present
+3. Say when medication will run out and if refill needed
+4. One short advice
+5. Maximum 100 words`;
+
+      textPrompt = isFarsi
+        ? `داروها، دوز و مدت مصرف را پیدا کن. اگر نیاز به تهیه مجدد یا یادآوری هست، بگو.`
+        : `Find medications, dosages, and duration. If a refill reminder is needed, mention it.`;
     } else {
       systemPrompt = isFarsi 
         ? `تحلیلگر مختصر مدارک پزشکی حیوانات.
@@ -90,48 +123,95 @@ Rules:
     userContent.push({ type: "text", text: textPrompt });
 
     // Define tools for extracting structured reminder data
-    const tools = isPassport ? [
-      {
-        type: "function",
-        function: {
-          name: "analyze_passport",
-          description: "Analyze pet passport and extract vaccination/deworming information with reminder suggestions",
-          parameters: {
-            type: "object",
-            properties: {
-              analysis_text: {
-                type: "string",
-                description: "The analysis text to show to user (max 80 words)"
-              },
-              reminder_suggestion: {
-                type: "object",
-                properties: {
-                  needed: {
-                    type: "boolean",
-                    description: "Whether a reminder should be suggested"
-                  },
-                  type: {
-                    type: "string",
-                    enum: ["vaccine", "deworming", "checkup"],
-                    description: "Type of reminder"
-                  },
-                  title: {
-                    type: "string",
-                    description: "Suggested title for the reminder"
-                  },
-                  days_until_due: {
-                    type: "number",
-                    description: "Approximate days until this is due (0 if overdue, positive if upcoming)"
-                  }
+    let tools: any[] | undefined;
+
+    if (isPassport) {
+      tools = [
+        {
+          type: "function",
+          function: {
+            name: "analyze_passport",
+            description: "Analyze pet passport and extract vaccination/deworming information with reminder suggestions",
+            parameters: {
+              type: "object",
+              properties: {
+                analysis_text: {
+                  type: "string",
+                  description: "The analysis text to show to user (max 80 words)"
                 },
-                required: ["needed"]
-              }
-            },
-            required: ["analysis_text", "reminder_suggestion"]
+                reminder_suggestion: {
+                  type: "object",
+                  properties: {
+                    needed: {
+                      type: "boolean",
+                      description: "Whether a reminder should be suggested"
+                    },
+                    type: {
+                      type: "string",
+                      enum: ["vaccine", "deworming", "checkup"],
+                      description: "Type of reminder"
+                    },
+                    title: {
+                      type: "string",
+                      description: "Suggested title for the reminder"
+                    },
+                    days_until_due: {
+                      type: "number",
+                      description: "Approximate days until this is due (0 if overdue, positive if upcoming)"
+                    }
+                  },
+                  required: ["needed"]
+                }
+              },
+              required: ["analysis_text", "reminder_suggestion"]
+            }
           }
         }
-      }
-    ] : undefined;
+      ];
+    } else if (isPrescription) {
+      tools = [
+        {
+          type: "function",
+          function: {
+            name: "analyze_prescription",
+            description: "Analyze pet prescription and extract medication schedule with refill reminder suggestions",
+            parameters: {
+              type: "object",
+              properties: {
+                analysis_text: {
+                  type: "string",
+                  description: "The analysis text to show to user (max 100 words)"
+                },
+                reminder_suggestion: {
+                  type: "object",
+                  properties: {
+                    needed: {
+                      type: "boolean",
+                      description: "Whether a medication refill reminder should be suggested"
+                    },
+                    type: {
+                      type: "string",
+                      enum: ["medication"],
+                      description: "Type of reminder (always medication for prescriptions)"
+                    },
+                    title: {
+                      type: "string",
+                      description: "Suggested title for the reminder (e.g., 'Refill Amoxicillin' or 'تهیه مجدد آموکسی‌سیلین')"
+                    },
+                    days_until_due: {
+                      type: "number",
+                      description: "Days until medication runs out (0 if already out, positive if still have supply)"
+                    }
+                  },
+                  required: ["needed"]
+                }
+              },
+              required: ["analysis_text", "reminder_suggestion"]
+            }
+          }
+        }
+      ];
+    }
 
     const requestBody: any = {
       model: 'google/gemini-2.5-flash',
@@ -143,9 +223,9 @@ Rules:
       temperature: 0.1,
     };
 
-    if (tools) {
+    if (tools && toolName) {
       requestBody.tools = tools;
-      requestBody.tool_choice = { type: "function", function: { name: "analyze_passport" } };
+      requestBody.tool_choice = { type: "function", function: { name: toolName } };
     }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -186,7 +266,7 @@ Rules:
 
     // Check if response used tool calling
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (toolCall && toolCall.function?.name === 'analyze_passport') {
+    if (toolCall && (toolCall.function?.name === 'analyze_passport' || toolCall.function?.name === 'analyze_prescription')) {
       try {
         const args = JSON.parse(toolCall.function.arguments);
         analysis = args.analysis_text;
