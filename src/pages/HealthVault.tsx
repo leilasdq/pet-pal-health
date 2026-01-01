@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -13,13 +14,14 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell, Flag, RefreshCw } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell, Flag, RefreshCw, Download, Lock } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { parseISO, format as formatGregorianDate } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, formatDisplayDate } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
+import jsPDF from 'jspdf';
 
 interface Pet {
   id: string;
@@ -42,6 +44,7 @@ interface MedicalRecord {
 
 const HealthVault = () => {
   const { user, loading: authLoading } = useAuth();
+  const { isPaidUser, loading: subscriptionLoading } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
@@ -82,6 +85,7 @@ const HealthVault = () => {
     title?: string;
     days_until_due?: number;
   } | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   
   // Date feedback state
   const [dateFeedbackOpen, setDateFeedbackOpen] = useState(false);
@@ -439,6 +443,192 @@ const HealthVault = () => {
     setSubmittingFeedback(false);
   };
 
+  // Generate PDF with all medical records
+  const handleDownloadPdf = async () => {
+    if (!isPaidUser) {
+      toast({
+        title: language === 'fa' ? 'نیاز به اشتراک' : 'Subscription Required',
+        description: language === 'fa' 
+          ? 'برای دانلود PDF پرونده پزشکی، باید اشتراک داشته باشید.' 
+          : 'You need a subscription to download the medical records PDF.',
+        variant: 'destructive',
+      });
+      navigate('/subscription');
+      return;
+    }
+
+    if (filteredRecords.length === 0) {
+      toast({
+        title: language === 'fa' ? 'پرونده‌ای یافت نشد' : 'No Records Found',
+        description: language === 'fa' 
+          ? 'هیچ پرونده پزشکی برای دانلود وجود ندارد.' 
+          : 'No medical records available to download.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setGeneratingPdf(true);
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      let yPos = 20;
+
+      // Title
+      doc.setFontSize(24);
+      doc.setTextColor(16, 185, 129); // Primary green color
+      const title = language === 'fa' ? 'PetCare - پرونده پزشکی حیوان خانگی' : 'PetCare - Pet Medical Records';
+      doc.text(title, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // Date
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const dateStr = language === 'fa' 
+        ? `تاریخ تولید: ${formatGregorianDate(new Date(), 'yyyy/MM/dd')}`
+        : `Generated: ${formatGregorianDate(new Date(), 'yyyy/MM/dd')}`;
+      doc.text(dateStr, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 20;
+
+      // Group records by pet
+      const recordsByPet = new Map<string, MedicalRecord[]>();
+      for (const record of filteredRecords) {
+        const petName = record.pet?.name || 'Unknown';
+        if (!recordsByPet.has(petName)) {
+          recordsByPet.set(petName, []);
+        }
+        recordsByPet.get(petName)!.push(record);
+      }
+
+      // Process each pet
+      for (const [petName, petRecords] of recordsByPet) {
+        // Check if we need a new page
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        // Pet name header
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`🐾 ${petName}`, margin, yPos);
+        yPos += 10;
+
+        // Draw line
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        yPos += 10;
+
+        // Process each record
+        for (const record of petRecords) {
+          // Check if we need a new page
+          if (yPos > 250) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          // Record title
+          doc.setFontSize(12);
+          doc.setTextColor(0, 0, 0);
+          const recordTitle = record.title || (language === 'fa' ? 'بدون عنوان' : 'Untitled');
+          doc.text(`• ${recordTitle}`, margin + 5, yPos);
+          yPos += 7;
+
+          // Record details
+          doc.setFontSize(9);
+          doc.setTextColor(100, 100, 100);
+          
+          const categoryLabel = categories.find(c => c.value === record.category)?.labelKey;
+          const categoryText = categoryLabel ? t(categoryLabel) : record.category;
+          doc.text(`${language === 'fa' ? 'دسته‌بندی' : 'Category'}: ${categoryText}`, margin + 10, yPos);
+          yPos += 5;
+
+          if (record.record_date) {
+            const dateLabel = language === 'fa' ? 'تاریخ' : 'Date';
+            doc.text(`${dateLabel}: ${formatDisplayDate(record.record_date, language)}`, margin + 10, yPos);
+            yPos += 5;
+          }
+
+          // Notes
+          if (record.notes) {
+            const notesLabel = language === 'fa' ? 'یادداشت' : 'Notes';
+            const notesText = `${notesLabel}: ${record.notes}`;
+            const splitNotes = doc.splitTextToSize(notesText, pageWidth - margin * 2 - 10);
+            doc.text(splitNotes, margin + 10, yPos);
+            yPos += splitNotes.length * 4 + 2;
+          }
+
+          // AI Analysis
+          if (record.ai_analysis) {
+            if (yPos > 230) {
+              doc.addPage();
+              yPos = 20;
+            }
+
+            doc.setFontSize(10);
+            doc.setTextColor(16, 185, 129);
+            const aiLabel = language === 'fa' ? '🤖 تحلیل هوش مصنوعی:' : '🤖 AI Analysis:';
+            doc.text(aiLabel, margin + 10, yPos);
+            yPos += 6;
+
+            doc.setFontSize(9);
+            doc.setTextColor(60, 60, 60);
+            const splitAnalysis = doc.splitTextToSize(record.ai_analysis, pageWidth - margin * 2 - 15);
+            
+            // Limit to first 10 lines to avoid overflow
+            const analysisLines = splitAnalysis.slice(0, 10);
+            doc.text(analysisLines, margin + 15, yPos);
+            yPos += analysisLines.length * 4 + 5;
+
+            if (splitAnalysis.length > 10) {
+              doc.setTextColor(150, 150, 150);
+              doc.text(language === 'fa' ? '...(متن کامل در اپلیکیشن)' : '...(full text in app)', margin + 15, yPos);
+              yPos += 5;
+            }
+          }
+
+          yPos += 8;
+        }
+
+        yPos += 10;
+      }
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      const footer = language === 'fa' 
+        ? 'این گزارش توسط اپلیکیشن PetCare تولید شده است'
+        : 'This report was generated by PetCare App';
+      doc.text(footer, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+
+      // Save the PDF
+      const fileName = language === 'fa' 
+        ? `petcare-medical-records-${formatGregorianDate(new Date(), 'yyyy-MM-dd')}.pdf`
+        : `petcare-medical-records-${formatGregorianDate(new Date(), 'yyyy-MM-dd')}.pdf`;
+      doc.save(fileName);
+
+      toast({
+        title: language === 'fa' ? 'PDF دانلود شد' : 'PDF Downloaded',
+        description: language === 'fa' 
+          ? 'پرونده پزشکی با موفقیت دانلود شد.' 
+          : 'Medical records PDF downloaded successfully.',
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: language === 'fa' ? 'خطا' : 'Error',
+        description: language === 'fa' 
+          ? 'خطا در تولید PDF' 
+          : 'Failed to generate PDF',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   const filteredRecords = records.filter(r => {
     const matchesCategory = activeTab === 'all' || r.category === activeTab;
     const matchesPet = petFilter === 'all' || r.pet_id === petFilter;
@@ -465,12 +655,35 @@ const HealthVault = () => {
               <h1 className="text-2xl font-bold text-foreground">{t('vault.title')}</h1>
               <p className="text-muted-foreground text-sm">{t('vault.subtitle')}</p>
             </div>
-            <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
-              <DialogTrigger asChild>
-                <Button size="icon" variant="fab" className="h-10 w-10 shrink-0">
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              {/* Download PDF Button */}
+              <Button
+                variant={isPaidUser ? "outline" : "ghost"}
+                size="icon"
+                className={cn("h-10 w-10 shrink-0", !isPaidUser && "opacity-60")}
+                onClick={handleDownloadPdf}
+                disabled={generatingPdf || subscriptionLoading}
+                title={isPaidUser 
+                  ? (language === 'fa' ? 'دانلود PDF پرونده' : 'Download PDF Report')
+                  : (language === 'fa' ? 'نیاز به اشتراک' : 'Subscription Required')
+                }
+              >
+                {generatingPdf ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : isPaidUser ? (
+                  <Download className="w-5 h-5" />
+                ) : (
+                  <Lock className="w-5 h-5" />
+                )}
+              </Button>
+              
+              {/* Add Record Button */}
+              <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="fab" className="h-10 w-10 shrink-0">
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </DialogTrigger>
             <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{t('vault.uploadNew')}</DialogTitle>
@@ -591,6 +804,7 @@ const HealthVault = () => {
               </form>
             </DialogContent>
           </Dialog>
+            </div>
           </div>
         </div>
 
