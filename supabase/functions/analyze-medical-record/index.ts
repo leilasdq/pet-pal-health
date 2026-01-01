@@ -19,9 +19,40 @@ serve(async (req) => {
     console.log('Analyzing medical record:', { record_title, record_category, pet_name, language, hasImage: !!image_url });
 
     const isFarsi = language === 'fa';
+    const isPassport = record_category === 'passport';
+    const isMedicalTest = record_category === 'medical_test';
 
-    const systemPrompt = isFarsi 
-      ? `تحلیلگر مختصر مدارک پزشکی حیوانات.
+    let systemPrompt: string;
+    let textPrompt: string;
+
+    if (isPassport) {
+      systemPrompt = isFarsi 
+        ? `تحلیلگر دفترچه واکسن و شناسنامه حیوانات.
+
+قوانین:
+1. تاریخ آخرین واکسن یا ضدانگل را پیدا کن
+2. بگو چه مدت گذشته و آیا نیاز به تمدید دارد
+3. یک توصیه کوتاه بده
+4. حداکثر ۸۰ کلمه
+
+مثال:
+**آخرین واکسن:** ۱۴۰۳/۰۹/۱۵ (۳ ماه پیش)
+**ضدانگل:** ۱۴۰۳/۱۰/۰۱ (۲ ماه پیش)
+**توصیه:** واکسن سالانه در ۳ ماه آینده باید تمدید شود.`
+        : `Pet vaccination passport analyzer.
+
+Rules:
+1. Find dates of last vaccines or deworming
+2. Say how long ago and if renewal needed
+3. One short advice
+4. Maximum 80 words`;
+
+      textPrompt = isFarsi
+        ? `تاریخ‌های واکسن و ضدانگل را پیدا کن و توصیه بده.`
+        : `Find vaccine/deworming dates and give advice.`;
+    } else {
+      systemPrompt = isFarsi 
+        ? `تحلیلگر مختصر مدارک پزشکی حیوانات.
 
 قوانین:
 1. فقط مقادیر غیرنرمال را بنویس
@@ -33,24 +64,20 @@ serve(async (req) => {
 **مقادیر غیرنرمال:**
 • HGB: 17.5 g/dL 🔴بالا
 • HCT: 56% 🔴بالا
-• MCHC: 31.3 g/dL 🔵پایین
 
-**خلاصه:** هموگلوبین و هماتوکریت بالا ممکن است نشانه کم‌آبی باشد. مراجعه به دامپزشک توصیه می‌شود.`
-      : `Concise pet medical document analyzer.
+**خلاصه:** هموگلوبین بالا ممکن است نشانه کم‌آبی باشد.`
+        : `Concise pet medical document analyzer.
 
 Rules:
 1. List ONLY abnormal values
 2. For each: Name | Value | 🔴High or 🔵Low
 3. One short summary sentence at the end
-4. Maximum 100 words
+4. Maximum 100 words`;
 
-Example output:
-**Abnormal Values:**
-• HGB: 17.5 g/dL 🔴High
-• HCT: 56% 🔴High
-• MCHC: 31.3 g/dL 🔵Low
-
-**Summary:** Elevated hemoglobin and hematocrit may indicate dehydration. Consult your vet.`;
+      textPrompt = isFarsi
+        ? `فقط مقادیر غیرنرمال را لیست کن. مختصر باش.`
+        : `List only abnormal values. Be concise.`;
+    }
 
     const userContent: any[] = [];
     
@@ -60,10 +87,6 @@ Example output:
         image_url: { url: image_url }
       });
     }
-    
-    const textPrompt = isFarsi
-      ? `فقط مقادیر غیرنرمال را لیست کن. مختصر باش.`
-      : `List only abnormal values. Be concise.`;
     
     userContent.push({ type: "text", text: textPrompt });
 
