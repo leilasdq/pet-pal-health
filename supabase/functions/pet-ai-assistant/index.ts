@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,61 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // Check usage limits if user is authenticated
+    let usageInfo = null;
+    if (authHeader) {
+      const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      
+      const { data: { user } } = await supabaseAnon.auth.getUser();
+      
+      if (user) {
+        const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        
+        // Get user tier
+        const { data: tierData } = await supabaseService.rpc('get_user_tier', { p_user_id: user.id });
+        const tier = tierData?.[0] || { tier_name: 'free', monthly_limit: 5, grace_buffer: 2 };
+        
+        // Get current usage
+        const { data: usageData } = await supabaseService.rpc('get_user_usage', { p_user_id: user.id });
+        const usage = usageData?.[0] || { total_count: 0 };
+        
+        const totalLimit = tier.monthly_limit + tier.grace_buffer;
+        const isBlocked = usage.total_count >= totalLimit;
+        const isGrace = usage.total_count >= tier.monthly_limit && usage.total_count < totalLimit;
+        const remaining = Math.max(0, tier.monthly_limit - usage.total_count);
+        
+        usageInfo = {
+          remaining,
+          isGrace,
+          isBlocked,
+          tierName: tier.tier_name,
+          monthlyLimit: tier.monthly_limit,
+          currentUsage: usage.total_count,
+        };
+        
+        if (isBlocked) {
+          console.log(`User ${user.id} blocked - usage: ${usage.total_count}/${totalLimit}`);
+          return new Response(
+            JSON.stringify({
+              error: 'Usage limit exceeded',
+              response: '⚠️ متأسفانه سقف استفاده ماهانه شما تمام شده است. برای ادامه استفاده از دستیار هوش مصنوعی، لطفاً اشتراک خود را ارتقا دهید.',
+              usageInfo,
+              blocked: true,
+            }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
     const { user_message, pet_context, conversation_history } = await req.json();
 
     if (!user_message) {
@@ -121,8 +177,66 @@ serve(async (req) => {
 
     console.log('AI Response received successfully');
 
+    // Track usage after successful response
+    if (authHeader) {
+      try {
+        const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } }
+        });
+        const { data: { user } } = await supabaseAnon.auth.getUser();
+        
+        if (user) {
+          const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          
+          // Get or create usage record
+          const { data: existingUsage } = await supabaseService
+            .from('ai_usage')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('month_year', currentMonth)
+            .maybeSingle();
+          
+          if (existingUsage) {
+            await supabaseService
+              .from('ai_usage')
+              .update({
+                chatbot_count: existingUsage.chatbot_count + 1,
+                total_count: existingUsage.total_count + 1,
+              })
+              .eq('id', existingUsage.id);
+          } else {
+            await supabaseService
+              .from('ai_usage')
+              .insert({
+                user_id: user.id,
+                month_year: currentMonth,
+                chatbot_count: 1,
+                analysis_count: 0,
+                total_count: 1,
+              });
+          }
+          
+          // Update usageInfo for response
+          if (usageInfo) {
+            usageInfo.remaining = Math.max(0, usageInfo.remaining - 1);
+            usageInfo.currentUsage += 1;
+          }
+        }
+      } catch (trackError) {
+        console.error('Error tracking usage:', trackError);
+        // Don't fail the request if tracking fails
+      }
+    }
+
+    // Add grace period warning to response
+    let finalResponse = aiResponse;
+    if (usageInfo?.isGrace) {
+      finalResponse = `⚠️ توجه: شما از سقف عادی ماهانه فراتر رفته‌اید. ${usageInfo.remaining} درخواست اضافی باقی مانده.\n\n${aiResponse}`;
+    }
+
     return new Response(
-      JSON.stringify({ response: aiResponse }),
+      JSON.stringify({ response: finalResponse, usageInfo }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

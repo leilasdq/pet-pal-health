@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          analysis_count: number
+          chatbot_count: number
+          created_at: string
+          id: string
+          month_year: string
+          total_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_count?: number
+          chatbot_count?: number
+          created_at?: string
+          id?: string
+          month_year: string
+          total_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_count?: number
+          chatbot_count?: number
+          created_at?: string
+          id?: string
+          month_year?: string
+          total_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -128,6 +161,69 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          authority: string | null
+          created_at: string
+          discount_amount: number
+          final_amount: number
+          gateway: string
+          id: string
+          original_amount: number
+          promo_code_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          tier_id: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          authority?: string | null
+          created_at?: string
+          discount_amount?: number
+          final_amount: number
+          gateway?: string
+          id?: string
+          original_amount: number
+          promo_code_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          tier_id: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          authority?: string | null
+          created_at?: string
+          discount_amount?: number
+          final_amount?: number
+          gateway?: string
+          id?: string
+          original_amount?: number
+          promo_code_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          tier_id?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pets: {
         Row: {
           birth_date: string | null
@@ -203,6 +299,95 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_code_usage: {
+        Row: {
+          id: string
+          payment_id: string | null
+          promo_code_id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          payment_id?: string | null
+          promo_code_id: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          payment_id?: string | null
+          promo_code_id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_payment"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_usage_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value: number
+          free_tier_id: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          used_count: number
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value?: number
+          free_tier_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: Database["public"]["Enums"]["discount_type"]
+          discount_value?: number
+          free_tier_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_free_tier_id_fkey"
+            columns: ["free_tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminders: {
         Row: {
           created_at: string
@@ -253,15 +438,117 @@ export type Database = {
           },
         ]
       }
+      subscription_tiers: {
+        Row: {
+          created_at: string
+          display_name_fa: string
+          grace_buffer: number
+          id: string
+          is_active: boolean
+          monthly_limit: number
+          name: string
+          price_toman: number
+        }
+        Insert: {
+          created_at?: string
+          display_name_fa: string
+          grace_buffer?: number
+          id?: string
+          is_active?: boolean
+          monthly_limit?: number
+          name: string
+          price_toman?: number
+        }
+        Update: {
+          created_at?: string
+          display_name_fa?: string
+          grace_buffer?: number
+          id?: string
+          is_active?: boolean
+          monthly_limit?: number
+          name?: string
+          price_toman?: number
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          promo_code_id: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          tier_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          promo_code_id?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tier_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          promo_code_id?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tier_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_promo_code"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_tier: {
+        Args: { p_user_id: string }
+        Returns: {
+          grace_buffer: number
+          monthly_limit: number
+          tier_id: string
+          tier_name: string
+        }[]
+      }
+      get_user_usage: {
+        Args: { p_user_id: string }
+        Returns: {
+          analysis_count: number
+          chatbot_count: number
+          total_count: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      discount_type: "percentage" | "fixed_amount" | "free_tier"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
+      subscription_status: "active" | "expired" | "pending" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -388,6 +675,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      discount_type: ["percentage", "fixed_amount", "free_tier"],
+      payment_status: ["pending", "completed", "failed", "refunded"],
+      subscription_status: ["active", "expired", "pending", "cancelled"],
+    },
   },
 } as const
