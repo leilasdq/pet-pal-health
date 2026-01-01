@@ -26,6 +26,16 @@ interface UsageInfo {
   total_count: number;
 }
 
+interface PromoDiscount {
+  promoCodeId: string;
+  discountType: string;
+  discountValue: number;
+  valid: boolean;
+  message?: string;
+  messageFa?: string;
+  tierDiscounts: Record<string, { discountAmount: number; finalPrice: number }>;
+}
+
 const Subscription = () => {
   const { user, loading: authLoading } = useAuth();
   const { language } = useLanguage();
@@ -34,9 +44,10 @@ const Subscription = () => {
 
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState<any>(null);
+  const [promoApplied, setPromoApplied] = useState<PromoDiscount | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [validatingPromo, setValidatingPromo] = useState(false);
@@ -74,8 +85,11 @@ const Subscription = () => {
         .limit(1)
         .maybeSingle();
 
-      if (subData?.subscription_tiers) {
-        setCurrentTier(subData.subscription_tiers as unknown as Tier);
+      if (subData) {
+        setCurrentSubscription(subData);
+        if (subData.subscription_tiers) {
+          setCurrentTier(subData.subscription_tiers as unknown as Tier);
+        }
       } else if (tiersData) {
         setCurrentTier(tiersData.find(t => t.name === 'free') || null);
       }
@@ -97,27 +111,52 @@ const Subscription = () => {
     }
   };
 
-  const validatePromoCode = async (tierId: string) => {
+  const validatePromoCode = async () => {
     if (!promoCode.trim()) return;
     
     setValidatingPromo(true);
+    setPromoApplied(null);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('validate-promo-code', {
-        body: { code: promoCode, tier_id: tierId }
-      });
+      // Validate against all paid tiers
+      const paidTiers = tiers.filter(t => t.price_toman > 0);
+      const tierDiscounts: Record<string, { discountAmount: number; finalPrice: number }> = {};
+      let validPromo: any = null;
+      
+      for (const tier of paidTiers) {
+        const { data, error } = await supabase.functions.invoke('validate-promo-code', {
+          body: { code: promoCode, tier_id: tier.id }
+        });
 
-      if (error) throw error;
+        if (error) continue;
 
-      if (data.valid) {
-        setPromoApplied({ ...data, tierId });
+        if (data.valid) {
+          validPromo = data;
+          tierDiscounts[tier.id] = {
+            discountAmount: data.discountAmount || 0,
+            finalPrice: data.finalAmount ?? tier.price_toman,
+          };
+        }
+      }
+      
+      if (validPromo) {
+        setPromoApplied({
+          promoCodeId: validPromo.promoCodeId,
+          discountType: validPromo.discountType,
+          discountValue: validPromo.discountValue,
+          valid: true,
+          message: validPromo.message,
+          messageFa: validPromo.messageFa,
+          tierDiscounts,
+        });
         toast({
-          title: isFarsi ? 'کد تخفیف اعمال شد' : 'Promo code applied',
-          description: data.messageFa || data.message,
+          title: isFarsi ? 'کد تخفیف با موفقیت اعمال شد' : 'Promo code applied',
+          description: validPromo.messageFa || validPromo.message,
         });
       } else {
         toast({
           title: isFarsi ? 'خطا' : 'Error',
-          description: data.errorFa || data.error,
+          description: isFarsi ? 'کد تخفیف نامعتبر است' : 'Invalid promo code',
           variant: 'destructive',
         });
       }
@@ -133,15 +172,41 @@ const Subscription = () => {
     }
   };
 
+  const getDiscountedPrice = (tier: Tier): { original: number; final: number; hasDiscount: boolean } => {
+    if (promoApplied?.valid && promoApplied.tierDiscounts[tier.id]) {
+      const discount = promoApplied.tierDiscounts[tier.id];
+      return {
+        original: tier.price_toman,
+        final: discount.finalPrice,
+        hasDiscount: discount.finalPrice < tier.price_toman,
+      };
+    }
+    return { original: tier.price_toman, final: tier.price_toman, hasDiscount: false };
+  };
+
+  const canPurchaseTier = (tier: Tier): boolean => {
+    // Can't purchase free tier
+    if (tier.price_toman === 0 && !promoApplied?.valid) return false;
+    
+    // If user has active subscription for this tier, can't purchase again
+    if (currentSubscription && currentTier?.id === tier.id) {
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleUpgrade = async (tier: Tier) => {
-    if (tier.price_toman === 0) return;
+    if (!canPurchaseTier(tier)) return;
+    
+    const priceInfo = getDiscountedPrice(tier);
     
     setProcessingPayment(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           tier_id: tier.id,
-          promo_code_id: promoApplied?.tierId === tier.id ? promoApplied.promoCodeId : null,
+          promo_code_id: promoApplied?.valid && promoApplied.tierDiscounts[tier.id] ? promoApplied.promoCodeId : null,
           callback_url: `${window.location.origin}/payment-success`,
         }
       });
@@ -153,6 +218,8 @@ const Subscription = () => {
           title: isFarsi ? 'اشتراک فعال شد' : 'Subscription activated',
           description: data.messageFa || data.message,
         });
+        setPromoApplied(null);
+        setPromoCode('');
         fetchData();
       } else if (data.demo) {
         toast({
@@ -255,7 +322,7 @@ const Subscription = () => {
                 className="flex-1"
               />
               <Button 
-                onClick={() => tiers[1] && validatePromoCode(tiers[1].id)}
+                onClick={() => validatePromoCode()}
                 disabled={validatingPromo || !promoCode.trim()}
               >
                 {validatingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : (isFarsi ? 'بررسی' : 'Apply')}
@@ -272,8 +339,10 @@ const Subscription = () => {
         {/* Tier Cards */}
         <div className="grid gap-4 md:grid-cols-3">
           {tiers.map((tier) => {
-            const isCurrent = currentTier?.id === tier.id;
+            const isCurrent = currentTier?.id === tier.id && !!currentSubscription;
             const isUpgrade = (currentTier?.price_toman || 0) < tier.price_toman;
+            const priceInfo = getDiscountedPrice(tier);
+            const canPurchase = canPurchaseTier(tier);
             
             return (
               <Card 
@@ -291,8 +360,21 @@ const Subscription = () => {
                   </div>
                   <CardTitle>{tier.display_name_fa}</CardTitle>
                   <CardDescription className="text-2xl font-bold text-foreground">
-                    {formatPrice(tier.price_toman)}
-                    {tier.price_toman > 0 && <span className="text-sm font-normal text-muted-foreground">/{isFarsi ? 'ماه' : 'mo'}</span>}
+                    {priceInfo.hasDiscount ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-sm line-through text-muted-foreground">
+                          {formatPrice(priceInfo.original)}
+                        </span>
+                        <span className="text-success">
+                          {formatPrice(priceInfo.final)}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        {formatPrice(tier.price_toman)}
+                        {tier.price_toman > 0 && <span className="text-sm font-normal text-muted-foreground">/{isFarsi ? 'ماه' : 'mo'}</span>}
+                      </>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -318,12 +400,14 @@ const Subscription = () => {
                   <Button
                     className="w-full"
                     variant={isCurrent ? 'outline' : tier.name === 'pro' ? 'default' : 'secondary'}
-                    disabled={isCurrent || processingPayment || tier.price_toman === 0}
+                    disabled={isCurrent || processingPayment || !canPurchase}
                     onClick={() => handleUpgrade(tier)}
                   >
                     {processingPayment ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : isCurrent ? (
+                      isFarsi ? 'پلن فعلی' : 'Current'
+                    ) : !canPurchase ? (
                       isFarsi ? 'پلن فعلی' : 'Current'
                     ) : isUpgrade ? (
                       <>
