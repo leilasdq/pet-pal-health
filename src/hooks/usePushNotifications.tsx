@@ -28,14 +28,26 @@ export const usePushNotifications = () => {
   }, [isSupported]);
 
   const showNotification = useCallback((title: string, options?: NotificationOptions): boolean => {
-    if (!isSupported || permission !== 'granted') return false;
+    // Check actual browser permission, not just React state
+    const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    
+    if (!isSupported || currentPermission !== 'granted') {
+      console.log('Notification blocked:', { isSupported, currentPermission });
+      return false;
+    }
     
     try {
-      new Notification(title, {
+      const notification = new Notification(title, {
         icon: '/favicon.ico',
         badge: '/favicon.ico',
         ...options,
       });
+      
+      // Update state if it was out of sync
+      if (permission !== currentPermission) {
+        setPermission(currentPermission);
+      }
+      
       return true;
     } catch (error) {
       console.error('Error showing notification:', error);

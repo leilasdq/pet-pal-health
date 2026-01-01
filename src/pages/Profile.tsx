@@ -187,7 +187,31 @@ const Profile = () => {
     }
   };
 
-  const handleTestPush = () => {
+  const handleTestPush = async () => {
+    // First check if we need to request permission
+    const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    
+    if (currentPermission === 'default') {
+      const granted = await requestPermission();
+      if (!granted) {
+        toast({ 
+          title: t('profile.pushPermissionDenied'),
+          description: t('profile.pushPermissionDeniedDesc'),
+          variant: 'destructive'
+        });
+        return;
+      }
+    }
+    
+    if (currentPermission === 'denied') {
+      toast({ 
+        title: t('profile.pushPermissionDenied'),
+        description: t('profile.pushPermissionDeniedDesc'),
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     const success = showNotification('🐾 PetCare Test', {
       body: t('profile.testPushSent'),
       tag: 'petcare-test',
