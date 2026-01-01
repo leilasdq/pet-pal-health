@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send, Crown, ChevronRight, Settings } from 'lucide-react';
+import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send, Crown, ChevronRight, Settings, FileText, CalendarClock } from 'lucide-react';
 import { formatNumber } from '@/lib/dateUtils';
 
 interface Profile {
@@ -248,19 +248,48 @@ const Profile = () => {
           <p className="text-muted-foreground text-sm">{profile?.email || user?.email}</p>
         </div>
 
-        {/* Quick Stats - Compact */}
-        <div className="flex justify-center gap-8 py-3 border-y border-border/50">
-          <button onClick={() => navigate('/dashboard')} className="text-center hover:opacity-70 transition-opacity">
-            <p className="text-xl font-bold text-primary">{formatNumber(stats.pets, language)}</p>
-            <p className="text-xs text-muted-foreground">{t('profile.pets')}</p>
+        {/* Quick Stats - Beautiful Cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <button 
+            onClick={() => navigate('/dashboard')} 
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500/10 via-pink-500/10 to-rose-500/5 p-4 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-rose-500/10 active:scale-[0.98]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center mb-2 mx-auto group-hover:bg-rose-500/30 transition-colors">
+                <PawPrint className="w-5 h-5 text-rose-500" />
+              </div>
+              <p className="text-2xl font-bold text-rose-500 mb-0.5">{formatNumber(stats.pets, language)}</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('profile.pets')}</p>
+            </div>
           </button>
-          <button onClick={() => navigate('/vault')} className="text-center hover:opacity-70 transition-opacity">
-            <p className="text-xl font-bold text-primary">{formatNumber(stats.records, language)}</p>
-            <p className="text-xs text-muted-foreground">{t('profile.records')}</p>
+
+          <button 
+            onClick={() => navigate('/vault')} 
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-blue-500/5 p-4 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10 active:scale-[0.98]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center mb-2 mx-auto group-hover:bg-blue-500/30 transition-colors">
+                <FileText className="w-5 h-5 text-blue-500" />
+              </div>
+              <p className="text-2xl font-bold text-blue-500 mb-0.5">{formatNumber(stats.records, language)}</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('profile.records')}</p>
+            </div>
           </button>
-          <button onClick={() => navigate('/reminders')} className="text-center hover:opacity-70 transition-opacity">
-            <p className="text-xl font-bold text-primary">{formatNumber(stats.reminders, language)}</p>
-            <p className="text-xs text-muted-foreground">{t('profile.reminders')}</p>
+
+          <button 
+            onClick={() => navigate('/reminders')} 
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 p-4 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-amber-500/10 active:scale-[0.98]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center mb-2 mx-auto group-hover:bg-amber-500/30 transition-colors">
+                <CalendarClock className="w-5 h-5 text-amber-500" />
+              </div>
+              <p className="text-2xl font-bold text-amber-500 mb-0.5">{formatNumber(stats.reminders, language)}</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('profile.reminders')}</p>
+            </div>
           </button>
         </div>
 
