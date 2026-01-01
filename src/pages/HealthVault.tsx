@@ -76,7 +76,7 @@ const HealthVault = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [reminderSuggestion, setReminderSuggestion] = useState<{
     needed: boolean;
-    type?: 'vaccine' | 'deworming' | 'checkup';
+    type?: 'vaccine' | 'deworming' | 'checkup' | 'medication';
     title?: string;
     days_until_due?: number;
   } | null>(null);
@@ -352,13 +352,27 @@ const HealthVault = () => {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + (reminderSuggestion.days_until_due || 0));
     
+    // Get default title based on type
+    const getDefaultTitle = () => {
+      const type = reminderSuggestion.type;
+      if (language === 'fa') {
+        if (type === 'medication') return 'یادآوری تهیه دارو';
+        if (type === 'deworming') return 'یادآوری ضدانگل';
+        return 'یادآوری واکسن';
+      } else {
+        if (type === 'medication') return 'Medication Refill Reminder';
+        if (type === 'deworming') return 'Deworming Reminder';
+        return 'Vaccination Reminder';
+      }
+    };
+    
     // Navigate to reminders page with pre-filled data
     navigate('/reminders', { 
       state: { 
         createReminder: true,
         petId: viewingRecord.pet_id,
         petName: pet?.name,
-        title: reminderSuggestion.title || (language === 'fa' ? 'یادآوری واکسن' : 'Vaccination Reminder'),
+        title: reminderSuggestion.title || getDefaultTitle(),
         type: reminderSuggestion.type || 'vaccine',
         dueDate: formatGregorianDate(dueDate, 'yyyy-MM-dd'),
       } 
