@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { parseISO, format as formatGregorianDate } from 'date-fns';
@@ -74,6 +74,12 @@ const HealthVault = () => {
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [reminderSuggestion, setReminderSuggestion] = useState<{
+    needed: boolean;
+    type?: 'vaccine' | 'deworming' | 'checkup';
+    title?: string;
+    days_until_due?: number;
+  } | null>(null);
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -302,6 +308,7 @@ const HealthVault = () => {
   const handleAiAnalysis = async (record: MedicalRecord) => {
     setAnalyzing(true);
     setAiAnalysis(null);
+    setReminderSuggestion(null);
     
     try {
       const pet = pets.find(p => p.id === record.pet_id);
@@ -323,6 +330,9 @@ const HealthVault = () => {
       if (error) throw error;
       
       setAiAnalysis(data.analysis);
+      if (data.reminderSuggestion) {
+        setReminderSuggestion(data.reminderSuggestion);
+      }
     } catch (error) {
       console.error('AI Analysis error:', error);
       toast({ 
@@ -333,6 +343,26 @@ const HealthVault = () => {
     } finally {
       setAnalyzing(false);
     }
+  };
+
+  const handleCreateReminderFromAI = () => {
+    if (!reminderSuggestion || !viewingRecord) return;
+    
+    const pet = pets.find(p => p.id === viewingRecord.pet_id);
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + (reminderSuggestion.days_until_due || 0));
+    
+    // Navigate to reminders page with pre-filled data
+    navigate('/reminders', { 
+      state: { 
+        createReminder: true,
+        petId: viewingRecord.pet_id,
+        petName: pet?.name,
+        title: reminderSuggestion.title || (language === 'fa' ? 'یادآوری واکسن' : 'Vaccination Reminder'),
+        type: reminderSuggestion.type || 'vaccine',
+        dueDate: formatGregorianDate(dueDate, 'yyyy-MM-dd'),
+      } 
+    });
   };
 
   const filteredRecords = records.filter(r => {
@@ -723,6 +753,19 @@ const HealthVault = () => {
                               {t('vault.aiDisclaimer')}
                             </p>
                           </div>
+                          
+                          {/* Reminder Suggestion */}
+                          {reminderSuggestion?.needed && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={handleCreateReminderFromAI}
+                              className="w-full justify-center bg-primary/5 border-primary/30 hover:bg-primary/10"
+                            >
+                              <Bell className="w-4 h-4 me-2 text-primary" />
+                              {language === 'fa' ? 'ایجاد یادآوری' : 'Create Reminder'}
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
