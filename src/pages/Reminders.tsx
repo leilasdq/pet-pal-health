@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -15,7 +15,7 @@ import { SwipeableReminder } from '@/components/SwipeableReminder';
 import { DatePicker } from '@/components/ui/date-picker';
 import { 
   Bell, Calendar, Syringe, Bug, Stethoscope, Loader2, 
-  Pencil, Trash2, Repeat, CheckCircle2, Clock, ListTodo 
+  Pencil, Trash2, Repeat, CheckCircle2, Clock, ListTodo, Plus, Pill
 } from 'lucide-react';
 import { differenceInDays, parseISO, startOfDay, format as formatGregorian, addWeeks, addMonths, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -42,27 +42,54 @@ interface Reminder {
   pet?: Pet;
 }
 
+interface LocationState {
+  createReminder?: boolean;
+  petId?: string;
+  petName?: string;
+  title?: string;
+  type?: string;
+  dueDate?: string;
+}
+
 const reminderTypeIcons: Record<string, typeof Syringe> = {
   vaccination: Syringe,
   antiparasitic: Bug,
   checkup: Stethoscope,
+  medication: Pill,
 };
 
 const reminderTypeColors: Record<string, string> = {
   vaccination: 'bg-primary/10 text-primary border-primary/20',
   antiparasitic: 'bg-warning/10 text-warning border-warning/20',
   checkup: 'bg-secondary/10 text-secondary border-secondary/20',
+  medication: 'bg-accent/10 text-accent-foreground border-accent/20',
 };
 
 const Reminders = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
   
+  const locationState = location.state as LocationState | undefined;
+  
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
+  
+  // Create reminder state
+  const [createReminderOpen, setCreateReminderOpen] = useState(false);
+  const [createReminderData, setCreateReminderData] = useState({ 
+    title: '', 
+    type: 'vaccination', 
+    due_date: '', 
+    pet_id: '',
+    recurrence: 'none' as RecurrenceUnit, 
+    recurrence_interval: 1 
+  });
+  const [creatingReminder, setCreatingReminder] = useState(false);
   
   // Edit reminder state
   const [editReminderOpen, setEditReminderOpen] = useState(false);
@@ -85,8 +112,47 @@ const Reminders = () => {
   useEffect(() => {
     if (user) {
       fetchReminders();
+      fetchPets();
     }
   }, [user]);
+  
+  // Handle navigation state from AI analysis
+  useEffect(() => {
+    if (locationState?.createReminder && pets.length > 0) {
+      const mapTypeToReminderType = (type?: string) => {
+        switch (type) {
+          case 'vaccine': return 'vaccination';
+          case 'deworming': return 'antiparasitic';
+          case 'checkup': return 'checkup';
+          case 'medication': return 'medication';
+          default: return 'vaccination';
+        }
+      };
+      
+      setCreateReminderData({
+        title: locationState.title || '',
+        type: mapTypeToReminderType(locationState.type),
+        due_date: locationState.dueDate || '',
+        pet_id: locationState.petId || '',
+        recurrence: 'none',
+        recurrence_interval: 1
+      });
+      setCreateReminderOpen(true);
+      
+      // Clear the location state
+      navigate(location.pathname, { replace: true });
+    }
+  }, [locationState, pets, navigate, location.pathname]);
+  
+  const fetchPets = async () => {
+    const { data, error } = await supabase
+      .from('pets')
+      .select('id, name, pet_type');
+    
+    if (!error && data) {
+      setPets(data);
+    }
+  };
 
   const fetchReminders = async () => {
     const { data, error } = await supabase
@@ -245,8 +311,41 @@ const Reminders = () => {
       case 'vaccination': return t('reminder.vaccination');
       case 'antiparasitic': return t('reminder.antiparasitic');
       case 'checkup': return t('reminder.checkup');
+      case 'medication': return language === 'fa' ? 'دارو' : 'Medication';
       default: return type;
     }
+  };
+  
+  const handleCreateReminder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createReminderData.title.trim() || !createReminderData.due_date || !createReminderData.pet_id) return;
+
+    setCreatingReminder(true);
+    const { error } = await supabase
+      .from('reminders')
+      .insert({
+        pet_id: createReminderData.pet_id,
+        title: createReminderData.title.trim(),
+        reminder_type: createReminderData.type,
+        due_date: createReminderData.due_date,
+        recurrence: createReminderData.recurrence,
+        recurrence_interval: createReminderData.recurrence_interval
+      });
+
+    if (error) {
+      toast({ title: t('common.error'), description: language === 'fa' ? 'خطا در ایجاد یادآوری' : 'Failed to create reminder', variant: 'destructive' });
+    } else {
+      toast({ title: language === 'fa' ? 'یادآوری ایجاد شد' : 'Reminder created', description: '' });
+      setCreateReminderOpen(false);
+      setCreateReminderData({ title: '', type: 'vaccination', due_date: '', pet_id: '', recurrence: 'none', recurrence_interval: 1 });
+      fetchReminders();
+    }
+    setCreatingReminder(false);
+  };
+  
+  const openCreateDialog = () => {
+    setCreateReminderData({ title: '', type: 'vaccination', due_date: '', pet_id: pets[0]?.id || '', recurrence: 'none', recurrence_interval: 1 });
+    setCreateReminderOpen(true);
   };
 
   const filteredReminders = getFilteredAndSortedReminders();
@@ -267,12 +366,18 @@ const Reminders = () => {
     <AppLayout>
       <div className="px-4 py-6 space-y-6">
         {/* Header */}
-        <div className="text-start">
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Bell className="w-6 h-6 text-primary" />
-            {t('reminders.title')}
-          </h1>
-          <p className="text-muted-foreground text-sm">{t('reminders.subtitle')}</p>
+        <div className="flex items-start justify-between">
+          <div className="text-start">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Bell className="w-6 h-6 text-primary" />
+              {t('reminders.title')}
+            </h1>
+            <p className="text-muted-foreground text-sm">{t('reminders.subtitle')}</p>
+          </div>
+          <Button onClick={openCreateDialog} size="sm" className="gap-1">
+            <Plus className="w-4 h-4" />
+            {language === 'fa' ? 'جدید' : 'New'}
+          </Button>
         </div>
 
         {/* Filter Chips */}
@@ -450,6 +555,103 @@ const Reminders = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Create Reminder Dialog */}
+        <Dialog open={createReminderOpen} onOpenChange={setCreateReminderOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{language === 'fa' ? 'یادآوری جدید' : 'New Reminder'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateReminder} className="space-y-4">
+              <div className="space-y-2">
+                <Label>{language === 'fa' ? 'حیوان خانگی' : 'Pet'} *</Label>
+                <select
+                  value={createReminderData.pet_id}
+                  onChange={(e) => setCreateReminderData({ ...createReminderData, pet_id: e.target.value })}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  required
+                >
+                  <option value="">{language === 'fa' ? 'انتخاب کنید...' : 'Select...'}</option>
+                  {pets.map(pet => (
+                    <option key={pet.id} value={pet.id}>{pet.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-reminder-title">{t('reminder.title')} *</Label>
+                <Input
+                  id="create-reminder-title"
+                  value={createReminderData.title}
+                  onChange={(e) => setCreateReminderData({ ...createReminderData, title: e.target.value })}
+                  placeholder={t('reminder.titlePlaceholder')}
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('reminder.type')}</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['vaccination', 'antiparasitic', 'checkup', 'medication'].map((type) => {
+                    const Icon = reminderTypeIcons[type];
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setCreateReminderData({ ...createReminderData, type })}
+                        className={cn(
+                          "flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all",
+                          createReminderData.type === type
+                            ? "border-primary bg-primary-soft"
+                            : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="text-[10px] font-medium">{getReminderTypeLabel(type)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('reminder.dueDate')} *</Label>
+                <DatePicker
+                  date={createReminderData.due_date ? parseISO(createReminderData.due_date) : undefined}
+                  onDateChange={(date) => setCreateReminderData({ ...createReminderData, due_date: date ? formatGregorian(date, 'yyyy-MM-dd') : '' })}
+                  placeholder={t('common.selectDate')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('reminder.recurrence')}</Label>
+                <div className="flex gap-2">
+                  <select
+                    value={createReminderData.recurrence_interval}
+                    onChange={(e) => setCreateReminderData({ ...createReminderData, recurrence_interval: parseInt(e.target.value) })}
+                    className="w-20 h-9 rounded-md border border-input bg-background px-3 text-sm"
+                    disabled={createReminderData.recurrence === 'none'}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={createReminderData.recurrence}
+                    onChange={(e) => setCreateReminderData({ ...createReminderData, recurrence: e.target.value as RecurrenceUnit })}
+                    className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="none">{t('reminder.noRepeat')}</option>
+                    <option value="week">{t('reminder.weeks')}</option>
+                    <option value="month">{t('reminder.months')}</option>
+                    <option value="year">{t('reminder.years')}</option>
+                  </select>
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={creatingReminder || !createReminderData.title.trim() || !createReminderData.due_date || !createReminderData.pet_id}>
+                {creatingReminder ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                {creatingReminder ? t('common.saving') : (language === 'fa' ? 'ایجاد یادآوری' : 'Create Reminder')}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Reminder Dialog */}
         <Dialog open={editReminderOpen} onOpenChange={setEditReminderOpen}>
