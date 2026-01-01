@@ -380,6 +380,7 @@ export type Database = {
           created_at: string
           discount_type: Database["public"]["Enums"]["discount_type"]
           discount_value: number
+          duration_months: number
           free_tier_id: string | null
           id: string
           is_active: boolean
@@ -393,6 +394,7 @@ export type Database = {
           created_at?: string
           discount_type: Database["public"]["Enums"]["discount_type"]
           discount_value?: number
+          duration_months?: number
           free_tier_id?: string | null
           id?: string
           is_active?: boolean
@@ -406,6 +408,7 @@ export type Database = {
           created_at?: string
           discount_type?: Database["public"]["Enums"]["discount_type"]
           discount_value?: number
+          duration_months?: number
           free_tier_id?: string | null
           id?: string
           is_active?: boolean

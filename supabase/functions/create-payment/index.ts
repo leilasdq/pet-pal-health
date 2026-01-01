@@ -97,6 +97,9 @@ serve(async (req) => {
       }
     }
 
+    // Get duration from promo code (default 1 month)
+    const durationMonths = promoCode?.duration_months || 1;
+
     console.log(`Amount: ${originalAmount}, Discount: ${discountAmount}, Final: ${finalAmount}`);
 
     // If final amount is 0 (free via promo), activate subscription directly
@@ -122,9 +125,10 @@ serve(async (req) => {
         throw paymentError;
       }
 
-      // Create subscription
+      // Create subscription with duration from promo code
       const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
+      expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+      console.log(`Creating subscription for ${durationMonths} month(s), expires: ${expiresAt.toISOString()}`);
 
       await supabaseClient
         .from('user_subscriptions')
