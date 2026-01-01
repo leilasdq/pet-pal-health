@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell, Flag } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { parseISO, format as formatGregorianDate } from 'date-fns';
@@ -80,6 +80,11 @@ const HealthVault = () => {
     title?: string;
     days_until_due?: number;
   } | null>(null);
+  
+  // Date feedback state
+  const [dateFeedbackOpen, setDateFeedbackOpen] = useState(false);
+  const [dateFeedback, setDateFeedback] = useState({ correctDate: '', notes: '' });
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   const categories = [
     { value: 'medical_test', labelKey: 'vault.medicalTest', icon: FileText, color: 'bg-primary/10 text-primary' },
@@ -377,6 +382,32 @@ const HealthVault = () => {
         dueDate: formatGregorianDate(dueDate, 'yyyy-MM-dd'),
       } 
     });
+  };
+  
+  const handleDateFeedback = async () => {
+    if (!dateFeedback.correctDate.trim() && !dateFeedback.notes.trim()) return;
+    
+    setSubmittingFeedback(true);
+    
+    // Log feedback for improvement (in production, this could go to a feedback table)
+    console.log('Date feedback submitted:', {
+      record_id: viewingRecord?.id,
+      record_category: viewingRecord?.category,
+      ai_analysis: aiAnalysis,
+      correct_date: dateFeedback.correctDate,
+      user_notes: dateFeedback.notes,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Show success toast
+    toast({
+      title: language === 'fa' ? 'بازخورد ارسال شد' : 'Feedback submitted',
+      description: language === 'fa' ? 'از کمک شما ممنونیم!' : 'Thank you for helping us improve!',
+    });
+    
+    setDateFeedbackOpen(false);
+    setDateFeedback({ correctDate: '', notes: '' });
+    setSubmittingFeedback(false);
   };
 
   const filteredRecords = records.filter(r => {
@@ -768,18 +799,83 @@ const HealthVault = () => {
                             </p>
                           </div>
                           
-                          {/* Reminder Suggestion */}
-                          {reminderSuggestion?.needed && (
+                          {/* Action Buttons */}
+                          <div className="flex gap-2">
+                            {/* Reminder Suggestion */}
+                            {reminderSuggestion?.needed && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={handleCreateReminderFromAI}
+                                className="flex-1 justify-center bg-primary/5 border-primary/30 hover:bg-primary/10"
+                              >
+                                <Bell className="w-4 h-4 me-2 text-primary" />
+                                {language === 'fa' ? 'ایجاد یادآوری' : 'Create Reminder'}
+                              </Button>
+                            )}
+                            
+                            {/* Report Wrong Date */}
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
-                              onClick={handleCreateReminderFromAI}
-                              className="w-full justify-center bg-primary/5 border-primary/30 hover:bg-primary/10"
+                              onClick={() => setDateFeedbackOpen(true)}
+                              className="text-muted-foreground hover:text-foreground"
                             >
-                              <Bell className="w-4 h-4 me-2 text-primary" />
-                              {language === 'fa' ? 'ایجاد یادآوری' : 'Create Reminder'}
+                              <Flag className="w-4 h-4 me-1" />
+                              {language === 'fa' ? 'تاریخ اشتباه؟' : 'Wrong date?'}
                             </Button>
-                          )}
+                          </div>
+                          
+                          {/* Date Feedback Dialog */}
+                          <Dialog open={dateFeedbackOpen} onOpenChange={setDateFeedbackOpen}>
+                            <DialogContent className="max-w-sm">
+                              <DialogHeader>
+                                <DialogTitle>
+                                  {language === 'fa' ? 'گزارش تاریخ اشتباه' : 'Report Wrong Date'}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  {language === 'fa' 
+                                    ? 'تاریخ صحیح را وارد کنید تا تحلیل هوش مصنوعی را بهبود دهیم.'
+                                    : 'Enter the correct date to help us improve AI analysis.'}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="space-y-2">
+                                  <Label>
+                                    {language === 'fa' ? 'تاریخ صحیح' : 'Correct Date'}
+                                  </Label>
+                                  <Input
+                                    value={dateFeedback.correctDate}
+                                    onChange={(e) => setDateFeedback({ ...dateFeedback, correctDate: e.target.value })}
+                                    placeholder={language === 'fa' ? 'مثال: ۱۴۰۳/۱۰/۱۵' : 'e.g., 2024-12-25'}
+                                    dir={isRTL ? 'rtl' : 'ltr'}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>
+                                    {language === 'fa' ? 'توضیحات (اختیاری)' : 'Notes (optional)'}
+                                  </Label>
+                                  <Textarea
+                                    value={dateFeedback.notes}
+                                    onChange={(e) => setDateFeedback({ ...dateFeedback, notes: e.target.value })}
+                                    placeholder={language === 'fa' ? 'چه چیزی اشتباه خوانده شد؟' : 'What was read incorrectly?'}
+                                    rows={3}
+                                    dir={isRTL ? 'rtl' : 'ltr'}
+                                  />
+                                </div>
+                                <Button 
+                                  onClick={handleDateFeedback} 
+                                  className="w-full"
+                                  disabled={submittingFeedback || (!dateFeedback.correctDate.trim() && !dateFeedback.notes.trim())}
+                                >
+                                  {submittingFeedback ? (
+                                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                                  ) : null}
+                                  {language === 'fa' ? 'ارسال بازخورد' : 'Submit Feedback'}
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       )}
                     </div>
