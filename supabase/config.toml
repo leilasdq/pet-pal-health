@@ -8,3 +8,18 @@ verify_jwt = false
 
 [functions.analyze-medical-record]
 verify_jwt = false
+
+[functions.check-ai-usage]
+verify_jwt = false
+
+[functions.track-ai-usage]
+verify_jwt = false
+
+[functions.validate-promo-code]
+verify_jwt = false
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
