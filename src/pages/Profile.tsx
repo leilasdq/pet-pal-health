@@ -188,9 +188,10 @@ const Profile = () => {
   };
 
   const handleTestPush = async () => {
-    // First check if we need to request permission
-    const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    // Check current permission
+    let currentPermission = 'Notification' in window ? Notification.permission : 'denied';
     
+    // Request permission if not yet decided
     if (currentPermission === 'default') {
       const granted = await requestPermission();
       if (!granted) {
@@ -201,9 +202,12 @@ const Profile = () => {
         });
         return;
       }
+      // Re-check permission after request
+      currentPermission = Notification.permission;
     }
     
-    if (currentPermission === 'denied') {
+    // Check if denied
+    if (currentPermission !== 'granted') {
       toast({ 
         title: t('profile.pushPermissionDenied'),
         description: t('profile.pushPermissionDeniedDesc'),
