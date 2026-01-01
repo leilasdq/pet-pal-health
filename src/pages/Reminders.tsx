@@ -15,7 +15,7 @@ import { SwipeableReminder } from '@/components/SwipeableReminder';
 import { DatePicker } from '@/components/ui/date-picker';
 import { 
   Bell, Calendar, Syringe, Bug, Stethoscope, Loader2, 
-  Pencil, Trash2, Repeat, CheckCircle2, Clock, ListTodo, Plus, Pill
+  Pencil, Trash2, Repeat, CheckCircle2, Clock, ListTodo, Plus
 } from 'lucide-react';
 import { differenceInDays, parseISO, startOfDay, format as formatGregorian, addWeeks, addMonths, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -55,14 +55,12 @@ const reminderTypeIcons: Record<string, typeof Syringe> = {
   vaccination: Syringe,
   antiparasitic: Bug,
   checkup: Stethoscope,
-  medication: Pill,
 };
 
 const reminderTypeColors: Record<string, string> = {
-  vaccination: 'bg-primary/10 text-primary border-primary/20',
-  antiparasitic: 'bg-warning/10 text-warning border-warning/20',
-  checkup: 'bg-secondary/10 text-secondary border-secondary/20',
-  medication: 'bg-accent/10 text-accent-foreground border-accent/20',
+  vaccination: 'border-primary/30',
+  antiparasitic: 'border-warning/30',
+  checkup: 'border-secondary/30',
 };
 
 const Reminders = () => {
@@ -311,7 +309,6 @@ const Reminders = () => {
       case 'vaccination': return t('reminder.vaccination');
       case 'antiparasitic': return t('reminder.antiparasitic');
       case 'checkup': return t('reminder.checkup');
-      case 'medication': return language === 'fa' ? 'دارو' : 'Medication';
       default: return type;
     }
   };
@@ -469,45 +466,75 @@ const Reminders = () => {
                   >
                     <div
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl border",
-                        isCompleted ? "bg-muted/50 border-border" : reminderTypeColors[reminder.reminder_type]
+                        "flex items-start gap-3 p-3 rounded-xl border bg-card",
+                        isCompleted ? "opacity-60" : reminderTypeColors[reminder.reminder_type]
                       )}
                       style={isRTL ? { direction: 'rtl' } : undefined}
                     >
-                      <Checkbox
-                        checked={isCompleted}
-                        onCheckedChange={() => handleToggleReminderStatus(reminder)}
-                        className="shrink-0"
-                      />
-                      {isCompleted ? (
-                        <CheckCircle2 className="w-4 h-4 shrink-0 text-muted-foreground" />
-                      ) : (
-                        <Icon className="w-4 h-4 shrink-0" />
-                      )}
+                      <div className="flex items-center gap-3 pt-0.5">
+                        <Checkbox
+                          checked={isCompleted}
+                          onCheckedChange={() => handleToggleReminderStatus(reminder)}
+                          className="shrink-0"
+                        />
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                          isCompleted ? "bg-muted" : "bg-primary/10"
+                        )}>
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <Icon className="w-4 h-4 text-primary" />
+                          )}
+                        </div>
+                      </div>
                       <div 
                         className="flex-1 min-w-0 cursor-pointer"
                         onClick={() => handleEditReminder(reminder)}
                       >
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <p className={cn(
-                            "font-medium text-sm truncate",
-                            isCompleted && "line-through opacity-60"
+                            "font-medium text-sm truncate text-foreground",
+                            isCompleted && "line-through"
                           )}>{reminder.title}</p>
                           {reminder.recurrence && reminder.recurrence !== 'none' && (
                             <Repeat className="w-3 h-3 text-muted-foreground shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs opacity-75">
-                          <span>{formatShortDate(reminder.due_date, language)}</span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                          <span className="font-medium">{formatShortDate(reminder.due_date, language)}</span>
                           {reminder.pet && (
                             <>
-                              <span>•</span>
+                              <span className="opacity-50">•</span>
                               <span>{reminder.pet.name}</span>
                             </>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {!isCompleted && (
+                          <span className={cn(
+                            "text-xs font-medium whitespace-nowrap px-2 py-1 rounded-full",
+                            daysUntil < 0 && "bg-destructive/10 text-destructive",
+                            daysUntil === 0 && "bg-destructive/10 text-destructive",
+                            daysUntil === 1 && "bg-warning/10 text-warning",
+                            daysUntil > 1 && "bg-muted text-muted-foreground"
+                          )}>
+                            {daysUntil < 0
+                              ? t('reminder.overdue')
+                              : daysUntil === 0 
+                                ? t('reminder.today') 
+                                : daysUntil === 1 
+                                  ? t('reminder.tomorrow')
+                                  : `${formatNumber(daysUntil, language)} ${t('reminder.days')}`
+                            }
+                          </span>
+                        )}
+                        {isCompleted && (
+                          <span className="text-xs font-medium whitespace-nowrap px-2 py-1 rounded-full bg-primary/10 text-primary">
+                            {t('reminder.done')}
+                          </span>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -525,29 +552,6 @@ const Reminders = () => {
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
-                      {!isCompleted && (
-                        <span className={cn(
-                          "text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full",
-                          daysUntil < 0 && "bg-destructive/20 text-destructive",
-                          daysUntil === 0 && "bg-destructive/20 text-destructive",
-                          daysUntil === 1 && "bg-warning/20 text-warning",
-                          daysUntil > 1 && "bg-muted text-muted-foreground"
-                        )}>
-                          {daysUntil < 0
-                            ? t('reminder.overdue')
-                            : daysUntil === 0 
-                              ? t('reminder.today') 
-                              : daysUntil === 1 
-                                ? t('reminder.tomorrow')
-                                : `${formatNumber(daysUntil, language)} ${t('reminder.days')}`
-                          }
-                        </span>
-                      )}
-                      {isCompleted && (
-                        <span className="text-xs font-semibold whitespace-nowrap px-2 py-1 rounded-full bg-primary/20 text-primary">
-                          {t('reminder.done')}
-                        </span>
-                      )}
                     </div>
                   </SwipeableReminder>
                 );
@@ -590,8 +594,8 @@ const Reminders = () => {
               </div>
               <div className="space-y-2">
                 <Label>{t('reminder.type')}</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {['vaccination', 'antiparasitic', 'checkup', 'medication'].map((type) => {
+                <div className="grid grid-cols-3 gap-2">
+                  {['vaccination', 'antiparasitic', 'checkup'].map((type) => {
                     const Icon = reminderTypeIcons[type];
                     return (
                       <button
@@ -599,14 +603,14 @@ const Reminders = () => {
                         type="button"
                         onClick={() => setCreateReminderData({ ...createReminderData, type })}
                         className={cn(
-                          "flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all",
+                          "flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all",
                           createReminderData.type === type
-                            ? "border-primary bg-primary-soft"
+                            ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
                         )}
                       >
-                        <Icon className="w-4 h-4" />
-                        <span className="text-[10px] font-medium">{getReminderTypeLabel(type)}</span>
+                        <Icon className="w-5 h-5" />
+                        <span className="text-xs font-medium">{getReminderTypeLabel(type)}</span>
                       </button>
                     );
                   })}
@@ -684,7 +688,7 @@ const Reminders = () => {
                         className={cn(
                           "flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all",
                           editReminderData.type === type
-                            ? "border-primary bg-primary-soft"
+                            ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
                         )}
                       >
