@@ -20,7 +20,6 @@ serve(async (req) => {
 
     const isFarsi = language === 'fa';
     const isPassport = record_category === 'passport';
-    const isMedicalTest = record_category === 'medical_test';
 
     let systemPrompt: string;
     let textPrompt: string;
@@ -48,8 +47,8 @@ Rules:
 4. Maximum 80 words`;
 
       textPrompt = isFarsi
-        ? `تاریخ‌های واکسن و ضدانگل را پیدا کن و توصیه بده.`
-        : `Find vaccine/deworming dates and give advice.`;
+        ? `تاریخ‌های واکسن و ضدانگل را پیدا کن و توصیه بده. اگر نیاز به یادآوری برای واکسن یا ضدانگل هست، بگو.`
+        : `Find vaccine/deworming dates and give advice. If a reminder is needed, mention it.`;
     } else {
       systemPrompt = isFarsi 
         ? `تحلیلگر مختصر مدارک پزشکی حیوانات.
@@ -90,21 +89,72 @@ Rules:
     
     userContent.push({ type: "text", text: textPrompt });
 
+    // Define tools for extracting structured reminder data
+    const tools = isPassport ? [
+      {
+        type: "function",
+        function: {
+          name: "analyze_passport",
+          description: "Analyze pet passport and extract vaccination/deworming information with reminder suggestions",
+          parameters: {
+            type: "object",
+            properties: {
+              analysis_text: {
+                type: "string",
+                description: "The analysis text to show to user (max 80 words)"
+              },
+              reminder_suggestion: {
+                type: "object",
+                properties: {
+                  needed: {
+                    type: "boolean",
+                    description: "Whether a reminder should be suggested"
+                  },
+                  type: {
+                    type: "string",
+                    enum: ["vaccine", "deworming", "checkup"],
+                    description: "Type of reminder"
+                  },
+                  title: {
+                    type: "string",
+                    description: "Suggested title for the reminder"
+                  },
+                  days_until_due: {
+                    type: "number",
+                    description: "Approximate days until this is due (0 if overdue, positive if upcoming)"
+                  }
+                },
+                required: ["needed"]
+              }
+            },
+            required: ["analysis_text", "reminder_suggestion"]
+          }
+        }
+      }
+    ] : undefined;
+
+    const requestBody: any = {
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      max_tokens: 512,
+      temperature: 0.1,
+    };
+
+    if (tools) {
+      requestBody.tools = tools;
+      requestBody.tool_choice = { type: "function", function: { name: "analyze_passport" } };
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent },
-        ],
-        max_tokens: 512,
-        temperature: 0.1,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -129,7 +179,26 @@ Rules:
     }
 
     const data = await response.json();
-    const analysis = data.choices?.[0]?.message?.content;
+    console.log('AI Response:', JSON.stringify(data, null, 2));
+    
+    let analysis: string;
+    let reminderSuggestion: any = null;
+
+    // Check if response used tool calling
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall && toolCall.function?.name === 'analyze_passport') {
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        analysis = args.analysis_text;
+        reminderSuggestion = args.reminder_suggestion;
+        console.log('Parsed tool response:', { analysis: analysis?.length, reminderSuggestion });
+      } catch (e) {
+        console.error('Failed to parse tool response:', e);
+        analysis = data.choices?.[0]?.message?.content || '';
+      }
+    } else {
+      analysis = data.choices?.[0]?.message?.content || '';
+    }
 
     if (!analysis) {
       return new Response(
@@ -140,8 +209,13 @@ Rules:
 
     console.log('Analysis completed, length:', analysis.length);
 
+    const responseData: any = { analysis };
+    if (reminderSuggestion?.needed) {
+      responseData.reminderSuggestion = reminderSuggestion;
+    }
+
     return new Response(
-      JSON.stringify({ analysis }),
+      JSON.stringify(responseData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
