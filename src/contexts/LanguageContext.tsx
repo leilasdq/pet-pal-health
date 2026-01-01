@@ -211,6 +211,12 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.testEmailSent': 'Test Email Sent',
     'profile.testEmailSentDesc': 'Check your inbox for the reminder email',
     'profile.testEmailError': 'Failed to send test email',
+    'profile.pushEnabled': 'Push notifications enabled',
+    'profile.pushDisabled': 'Push notifications disabled',
+    'profile.testPush': 'Test Push Notification',
+    'profile.testPushDesc': 'Send a test notification to verify it works',
+    'profile.testPushSent': 'Test notification sent!',
+    'profile.testPushError': 'Could not send notification. Check browser permissions.',
     
     // Common
     'common.loading': 'Loading...',
@@ -430,6 +436,12 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.testEmailSent': 'ایمیل آزمایشی ارسال شد',
     'profile.testEmailSentDesc': 'صندوق ورودی خود را برای ایمیل یادآوری بررسی کنید',
     'profile.testEmailError': 'خطا در ارسال ایمیل آزمایشی',
+    'profile.pushEnabled': 'اعلان‌های فوری فعال شد',
+    'profile.pushDisabled': 'اعلان‌های فوری غیرفعال شد',
+    'profile.testPush': 'تست اعلان فوری',
+    'profile.testPushDesc': 'یک اعلان آزمایشی ارسال کنید',
+    'profile.testPushSent': 'اعلان آزمایشی ارسال شد!',
+    'profile.testPushError': 'ارسال اعلان ممکن نبود. دسترسی مرورگر را بررسی کنید.',
     
     // Common
     'common.loading': 'در حال بارگذاری...',
