@@ -17,7 +17,7 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2, Download, UserPlus, Trash2, Edit, Shield, Users, Database } from 'lucide-react';
 import { EditRecordDialog } from '@/components/admin/EditRecordDialog';
 
-type TableName = 'profiles' | 'pets' | 'reminders' | 'medical_records' | 'conversations' | 'user_roles' | 'admin_invites';
+type TableName = 'profiles' | 'pets' | 'reminders' | 'medical_records' | 'conversations' | 'chat_messages' | 'ai_usage' | 'payments' | 'user_subscriptions' | 'promo_codes' | 'promo_code_usage' | 'subscription_tiers' | 'user_roles' | 'admin_invites';
 
 interface AdminInvite {
   id: string;
@@ -260,6 +260,13 @@ const Admin = () => {
     reminders: ['id', 'title', 'reminder_type', 'due_date', 'status', 'pet_id'],
     medical_records: ['id', 'title', 'category', 'record_date', 'pet_id'],
     conversations: ['id', 'title', 'user_id', 'created_at'],
+    chat_messages: ['id', 'role', 'content', 'user_id', 'created_at'],
+    ai_usage: ['id', 'user_id', 'month_year', 'chatbot_count', 'analysis_count', 'total_count'],
+    payments: ['id', 'user_id', 'status', 'final_amount', 'gateway', 'created_at'],
+    user_subscriptions: ['id', 'user_id', 'tier_id', 'status', 'starts_at', 'expires_at'],
+    promo_codes: ['id', 'code', 'discount_type', 'discount_value', 'is_active', 'used_count', 'max_uses'],
+    promo_code_usage: ['id', 'user_id', 'promo_code_id', 'used_at'],
+    subscription_tiers: ['id', 'name', 'display_name_fa', 'monthly_limit', 'price_toman', 'is_active'],
     user_roles: ['id', 'user_id', 'role', 'created_at'],
     admin_invites: ['id', 'email', 'role', 'expires_at', 'used_at'],
   };
