@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell, Flag, RefreshCw, Download, Lock } from 'lucide-react';
+import { Plus, FileText, Pill, CreditCard, Loader2, Upload, X, Image as ImageIcon, MoreVertical, Pencil, Trash2, Calendar, PawPrint, StickyNote, Maximize2, Sparkles, AlertTriangle, Bell, Flag, RefreshCw, Download, Lock, FileDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { parseISO, format as formatGregorianDate } from 'date-fns';
@@ -86,6 +86,8 @@ const HealthVault = () => {
     days_until_due?: number;
   } | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedPdfPet, setSelectedPdfPet] = useState<string>('');
   
   // Date feedback state
   const [dateFeedbackOpen, setDateFeedbackOpen] = useState(false);
@@ -443,185 +445,296 @@ const HealthVault = () => {
     setSubmittingFeedback(false);
   };
 
-  // Generate PDF with all medical records
-  const handleDownloadPdf = async () => {
+  // Open PDF dialog
+  const handleOpenPdfDialog = () => {
     if (!isPaidUser) {
       toast({
         title: language === 'fa' ? 'نیاز به اشتراک' : 'Subscription Required',
         description: language === 'fa' 
-          ? 'برای دانلود PDF پرونده پزشکی، باید اشتراک داشته باشید.' 
-          : 'You need a subscription to download the medical records PDF.',
+          ? 'برای دانلود گزارش دامپزشکی، باید اشتراک داشته باشید.' 
+          : 'You need a subscription to download the vet report.',
         variant: 'destructive',
       });
       navigate('/subscription');
       return;
     }
 
-    if (filteredRecords.length === 0) {
+    // If only one pet, select it automatically
+    if (pets.length === 1) {
+      setSelectedPdfPet(pets[0].id);
+    } else {
+      setSelectedPdfPet('');
+    }
+    setPdfDialogOpen(true);
+  };
+
+  // Load image as base64 for PDF
+  const loadImageAsBase64 = async (url: string): Promise<string | null> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  // Generate PDF for selected pet
+  const handleDownloadPdf = async () => {
+    if (!selectedPdfPet) {
+      toast({
+        title: language === 'fa' ? 'لطفاً حیوان را انتخاب کنید' : 'Please select a pet',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const selectedPet = pets.find(p => p.id === selectedPdfPet);
+    const petRecords = records
+      .filter(r => r.pet_id === selectedPdfPet)
+      .sort((a, b) => {
+        const dateA = a.record_date ? new Date(a.record_date).getTime() : 0;
+        const dateB = b.record_date ? new Date(b.record_date).getTime() : 0;
+        return dateB - dateA; // Most recent first
+      });
+
+    if (petRecords.length === 0) {
       toast({
         title: language === 'fa' ? 'پرونده‌ای یافت نشد' : 'No Records Found',
         description: language === 'fa' 
-          ? 'هیچ پرونده پزشکی برای دانلود وجود ندارد.' 
-          : 'No medical records available to download.',
+          ? 'هیچ پرونده پزشکی برای این حیوان وجود ندارد.' 
+          : 'No medical records available for this pet.',
         variant: 'destructive',
       });
       return;
     }
 
     setGeneratingPdf(true);
+    setPdfDialogOpen(false);
 
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 20;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
       let yPos = 20;
 
-      // Title
-      doc.setFontSize(24);
-      doc.setTextColor(16, 185, 129); // Primary green color
-      const title = language === 'fa' ? 'PetCare - پرونده پزشکی حیوان خانگی' : 'PetCare - Pet Medical Records';
+      // Header with pet name
+      doc.setFontSize(22);
+      doc.setTextColor(16, 185, 129);
+      const title = language === 'fa' 
+        ? `گزارش پزشکی ${selectedPet?.name}`
+        : `Medical Report - ${selectedPet?.name}`;
       doc.text(title, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 12;
+
+      // Subtitle
+      doc.setFontSize(11);
+      doc.setTextColor(100, 100, 100);
+      const subtitle = language === 'fa' 
+        ? 'گزارش کامل پرونده بهداشتی برای ارائه به دامپزشک'
+        : 'Complete Health Records Report for Veterinary Use';
+      doc.text(subtitle, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 8;
+
+      // Generation date
+      doc.setFontSize(9);
+      const dateStr = language === 'fa' 
+        ? `تاریخ تولید: ${formatDisplayDate(formatGregorianDate(new Date(), 'yyyy-MM-dd'), language)}`
+        : `Generated: ${formatDisplayDate(formatGregorianDate(new Date(), 'yyyy-MM-dd'), language)}`;
+      doc.text(dateStr, pageWidth / 2, yPos, { align: 'center' });
       yPos += 15;
 
-      // Date
+      // Summary section
+      doc.setFillColor(240, 253, 244);
+      doc.roundedRect(margin, yPos, pageWidth - margin * 2, 25, 3, 3, 'F');
+      
       doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      const dateStr = language === 'fa' 
-        ? `تاریخ تولید: ${formatGregorianDate(new Date(), 'yyyy/MM/dd')}`
-        : `Generated: ${formatGregorianDate(new Date(), 'yyyy/MM/dd')}`;
-      doc.text(dateStr, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 20;
-
-      // Group records by pet
-      const recordsByPet = new Map<string, MedicalRecord[]>();
-      for (const record of filteredRecords) {
-        const petName = record.pet?.name || 'Unknown';
-        if (!recordsByPet.has(petName)) {
-          recordsByPet.set(petName, []);
-        }
-        recordsByPet.get(petName)!.push(record);
+      doc.setTextColor(22, 101, 52);
+      const summaryTitle = language === 'fa' ? 'خلاصه پرونده' : 'Record Summary';
+      doc.text(summaryTitle, margin + 5, yPos + 7);
+      
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 60);
+      const recordCount = `${language === 'fa' ? 'تعداد پرونده‌ها:' : 'Total Records:'} ${petRecords.length}`;
+      const analyzedCount = petRecords.filter(r => r.ai_analysis).length;
+      const analysisInfo = `${language === 'fa' ? 'تحلیل شده:' : 'AI Analyzed:'} ${analyzedCount}`;
+      doc.text(recordCount, margin + 5, yPos + 15);
+      doc.text(analysisInfo, margin + 5, yPos + 21);
+      
+      // Date range
+      const dates = petRecords.map(r => r.record_date).filter(Boolean).sort();
+      if (dates.length > 0) {
+        const dateRange = language === 'fa'
+          ? `بازه زمانی: ${formatDisplayDate(dates[0]!, language)} تا ${formatDisplayDate(dates[dates.length - 1]!, language)}`
+          : `Date Range: ${formatDisplayDate(dates[0]!, language)} to ${formatDisplayDate(dates[dates.length - 1]!, language)}`;
+        doc.text(dateRange, pageWidth / 2, yPos + 15, { align: 'center' });
       }
+      
+      yPos += 35;
 
-      // Process each pet
-      for (const [petName, petRecords] of recordsByPet) {
+      // Timeline header
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      const timelineTitle = language === 'fa' ? '📋 تایم‌لاین پرونده‌ها' : '📋 Records Timeline';
+      doc.text(timelineTitle, margin, yPos);
+      yPos += 10;
+
+      // Process each record with timeline
+      for (let i = 0; i < petRecords.length; i++) {
+        const record = petRecords[i];
+        
         // Check if we need a new page
-        if (yPos > 250) {
+        if (yPos > pageHeight - 80) {
           doc.addPage();
           yPos = 20;
         }
 
-        // Pet name header
-        doc.setFontSize(16);
+        // Timeline dot and line
+        doc.setFillColor(16, 185, 129);
+        doc.circle(margin + 3, yPos + 3, 3, 'F');
+        if (i < petRecords.length - 1) {
+          doc.setDrawColor(200, 200, 200);
+          doc.setLineWidth(0.5);
+          doc.line(margin + 3, yPos + 8, margin + 3, yPos + 80);
+        }
+
+        // Date badge
+        const recordDate = record.record_date 
+          ? formatDisplayDate(record.record_date, language)
+          : (language === 'fa' ? 'بدون تاریخ' : 'No date');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(recordDate, margin + 12, yPos + 2);
+
+        // Record title
+        doc.setFontSize(11);
         doc.setTextColor(0, 0, 0);
-        doc.text(`🐾 ${petName}`, margin, yPos);
-        yPos += 10;
+        const recordTitle = record.title || (language === 'fa' ? 'بدون عنوان' : 'Untitled');
+        doc.text(recordTitle, margin + 12, yPos + 9);
 
-        // Draw line
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, yPos, pageWidth - margin, yPos);
-        yPos += 10;
+        // Category badge
+        const categoryLabel = categories.find(c => c.value === record.category)?.labelKey;
+        const categoryText = categoryLabel ? t(categoryLabel) : record.category;
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        doc.text(`[${categoryText}]`, margin + 12 + doc.getTextWidth(recordTitle) + 3, yPos + 9);
 
-        // Process each record
-        for (const record of petRecords) {
-          // Check if we need a new page
-          if (yPos > 250) {
+        yPos += 15;
+
+        // Try to add image
+        const imageUrl = imageUrls[record.image_path];
+        if (imageUrl) {
+          try {
+            const base64Image = await loadImageAsBase64(imageUrl);
+            if (base64Image) {
+              // Check if we need a new page for the image
+              if (yPos > pageHeight - 60) {
+                doc.addPage();
+                yPos = 20;
+              }
+              
+              const imgWidth = 50;
+              const imgHeight = 35;
+              doc.addImage(base64Image, 'JPEG', margin + 12, yPos, imgWidth, imgHeight);
+              
+              // Add notes next to image if exists
+              if (record.notes) {
+                doc.setFontSize(8);
+                doc.setTextColor(80, 80, 80);
+                const notesLabel = language === 'fa' ? 'یادداشت:' : 'Notes:';
+                doc.text(notesLabel, margin + 12 + imgWidth + 5, yPos + 5);
+                const splitNotes = doc.splitTextToSize(record.notes, pageWidth - margin * 2 - imgWidth - 25);
+                doc.text(splitNotes.slice(0, 4), margin + 12 + imgWidth + 5, yPos + 11);
+              }
+              
+              yPos += imgHeight + 5;
+            }
+          } catch (e) {
+            console.log('Could not load image for PDF');
+          }
+        }
+
+        // AI Analysis section
+        if (record.ai_analysis) {
+          if (yPos > pageHeight - 50) {
             doc.addPage();
             yPos = 20;
           }
 
-          // Record title
-          doc.setFontSize(12);
-          doc.setTextColor(0, 0, 0);
-          const recordTitle = record.title || (language === 'fa' ? 'بدون عنوان' : 'Untitled');
-          doc.text(`• ${recordTitle}`, margin + 5, yPos);
-          yPos += 7;
-
-          // Record details
-          doc.setFontSize(9);
-          doc.setTextColor(100, 100, 100);
+          // AI analysis box
+          doc.setFillColor(249, 250, 251);
+          doc.setDrawColor(16, 185, 129);
+          doc.setLineWidth(0.3);
           
-          const categoryLabel = categories.find(c => c.value === record.category)?.labelKey;
-          const categoryText = categoryLabel ? t(categoryLabel) : record.category;
-          doc.text(`${language === 'fa' ? 'دسته‌بندی' : 'Category'}: ${categoryText}`, margin + 10, yPos);
-          yPos += 5;
-
-          if (record.record_date) {
-            const dateLabel = language === 'fa' ? 'تاریخ' : 'Date';
-            doc.text(`${dateLabel}: ${formatDisplayDate(record.record_date, language)}`, margin + 10, yPos);
-            yPos += 5;
+          const analysisLines = doc.splitTextToSize(record.ai_analysis, pageWidth - margin * 2 - 30);
+          const displayLines = analysisLines.slice(0, 8);
+          const boxHeight = Math.min(displayLines.length * 4 + 12, 50);
+          
+          doc.roundedRect(margin + 12, yPos, pageWidth - margin * 2 - 12, boxHeight, 2, 2, 'FD');
+          
+          doc.setFontSize(9);
+          doc.setTextColor(16, 185, 129);
+          const aiLabel = language === 'fa' ? '🤖 تحلیل هوش مصنوعی' : '🤖 AI Analysis';
+          doc.text(aiLabel, margin + 15, yPos + 7);
+          
+          doc.setFontSize(8);
+          doc.setTextColor(60, 60, 60);
+          doc.text(displayLines, margin + 15, yPos + 14);
+          
+          if (analysisLines.length > 8) {
+            doc.setTextColor(150, 150, 150);
+            doc.text('...', margin + 15, yPos + boxHeight - 3);
           }
-
-          // Notes
-          if (record.notes) {
-            const notesLabel = language === 'fa' ? 'یادداشت' : 'Notes';
-            const notesText = `${notesLabel}: ${record.notes}`;
-            const splitNotes = doc.splitTextToSize(notesText, pageWidth - margin * 2 - 10);
-            doc.text(splitNotes, margin + 10, yPos);
-            yPos += splitNotes.length * 4 + 2;
-          }
-
-          // AI Analysis
-          if (record.ai_analysis) {
-            if (yPos > 230) {
-              doc.addPage();
-              yPos = 20;
-            }
-
-            doc.setFontSize(10);
-            doc.setTextColor(16, 185, 129);
-            const aiLabel = language === 'fa' ? '🤖 تحلیل هوش مصنوعی:' : '🤖 AI Analysis:';
-            doc.text(aiLabel, margin + 10, yPos);
-            yPos += 6;
-
-            doc.setFontSize(9);
-            doc.setTextColor(60, 60, 60);
-            const splitAnalysis = doc.splitTextToSize(record.ai_analysis, pageWidth - margin * 2 - 15);
-            
-            // Limit to first 10 lines to avoid overflow
-            const analysisLines = splitAnalysis.slice(0, 10);
-            doc.text(analysisLines, margin + 15, yPos);
-            yPos += analysisLines.length * 4 + 5;
-
-            if (splitAnalysis.length > 10) {
-              doc.setTextColor(150, 150, 150);
-              doc.text(language === 'fa' ? '...(متن کامل در اپلیکیشن)' : '...(full text in app)', margin + 15, yPos);
-              yPos += 5;
-            }
-          }
-
-          yPos += 8;
+          
+          yPos += boxHeight + 10;
+        } else {
+          yPos += 10;
         }
 
-        yPos += 10;
+        yPos += 5;
       }
 
-      // Footer
+      // Footer on last page
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       const footer = language === 'fa' 
-        ? 'این گزارش توسط اپلیکیشن PetCare تولید شده است'
-        : 'This report was generated by PetCare App';
-      doc.text(footer, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+        ? 'این گزارش توسط اپلیکیشن PetCare تولید شده است | petcare.app'
+        : 'Generated by PetCare App | petcare.app';
+      doc.text(footer, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+      // Add page numbers
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        const pageText = language === 'fa' ? `صفحه ${i} از ${totalPages}` : `Page ${i} of ${totalPages}`;
+        doc.text(pageText, pageWidth - margin, pageHeight - 10);
+      }
 
       // Save the PDF
-      const fileName = language === 'fa' 
-        ? `petcare-medical-records-${formatGregorianDate(new Date(), 'yyyy-MM-dd')}.pdf`
-        : `petcare-medical-records-${formatGregorianDate(new Date(), 'yyyy-MM-dd')}.pdf`;
+      const fileName = `${selectedPet?.name || 'pet'}-medical-report-${formatGregorianDate(new Date(), 'yyyy-MM-dd')}.pdf`;
       doc.save(fileName);
 
       toast({
-        title: language === 'fa' ? 'PDF دانلود شد' : 'PDF Downloaded',
+        title: language === 'fa' ? 'گزارش آماده شد!' : 'Report Ready!',
         description: language === 'fa' 
-          ? 'پرونده پزشکی با موفقیت دانلود شد.' 
-          : 'Medical records PDF downloaded successfully.',
+          ? `گزارش پزشکی ${selectedPet?.name} دانلود شد.` 
+          : `Medical report for ${selectedPet?.name} downloaded.`,
       });
     } catch (error) {
       console.error('PDF generation error:', error);
       toast({
         title: language === 'fa' ? 'خطا' : 'Error',
         description: language === 'fa' 
-          ? 'خطا در تولید PDF' 
-          : 'Failed to generate PDF',
+          ? 'خطا در تولید گزارش' 
+          : 'Failed to generate report',
         variant: 'destructive',
       });
     } finally {
@@ -656,25 +769,28 @@ const HealthVault = () => {
               <p className="text-muted-foreground text-sm">{t('vault.subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Download PDF Button */}
+              {/* Download Vet Report Button */}
               <Button
                 variant={isPaidUser ? "outline" : "ghost"}
-                size="icon"
-                className={cn("h-10 w-10 shrink-0", !isPaidUser && "opacity-60")}
-                onClick={handleDownloadPdf}
+                size="sm"
+                className={cn(
+                  "gap-2 shrink-0",
+                  !isPaidUser && "opacity-60",
+                  isPaidUser && "border-primary/30 hover:border-primary hover:bg-primary/5"
+                )}
+                onClick={handleOpenPdfDialog}
                 disabled={generatingPdf || subscriptionLoading}
-                title={isPaidUser 
-                  ? (language === 'fa' ? 'دانلود PDF پرونده' : 'Download PDF Report')
-                  : (language === 'fa' ? 'نیاز به اشتراک' : 'Subscription Required')
-                }
               >
                 {generatingPdf ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : isPaidUser ? (
-                  <Download className="w-5 h-5" />
+                  <FileDown className="w-4 h-4 text-primary" />
                 ) : (
-                  <Lock className="w-5 h-5" />
+                  <Lock className="w-4 h-4" />
                 )}
+                <span className="hidden sm:inline">
+                  {language === 'fa' ? 'گزارش دامپزشکی' : 'Vet Report'}
+                </span>
               </Button>
               
               {/* Add Record Button */}
@@ -1360,6 +1476,110 @@ const HealthVault = () => {
                   {t('common.save')}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* PDF Download Dialog */}
+        <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileDown className="w-5 h-5 text-primary" />
+                {language === 'fa' ? 'دانلود گزارش دامپزشکی' : 'Download Vet Report'}
+              </DialogTitle>
+              <DialogDescription>
+                {language === 'fa' 
+                  ? 'گزارش کامل پرونده پزشکی با تصاویر و تحلیل هوش مصنوعی برای ارائه به دامپزشک'
+                  : 'Complete medical report with images and AI analysis for your veterinarian'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {/* Pet Selection */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <PawPrint className="w-4 h-4" />
+                  {language === 'fa' ? 'انتخاب حیوان خانگی' : 'Select Pet'}
+                </Label>
+                {pets.length === 1 ? (
+                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 flex items-center gap-2">
+                    <PawPrint className="w-4 h-4 text-primary" />
+                    <span className="font-medium">{pets[0].name}</span>
+                  </div>
+                ) : (
+                  <Select value={selectedPdfPet} onValueChange={setSelectedPdfPet}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === 'fa' ? 'حیوان را انتخاب کنید...' : 'Choose a pet...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pets.map((pet) => {
+                        const petRecordCount = records.filter(r => r.pet_id === pet.id).length;
+                        return (
+                          <SelectItem key={pet.id} value={pet.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{pet.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({petRecordCount} {language === 'fa' ? 'پرونده' : 'records'})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              {/* Report Info */}
+              {selectedPdfPet && (
+                <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    {language === 'fa' ? 'محتوای گزارش' : 'Report Contents'}
+                  </h4>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      {language === 'fa' ? 'تایم‌لاین کامل پرونده‌ها' : 'Complete records timeline'}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      {language === 'fa' ? 'تصاویر مدارک پزشکی' : 'Medical document images'}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      {language === 'fa' ? 'تحلیل هوش مصنوعی' : 'AI analysis summaries'}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      {language === 'fa' ? 'یادداشت‌ها و جزئیات' : 'Notes and details'}
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setPdfDialogOpen(false)}
+              >
+                {language === 'fa' ? 'انصراف' : 'Cancel'}
+              </Button>
+              <Button 
+                className="flex-1 gap-2"
+                onClick={handleDownloadPdf}
+                disabled={!selectedPdfPet || generatingPdf}
+              >
+                {generatingPdf ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                {language === 'fa' ? 'دانلود PDF' : 'Download PDF'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
