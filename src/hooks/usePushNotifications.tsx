@@ -73,8 +73,12 @@ export const usePushNotifications = () => {
   }, [isSupported, permission]);
 
   // Check for due reminders and show notifications
-  const checkDueReminders = useCallback(async () => {
-    if (!user || permission !== 'granted') return;
+  const checkDueReminders = useCallback(async (language: 'en' | 'fa' = 'en') => {
+    if (!user) return;
+    
+    // Check browser permission directly
+    const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    if (currentPermission !== 'granted') return;
 
     try {
       // Get user's push notification preference
@@ -86,40 +90,91 @@ export const usePushNotifications = () => {
 
       if (!profile?.push_notifications_enabled) return;
 
-      // Get today's reminders
-      const today = new Date().toISOString().split('T')[0];
+      // Get today and tomorrow's dates
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       
-      const { data: reminders } = await supabase
+      const todayStr = today.toISOString().split('T')[0];
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      
+      // Get today's reminders
+      const { data: todayReminders } = await supabase
         .from('reminders')
         .select('id, title, reminder_type, pets(name)')
-        .eq('due_date', today)
+        .eq('due_date', todayStr)
         .eq('status', 'pending');
 
-      if (reminders && reminders.length > 0) {
-        const petNames = [...new Set(reminders.map(r => (r.pets as any)?.name).filter(Boolean))];
-        
-        showNotification('🐾 PetCare Reminder', {
-          body: `You have ${reminders.length} reminder${reminders.length > 1 ? 's' : ''} due today for ${petNames.join(', ')}`,
-          tag: 'petcare-daily-reminder',
-        });
+      // Get tomorrow's reminders
+      const { data: tomorrowReminders } = await supabase
+        .from('reminders')
+        .select('id, title, reminder_type, pets(name)')
+        .eq('due_date', tomorrowStr)
+        .eq('status', 'pending');
+
+      // Show today's reminders
+      if (todayReminders && todayReminders.length > 0) {
+        for (const reminder of todayReminders) {
+          const petName = (reminder.pets as any)?.name || '';
+          const title = language === 'fa' ? '🐾 یادآوری امروز' : '🐾 Today\'s Reminder';
+          const body = language === 'fa' 
+            ? `فراموش نکنید: ${reminder.title}${petName ? ` برای ${petName}` : ''}`
+            : `Don't forget: ${reminder.title}${petName ? ` for ${petName}` : ''}`;
+          
+          await showNotification(title, {
+            body,
+            tag: `reminder-today-${reminder.id}`,
+          });
+        }
+      }
+
+      // Show tomorrow's reminders
+      if (tomorrowReminders && tomorrowReminders.length > 0) {
+        for (const reminder of tomorrowReminders) {
+          const petName = (reminder.pets as any)?.name || '';
+          const reminderTypeText = getReminderTypeText(reminder.reminder_type, language);
+          const title = language === 'fa' ? '📅 یادآوری فردا' : '📅 Tomorrow\'s Reminder';
+          const body = language === 'fa' 
+            ? `فردا ${reminderTypeText} دارید${petName ? ` برای ${petName}` : ''}: ${reminder.title}`
+            : `Tomorrow you have ${reminderTypeText}${petName ? ` for ${petName}` : ''}: ${reminder.title}`;
+          
+          await showNotification(title, {
+            body,
+            tag: `reminder-tomorrow-${reminder.id}`,
+          });
+        }
       }
     } catch (error) {
       console.error('Error checking due reminders:', error);
     }
-  }, [user, permission, showNotification]);
+  }, [user, showNotification]);
+
+  // Helper function to get reminder type text
+  const getReminderTypeText = (type: string, language: 'en' | 'fa'): string => {
+    const types: Record<string, Record<'en' | 'fa', string>> = {
+      vaccination: { en: 'a vaccination', fa: 'واکسیناسیون' },
+      antiparasitic: { en: 'an anti-parasitic treatment', fa: 'ضد انگل' },
+      checkup: { en: 'a vet checkup', fa: 'ویزیت دامپزشک' },
+    };
+    return types[type]?.[language] || (language === 'fa' ? 'یادآوری' : 'a reminder');
+  };
 
   // Run check on mount and periodically
   useEffect(() => {
-    if (permission === 'granted' && user) {
+    const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    if (currentPermission === 'granted' && user) {
+      // Get language from localStorage
+      const savedLanguage = (localStorage.getItem('petcare-language') as 'en' | 'fa') || 'fa';
+      
       // Check immediately
-      checkDueReminders();
+      checkDueReminders(savedLanguage);
       
       // Check every hour
-      const interval = setInterval(checkDueReminders, 60 * 60 * 1000);
+      const interval = setInterval(() => checkDueReminders(savedLanguage), 60 * 60 * 1000);
       
       return () => clearInterval(interval);
     }
-  }, [permission, user, checkDueReminders]);
+  }, [user, checkDueReminders]);
 
   return {
     isSupported,
