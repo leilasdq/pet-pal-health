@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send, Crown, ChevronRight, Settings, FileText, CalendarClock } from 'lucide-react';
+import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send, Crown, ChevronRight, Settings, FileText, CalendarClock, Shield } from 'lucide-react';
 import { formatNumber } from '@/lib/dateUtils';
 
 interface Profile {
@@ -25,6 +26,7 @@ interface Profile {
 
 const Profile = () => {
   const { user, loading: authLoading, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language, setLanguage, isRTL } = useLanguage();
@@ -309,6 +311,22 @@ const Profile = () => {
               </div>
               <ChevronRight className={`w-4 h-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
             </button>
+
+            {/* Admin Panel - Only for admins */}
+            {isAdmin && (
+              <button 
+                onClick={() => navigate('/admin')}
+                className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-purple-500/10 flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <span className="font-medium">{language === 'fa' ? 'پنل مدیریت' : 'Admin Panel'}</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
+              </button>
+            )}
 
             {/* Language */}
             <div className="p-4">
