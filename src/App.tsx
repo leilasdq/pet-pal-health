@@ -13,6 +13,7 @@ import AIChat from "./pages/AIChat";
 import Profile from "./pages/Profile";
 import Reminders from "./pages/Reminders";
 import Subscription from "./pages/Subscription";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/reminders" element={<Reminders />} />
               <Route path="/subscription" element={<Subscription />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
