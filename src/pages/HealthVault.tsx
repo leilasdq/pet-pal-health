@@ -799,8 +799,8 @@ const HealthVault = () => {
               <p className="text-muted-foreground text-sm">{t('vault.subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Download Vet Report Button */}
-              <Button
+              {/* Download Vet Report Button - Hidden for now */}
+              {/* <Button
                 variant={isPaidUser ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
@@ -821,7 +821,7 @@ const HealthVault = () => {
                 <span className="hidden sm:inline">
                   {language === 'fa' ? 'گزارش دامپزشکی' : 'Vet Report'}
                 </span>
-              </Button>
+              </Button> */}
               
               {/* Add Record Button */}
               <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
