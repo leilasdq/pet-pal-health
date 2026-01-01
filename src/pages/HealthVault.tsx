@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { formatShortDate, formatDisplayDate } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
 import jsPDF from 'jspdf';
+import { loadVazirmatnFont, registerVazirmatnFont, prepareRtlText } from '@/lib/pdfFonts';
 
 interface Pet {
   id: string;
@@ -524,30 +525,53 @@ const HealthVault = () => {
       const margin = 15;
       let yPos = 20;
 
+      // Load and register Persian font for Farsi text
+      const isFarsi = language === 'fa';
+      if (isFarsi) {
+        try {
+          const fontBase64 = await loadVazirmatnFont();
+          registerVazirmatnFont(doc, fontBase64);
+          doc.setFont('Vazirmatn');
+        } catch (fontError) {
+          console.error('Failed to load Persian font:', fontError);
+          toast({
+            title: 'خطا در بارگذاری فونت',
+            description: 'PDF با فونت پیش‌فرض ایجاد می‌شود',
+            variant: 'destructive',
+          });
+        }
+      }
+
+      // Helper function to handle RTL text
+      const addText = (text: string, x: number, y: number, options?: any) => {
+        const processedText = isFarsi ? prepareRtlText(text) : text;
+        doc.text(processedText, x, y, options);
+      };
+
       // Header with pet name
       doc.setFontSize(22);
       doc.setTextColor(16, 185, 129);
-      const title = language === 'fa' 
-        ? `گزارش پزشکی ${selectedPet?.name}`
+      const title = isFarsi 
+        ? `${selectedPet?.name} پزشکی گزارش`
         : `Medical Report - ${selectedPet?.name}`;
-      doc.text(title, pageWidth / 2, yPos, { align: 'center' });
+      addText(title, pageWidth / 2, yPos, { align: 'center' });
       yPos += 12;
 
       // Subtitle
       doc.setFontSize(11);
       doc.setTextColor(100, 100, 100);
-      const subtitle = language === 'fa' 
-        ? 'گزارش کامل پرونده بهداشتی برای ارائه به دامپزشک'
+      const subtitle = isFarsi 
+        ? 'دامپزشک به ارائه برای بهداشتی پرونده کامل گزارش'
         : 'Complete Health Records Report for Veterinary Use';
-      doc.text(subtitle, pageWidth / 2, yPos, { align: 'center' });
+      addText(subtitle, pageWidth / 2, yPos, { align: 'center' });
       yPos += 8;
 
       // Generation date
       doc.setFontSize(9);
-      const dateStr = language === 'fa' 
-        ? `تاریخ تولید: ${formatDisplayDate(formatGregorianDate(new Date(), 'yyyy-MM-dd'), language)}`
+      const dateStr = isFarsi 
+        ? `${formatDisplayDate(formatGregorianDate(new Date(), 'yyyy-MM-dd'), language)} :تولید تاریخ`
         : `Generated: ${formatDisplayDate(formatGregorianDate(new Date(), 'yyyy-MM-dd'), language)}`;
-      doc.text(dateStr, pageWidth / 2, yPos, { align: 'center' });
+      addText(dateStr, pageWidth / 2, yPos, { align: 'center' });
       yPos += 15;
 
       // Summary section
@@ -556,24 +580,24 @@ const HealthVault = () => {
       
       doc.setFontSize(10);
       doc.setTextColor(22, 101, 52);
-      const summaryTitle = language === 'fa' ? 'خلاصه پرونده' : 'Record Summary';
-      doc.text(summaryTitle, margin + 5, yPos + 7);
+      const summaryTitle = isFarsi ? 'پرونده خلاصه' : 'Record Summary';
+      addText(summaryTitle, isFarsi ? pageWidth - margin - 5 : margin + 5, yPos + 7, isFarsi ? { align: 'right' } : undefined);
       
       doc.setFontSize(9);
       doc.setTextColor(60, 60, 60);
-      const recordCount = `${language === 'fa' ? 'تعداد پرونده‌ها:' : 'Total Records:'} ${petRecords.length}`;
+      const recordCount = isFarsi ? `${petRecords.length} :ها پرونده تعداد` : `Total Records: ${petRecords.length}`;
       const analyzedCount = petRecords.filter(r => r.ai_analysis).length;
-      const analysisInfo = `${language === 'fa' ? 'تحلیل شده:' : 'AI Analyzed:'} ${analyzedCount}`;
-      doc.text(recordCount, margin + 5, yPos + 15);
-      doc.text(analysisInfo, margin + 5, yPos + 21);
+      const analysisInfo = isFarsi ? `${analyzedCount} :شده تحلیل` : `AI Analyzed: ${analyzedCount}`;
+      addText(recordCount, isFarsi ? pageWidth - margin - 5 : margin + 5, yPos + 15, isFarsi ? { align: 'right' } : undefined);
+      addText(analysisInfo, isFarsi ? pageWidth - margin - 5 : margin + 5, yPos + 21, isFarsi ? { align: 'right' } : undefined);
       
       // Date range
       const dates = petRecords.map(r => r.record_date).filter(Boolean).sort();
       if (dates.length > 0) {
-        const dateRange = language === 'fa'
-          ? `بازه زمانی: ${formatDisplayDate(dates[0]!, language)} تا ${formatDisplayDate(dates[dates.length - 1]!, language)}`
+        const dateRange = isFarsi
+          ? `${formatDisplayDate(dates[dates.length - 1]!, language)} تا ${formatDisplayDate(dates[0]!, language)} :زمانی بازه`
           : `Date Range: ${formatDisplayDate(dates[0]!, language)} to ${formatDisplayDate(dates[dates.length - 1]!, language)}`;
-        doc.text(dateRange, pageWidth / 2, yPos + 15, { align: 'center' });
+        addText(dateRange, pageWidth / 2, yPos + 15, { align: 'center' });
       }
       
       yPos += 35;
@@ -581,8 +605,8 @@ const HealthVault = () => {
       // Timeline header
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
-      const timelineTitle = language === 'fa' ? '📋 تایم‌لاین پرونده‌ها' : '📋 Records Timeline';
-      doc.text(timelineTitle, margin, yPos);
+      const timelineTitle = isFarsi ? 'ها پرونده لاین تایم' : 'Records Timeline';
+      addText(timelineTitle, isFarsi ? pageWidth - margin : margin, yPos, isFarsi ? { align: 'right' } : undefined);
       yPos += 10;
 
       // Process each record with timeline
@@ -607,23 +631,27 @@ const HealthVault = () => {
         // Date badge
         const recordDate = record.record_date 
           ? formatDisplayDate(record.record_date, language)
-          : (language === 'fa' ? 'بدون تاریخ' : 'No date');
+          : (isFarsi ? 'تاریخ بدون' : 'No date');
         doc.setFontSize(8);
         doc.setTextColor(100, 100, 100);
-        doc.text(recordDate, margin + 12, yPos + 2);
+        addText(recordDate, isFarsi ? pageWidth - margin - 12 : margin + 12, yPos + 2, isFarsi ? { align: 'right' } : undefined);
 
         // Record title
         doc.setFontSize(11);
         doc.setTextColor(0, 0, 0);
-        const recordTitle = record.title || (language === 'fa' ? 'بدون عنوان' : 'Untitled');
-        doc.text(recordTitle, margin + 12, yPos + 9);
+        const recordTitle = record.title || (isFarsi ? 'عنوان بدون' : 'Untitled');
+        addText(recordTitle, isFarsi ? pageWidth - margin - 12 : margin + 12, yPos + 9, isFarsi ? { align: 'right' } : undefined);
 
         // Category badge
         const categoryLabel = categories.find(c => c.value === record.category)?.labelKey;
         const categoryText = categoryLabel ? t(categoryLabel) : record.category;
         doc.setFontSize(8);
         doc.setTextColor(80, 80, 80);
-        doc.text(`[${categoryText}]`, margin + 12 + doc.getTextWidth(recordTitle) + 3, yPos + 9);
+        if (isFarsi) {
+          addText(`[${categoryText}]`, pageWidth - margin - 12 - doc.getTextWidth(recordTitle) - 3, yPos + 9);
+        } else {
+          doc.text(`[${categoryText}]`, margin + 12 + doc.getTextWidth(recordTitle) + 3, yPos + 9);
+        }
 
         yPos += 15;
 
@@ -647,9 +675,10 @@ const HealthVault = () => {
               if (record.notes) {
                 doc.setFontSize(8);
                 doc.setTextColor(80, 80, 80);
-                const notesLabel = language === 'fa' ? 'یادداشت:' : 'Notes:';
-                doc.text(notesLabel, margin + 12 + imgWidth + 5, yPos + 5);
+                const notesLabel = isFarsi ? ':یادداشت' : 'Notes:';
+                addText(notesLabel, margin + 12 + imgWidth + 5, yPos + 5);
                 const splitNotes = doc.splitTextToSize(record.notes, pageWidth - margin * 2 - imgWidth - 25);
+                // For RTL, we don't reverse multiline notes as each line should be in order
                 doc.text(splitNotes.slice(0, 4), margin + 12 + imgWidth + 5, yPos + 11);
               }
               
@@ -680,8 +709,8 @@ const HealthVault = () => {
           
           doc.setFontSize(9);
           doc.setTextColor(16, 185, 129);
-          const aiLabel = language === 'fa' ? '🤖 تحلیل هوش مصنوعی' : '🤖 AI Analysis';
-          doc.text(aiLabel, margin + 15, yPos + 7);
+          const aiLabel = isFarsi ? 'مصنوعی هوش تحلیل' : 'AI Analysis';
+          addText(aiLabel, isFarsi ? pageWidth - margin - 15 : margin + 15, yPos + 7, isFarsi ? { align: 'right' } : undefined);
           
           doc.setFontSize(8);
           doc.setTextColor(60, 60, 60);
@@ -703,19 +732,20 @@ const HealthVault = () => {
       // Footer on last page
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
-      const footer = language === 'fa' 
-        ? 'این گزارش توسط اپلیکیشن PetCare تولید شده است | petcare.app'
+      const footer = isFarsi 
+        ? 'petcare.app | است شده تولید PetCare اپلیکیشن توسط گزارش این'
         : 'Generated by PetCare App | petcare.app';
-      doc.text(footer, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      addText(footer, pageWidth / 2, pageHeight - 10, { align: 'center' });
 
       // Add page numbers
       const totalPages = doc.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
+        if (isFarsi) doc.setFont('Vazirmatn');
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
-        const pageText = language === 'fa' ? `صفحه ${i} از ${totalPages}` : `Page ${i} of ${totalPages}`;
-        doc.text(pageText, pageWidth - margin, pageHeight - 10);
+        const pageText = isFarsi ? `${totalPages} از ${i} صفحه` : `Page ${i} of ${totalPages}`;
+        addText(pageText, pageWidth - margin, pageHeight - 10);
       }
 
       // Save the PDF
