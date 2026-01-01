@@ -55,7 +55,7 @@ export const AppSidebar = () => {
           </div>
           {!isCollapsed && (
             <div className={cn("flex flex-col", isRTL && "items-end")}>
-              <span className="font-bold text-lg text-foreground">PetCare</span>
+              <span className="font-bold text-lg text-foreground">{isRTL ? 'ویتاپت' : 'VitaPet'}</span>
               <span className="text-xs text-muted-foreground">{t('auth.subtitle')}</span>
             </div>
           )}
