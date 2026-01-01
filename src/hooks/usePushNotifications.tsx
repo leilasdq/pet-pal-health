@@ -27,8 +27,8 @@ export const usePushNotifications = () => {
     }
   }, [isSupported]);
 
-  const showNotification = useCallback((title: string, options?: NotificationOptions) => {
-    if (!isSupported || permission !== 'granted') return;
+  const showNotification = useCallback((title: string, options?: NotificationOptions): boolean => {
+    if (!isSupported || permission !== 'granted') return false;
     
     try {
       new Notification(title, {
@@ -36,8 +36,10 @@ export const usePushNotifications = () => {
         badge: '/favicon.ico',
         ...options,
       });
+      return true;
     } catch (error) {
       console.error('Error showing notification:', error);
+      return false;
     }
   }, [isSupported, permission]);
 

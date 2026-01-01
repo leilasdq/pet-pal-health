@@ -28,7 +28,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language, setLanguage, isRTL } = useLanguage();
-  const { isSupported: pushSupported, permission: pushPermission, requestPermission } = usePushNotifications();
+  const { isSupported: pushSupported, permission: pushPermission, requestPermission, showNotification, checkDueReminders } = usePushNotifications();
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,6 +132,19 @@ const Profile = () => {
       }
     }
     setPushEnabled(enabled);
+    
+    // Save immediately to database
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ push_notifications_enabled: enabled })
+        .eq('id', user.id);
+      
+      toast({ 
+        title: enabled ? t('profile.pushEnabled') : t('profile.pushDisabled'),
+        description: ''
+      });
+    }
   };
 
   const handleTestEmail = async () => {
@@ -171,6 +184,25 @@ const Profile = () => {
         .from('profiles')
         .update({ preferred_language: lang })
         .eq('id', user.id);
+    }
+  };
+
+  const handleTestPush = () => {
+    const success = showNotification('🐾 PetCare Test', {
+      body: t('profile.testPushSent'),
+      tag: 'petcare-test',
+    });
+    
+    if (success) {
+      toast({ 
+        title: t('profile.testPushSent'),
+        description: ''
+      });
+    } else {
+      toast({ 
+        title: t('profile.testPushError'),
+        variant: 'destructive'
+      });
     }
   };
 
@@ -324,25 +356,45 @@ const Profile = () => {
               </p>
             )}
 
-            {/* Test Email Button */}
-            <div className="pt-2 border-t border-border">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTestEmail}
-                disabled={sendingTestEmail}
-                className="w-full"
-              >
-                {sendingTestEmail ? (
-                  <Loader2 className="w-4 h-4 animate-spin me-2" />
-                ) : (
-                  <Send className="w-4 h-4 me-2" />
-                )}
-                {t('profile.testEmail')}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                {t('profile.testEmailDesc')}
-              </p>
+            {/* Test Buttons */}
+            <div className="pt-2 border-t border-border space-y-3">
+              {/* Test Push Button */}
+              <div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestPush}
+                  disabled={!pushSupported || pushPermission !== 'granted'}
+                  className="w-full"
+                >
+                  <BellRing className="w-4 h-4 me-2" />
+                  {t('profile.testPush')}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1 text-center">
+                  {t('profile.testPushDesc')}
+                </p>
+              </div>
+
+              {/* Test Email Button */}
+              <div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestEmail}
+                  disabled={sendingTestEmail}
+                  className="w-full"
+                >
+                  {sendingTestEmail ? (
+                    <Loader2 className="w-4 h-4 animate-spin me-2" />
+                  ) : (
+                    <Send className="w-4 h-4 me-2" />
+                  )}
+                  {t('profile.testEmail')}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1 text-center">
+                  {t('profile.testEmailDesc')}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
