@@ -4,14 +4,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send, Crown } from 'lucide-react';
+import { User, Mail, LogOut, Loader2, PawPrint, Save, Heart, Globe, Bell, BellRing, Send, Crown, ChevronRight, Settings } from 'lucide-react';
 import { formatNumber } from '@/lib/dateUtils';
 
 interface Profile {
@@ -28,7 +28,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language, setLanguage, isRTL } = useLanguage();
-  const { isSupported: pushSupported, permission: pushPermission, requestPermission, showNotification, checkDueReminders } = usePushNotifications();
+  const { isSupported: pushSupported, permission: pushPermission, requestPermission, showNotification } = usePushNotifications();
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +38,7 @@ const Profile = () => {
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [stats, setStats] = useState({ pets: 0, records: 0, reminders: 0 });
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -133,7 +134,6 @@ const Profile = () => {
     }
     setPushEnabled(enabled);
     
-    // Save immediately to database
     if (user) {
       await supabase
         .from('profiles')
@@ -153,21 +153,18 @@ const Profile = () => {
       const { data, error } = await supabase.functions.invoke('send-reminder-email');
       
       if (error) {
-        console.error('Error sending test email:', error);
         toast({ 
           title: t('common.error'), 
           description: t('profile.testEmailError'),
           variant: 'destructive' 
         });
       } else {
-        console.log('Test email result:', data);
         toast({ 
           title: t('profile.testEmailSent'), 
           description: data?.message || t('profile.testEmailSentDesc')
         });
       }
     } catch (err) {
-      console.error('Error:', err);
       toast({ 
         title: t('common.error'), 
         description: t('profile.testEmailError'),
@@ -188,10 +185,8 @@ const Profile = () => {
   };
 
   const handleTestPush = async () => {
-    // Check current permission
     let currentPermission = 'Notification' in window ? Notification.permission : 'denied';
     
-    // Request permission if not yet decided
     if (currentPermission === 'default') {
       const granted = await requestPermission();
       if (!granted) {
@@ -202,11 +197,9 @@ const Profile = () => {
         });
         return;
       }
-      // Re-check permission after request
       currentPermission = Notification.permission;
     }
     
-    // Check if denied
     if (currentPermission !== 'granted') {
       toast({ 
         title: t('profile.pushPermissionDenied'),
@@ -222,15 +215,9 @@ const Profile = () => {
     });
     
     if (success) {
-      toast({ 
-        title: t('profile.testPushSent'),
-        description: ''
-      });
+      toast({ title: t('profile.testPushSent'), description: '' });
     } else {
-      toast({ 
-        title: t('profile.testPushError'),
-        variant: 'destructive'
-      });
+      toast({ title: t('profile.testPushError'), variant: 'destructive' });
     }
   };
 
@@ -251,242 +238,186 @@ const Profile = () => {
 
   return (
     <AppLayout>
-      <div className="px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <div className="w-24 h-24 rounded-full bg-gradient-primary mx-auto flex items-center justify-center mb-4 shadow-glow">
-            <User className="w-12 h-12 text-primary-foreground" />
+      <div className="px-4 py-6 max-w-lg mx-auto space-y-6">
+        {/* Profile Header */}
+        <div className="text-center pb-2">
+          <div className="w-20 h-20 rounded-full bg-gradient-primary mx-auto flex items-center justify-center mb-3 shadow-glow">
+            <User className="w-10 h-10 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold">{profile?.full_name || 'Pet Parent'}</h1>
-          <p className="text-muted-foreground text-sm flex items-center justify-center gap-1">
-            <Mail className="w-4 h-4" />
-            {profile?.email || user?.email}
-          </p>
+          <h1 className="text-xl font-bold">{profile?.full_name || 'Pet Parent'}</h1>
+          <p className="text-muted-foreground text-sm">{profile?.email || user?.email}</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card 
-            className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
-            onClick={() => navigate('/dashboard')}
-          >
-            <CardContent className="py-4">
-              <PawPrint className="w-6 h-6 mx-auto text-primary mb-1" />
-              <p className="text-2xl font-bold">{formatNumber(stats.pets, language)}</p>
-              <p className="text-xs text-muted-foreground">{t('profile.pets')}</p>
-            </CardContent>
-          </Card>
-          <Card 
-            className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
-            onClick={() => navigate('/vault')}
-          >
-            <CardContent className="py-4">
-              <Heart className="w-6 h-6 mx-auto text-destructive mb-1" />
-              <p className="text-2xl font-bold">{formatNumber(stats.records, language)}</p>
-              <p className="text-xs text-muted-foreground">{t('profile.records')}</p>
-            </CardContent>
-          </Card>
-          <Card 
-            className="card-elevated text-center cursor-pointer hover:border-primary/50 transition-all"
-            onClick={() => navigate('/reminders')}
-          >
-            <CardContent className="py-4">
-              <Bell className="w-6 h-6 mx-auto text-secondary mb-1" />
-              <p className="text-2xl font-bold">{formatNumber(stats.reminders, language)}</p>
-              <p className="text-xs text-muted-foreground">{t('profile.reminders')}</p>
-            </CardContent>
-          </Card>
+        {/* Quick Stats - Compact */}
+        <div className="flex justify-center gap-8 py-3 border-y border-border/50">
+          <button onClick={() => navigate('/dashboard')} className="text-center hover:opacity-70 transition-opacity">
+            <p className="text-xl font-bold text-primary">{formatNumber(stats.pets, language)}</p>
+            <p className="text-xs text-muted-foreground">{t('profile.pets')}</p>
+          </button>
+          <button onClick={() => navigate('/vault')} className="text-center hover:opacity-70 transition-opacity">
+            <p className="text-xl font-bold text-primary">{formatNumber(stats.records, language)}</p>
+            <p className="text-xs text-muted-foreground">{t('profile.records')}</p>
+          </button>
+          <button onClick={() => navigate('/reminders')} className="text-center hover:opacity-70 transition-opacity">
+            <p className="text-xl font-bold text-primary">{formatNumber(stats.reminders, language)}</p>
+            <p className="text-xs text-muted-foreground">{t('profile.reminders')}</p>
+          </button>
         </div>
 
-        {/* Subscription */}
-        <Card 
-          className="card-elevated cursor-pointer hover:border-primary/50 transition-all"
-          onClick={() => navigate('/subscription')}
-        >
-          <CardContent className="py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
-                <Crown className="w-5 h-5 text-primary" />
+        {/* Menu Items */}
+        <Card className="card-elevated overflow-hidden">
+          <CardContent className="p-0 divide-y divide-border/50">
+            {/* Subscription */}
+            <button 
+              onClick={() => navigate('/subscription')}
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                </div>
+                <span className="font-medium">{language === 'fa' ? 'اشتراک و پلن‌ها' : 'Subscription'}</span>
               </div>
-              <div>
-                <p className="font-medium">{language === 'fa' ? 'اشتراک و پلن‌ها' : 'Subscription & Plans'}</p>
-                <p className="text-xs text-muted-foreground">
-                  {language === 'fa' ? 'مدیریت اشتراک و سقف استفاده AI' : 'Manage subscription & AI limits'}
-                </p>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon">
-              <span className={language === 'fa' ? 'rotate-180' : ''}>→</span>
-            </Button>
-          </CardContent>
-        </Card>
+              <ChevronRight className={`w-4 h-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
+            </button>
 
-        {/* Language Toggle */}
-        <Card className="card-elevated">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              {t('profile.language')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleLanguageChange('en')}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  language === 'en'
-                    ? 'border-primary bg-primary-soft'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <span className="text-2xl mb-1 block">🇬🇧</span>
-                <span className="font-medium">{t('profile.english')}</span>
-              </button>
-              <button
-                onClick={() => handleLanguageChange('fa')}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  language === 'fa'
-                    ? 'border-primary bg-primary-soft'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <span className="text-2xl mb-1 block">🇮🇷</span>
-                <span className="font-medium font-vazirmatn">{t('profile.persian')}</span>
-              </button>
+            {/* Language */}
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <Globe className="w-4 h-4 text-blue-500" />
+                </div>
+                <span className="font-medium">{t('profile.language')}</span>
+              </div>
+              <div className="flex gap-2 ms-12">
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                    language === 'en'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted hover:bg-muted/80'
+                  }`}
+                >
+                  🇬🇧 English
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('fa')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium font-vazirmatn transition-all ${
+                    language === 'fa'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted hover:bg-muted/80'
+                  }`}
+                >
+                  🇮🇷 فارسی
+                </button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Notification Settings */}
-        <Card className="card-elevated">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              {t('profile.notifications')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Push Notifications */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="flex items-center gap-2">
-                  <BellRing className="w-4 h-4" />
-                  {t('profile.pushNotifications')}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('profile.pushNotificationsDesc')}
-                </p>
+            {/* Notifications Toggle */}
+            <div className="p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <Bell className="w-4 h-4 text-green-500" />
+                </div>
+                <span className="font-medium">{t('profile.notifications')}</span>
               </div>
-              <Switch
-                checked={pushEnabled}
-                onCheckedChange={handlePushToggle}
-                disabled={!pushSupported}
-              />
-            </div>
-            
-            {/* Email Notifications */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  {t('profile.emailNotifications')}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('profile.emailNotificationsDesc')}
-                </p>
+              <div className="ms-12 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">{t('profile.pushNotifications')}</span>
+                  <Switch
+                    checked={pushEnabled}
+                    onCheckedChange={handlePushToggle}
+                    disabled={!pushSupported}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">{t('profile.emailNotifications')}</span>
+                  <Switch
+                    checked={emailEnabled}
+                    onCheckedChange={setEmailEnabled}
+                  />
+                </div>
               </div>
-              <Switch
-                checked={emailEnabled}
-                onCheckedChange={setEmailEnabled}
-              />
             </div>
-            
-            {!pushSupported && (
-              <p className="text-xs text-muted-foreground">
-                {t('profile.pushNotSupported')}
-              </p>
+
+            {/* Settings - Expandable */}
+            <button 
+              onClick={() => setShowSettings(!showSettings)}
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-gray-500/10 flex items-center justify-center">
+                  <Settings className="w-4 h-4 text-gray-500" />
+                </div>
+                <span className="font-medium">{t('profile.editProfile')}</span>
+              </div>
+              <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${showSettings ? 'rotate-90' : ''} ${isRTL && !showSettings ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showSettings && (
+              <div className="p-4 bg-muted/30">
+                <form onSubmit={handleSave} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="full-name" className="text-sm">{t('profile.fullName')}</Label>
+                    <Input
+                      id="full-name"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      placeholder={isRTL ? "مثلاً: علی احمدی" : "John Doe"}
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                      className="h-10"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">{t('profile.email')}</Label>
+                    <Input
+                      value={user?.email || ''}
+                      disabled
+                      className="bg-muted h-10"
+                    />
+                  </div>
+                  <Button type="submit" size="sm" className="w-full" disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Save className="w-4 h-4 me-2" />}
+                    {t('profile.save')}
+                  </Button>
+                </form>
+
+                {/* Test Buttons - Compact */}
+                <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestPush}
+                    disabled={!pushSupported || pushPermission !== 'granted'}
+                    className="flex-1 text-xs"
+                  >
+                    <BellRing className="w-3 h-3 me-1" />
+                    {t('profile.testPush')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestEmail}
+                    disabled={sendingTestEmail}
+                    className="flex-1 text-xs"
+                  >
+                    {sendingTestEmail ? (
+                      <Loader2 className="w-3 h-3 animate-spin me-1" />
+                    ) : (
+                      <Send className="w-3 h-3 me-1" />
+                    )}
+                    {t('profile.testEmail')}
+                  </Button>
+                </div>
+              </div>
             )}
-
-            {/* Test Buttons */}
-            <div className="pt-2 border-t border-border space-y-3">
-              {/* Test Push Button */}
-              <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTestPush}
-                  disabled={!pushSupported || pushPermission !== 'granted'}
-                  className="w-full"
-                >
-                  <BellRing className="w-4 h-4 me-2" />
-                  {t('profile.testPush')}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1 text-center">
-                  {t('profile.testPushDesc')}
-                </p>
-              </div>
-
-              {/* Test Email Button */}
-              <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTestEmail}
-                  disabled={sendingTestEmail}
-                  className="w-full"
-                >
-                  {sendingTestEmail ? (
-                    <Loader2 className="w-4 h-4 animate-spin me-2" />
-                  ) : (
-                    <Send className="w-4 h-4 me-2" />
-                  )}
-                  {t('profile.testEmail')}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1 text-center">
-                  {t('profile.testEmailDesc')}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Edit Profile */}
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle className="text-lg">{t('profile.editProfile')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="full-name">{t('profile.fullName')}</Label>
-                <Input
-                  id="full-name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder={isRTL ? "مثلاً: علی احمدی" : "John Doe"}
-                  dir={isRTL ? 'rtl' : 'ltr'}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('profile.email')}</Label>
-                <Input
-                  value={user?.email || ''}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Save className="w-4 h-4 me-2" />}
-                {t('profile.save')}
-              </Button>
-            </form>
           </CardContent>
         </Card>
 
         {/* Sign Out */}
         <Button 
-          variant="outline" 
-          className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
+          variant="ghost" 
+          className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
           onClick={handleSignOut}
         >
           <LogOut className="w-4 h-4 me-2" />
@@ -494,10 +425,7 @@ const Profile = () => {
         </Button>
 
         {/* App Info */}
-        <div className="text-center text-xs text-muted-foreground pt-4">
-          <p>PetCare v1.0.0</p>
-          <p>Made with ❤️ for pet parents</p>
-        </div>
+        <p className="text-center text-xs text-muted-foreground">PetCare v1.0.0</p>
       </div>
     </AppLayout>
   );
