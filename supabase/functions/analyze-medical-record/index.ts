@@ -9,7 +9,6 @@ const corsHeaders = {
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,89 +20,53 @@ serve(async (req) => {
 
     const isFarsi = language === 'fa';
 
-    // Build context about the record
-    let recordContext = '';
-    if (record_title) recordContext += `Title: ${record_title}\n`;
-    if (record_category) {
-      const categoryMap: Record<string, string> = {
-        medical_test: 'Medical Test / Blood Work',
-        prescription: 'Prescription',
-        passport: 'Pet Passport/ID',
-      };
-      recordContext += `Type: ${categoryMap[record_category] || record_category}\n`;
-    }
-    if (record_notes) recordContext += `Notes: ${record_notes}\n`;
-    if (pet_name) recordContext += `Pet Name: ${pet_name}\n`;
-    if (pet_type) recordContext += `Pet Type: ${pet_type}\n`;
-
     const systemPrompt = isFarsi 
-      ? `شما یک دستیار دامپزشکی هوشمند هستید. وظیفه شما تحلیل دقیق مدارک پزشکی حیوانات خانگی است.
+      ? `تحلیلگر مختصر مدارک پزشکی حیوانات.
 
-دستورالعمل‌های تحلیل:
+قوانین:
+1. فقط مقادیر غیرنرمال را بنویس
+2. برای هر مورد غیرنرمال: نام | مقدار | 🔴بالا یا 🔵پایین
+3. یک جمله کوتاه در آخر بگو چه چیزی مهم است
+4. حداکثر ۱۰۰ کلمه
 
-برای آزمایش خون یا آزمایشات:
-- تمام مقادیر را از تصویر بخوانید
-- برای هر مقدار بنویسید: نام آزمایش | مقدار | واحد | وضعیت
-- وضعیت‌ها: 🔴 بالا | 🔵 پایین | ✅ نرمال
-- برای مقادیر غیرنرمال توضیح کوتاه بدهید
+مثال خروجی:
+**مقادیر غیرنرمال:**
+• HGB: 17.5 g/dL 🔴بالا
+• HCT: 56% 🔴بالا
+• MCHC: 31.3 g/dL 🔵پایین
 
-برای نسخه دارو:
-- لیست داروها با دوز و دستور مصرف
-- هشدارهای مهم
+**خلاصه:** هموگلوبین و هماتوکریت بالا ممکن است نشانه کم‌آبی باشد. مراجعه به دامپزشک توصیه می‌شود.`
+      : `Concise pet medical document analyzer.
 
-برای پاسپورت/شناسنامه:
-- واکسیناسیون‌ها با تاریخ
-- تاریخ‌های مهم آینده
+Rules:
+1. List ONLY abnormal values
+2. For each: Name | Value | 🔴High or 🔵Low
+3. One short summary sentence at the end
+4. Maximum 100 words
 
-مهم: مستقیماً تحلیل را بنویسید. جمله مقدماتی ننویسید. فقط نتایج.
+Example output:
+**Abnormal Values:**
+• HGB: 17.5 g/dL 🔴High
+• HCT: 56% 🔴High
+• MCHC: 31.3 g/dL 🔵Low
 
-⚠️ در انتها یادآوری کنید: برای تفسیر دقیق به دامپزشک مراجعه کنید.`
-      : `You are an intelligent veterinary assistant. Your task is to accurately analyze pet medical documents.
+**Summary:** Elevated hemoglobin and hematocrit may indicate dehydration. Consult your vet.`;
 
-Analysis instructions:
-
-For blood tests or lab work:
-- Read ALL values from the image
-- For each value write: Test Name | Value | Unit | Status
-- Status: 🔴 High | 🔵 Low | ✅ Normal
-- Provide brief explanation for abnormal values
-
-For prescriptions:
-- List medications with dosage and instructions
-- Important warnings
-
-For passport/ID:
-- Vaccinations with dates
-- Important future dates
-
-Important: Write the analysis directly. No introductory sentences. Just results.
-
-⚠️ End with reminder: Consult a vet for accurate interpretation.`;
-
-    // Build messages with image if available
     const userContent: any[] = [];
     
     if (image_url) {
       userContent.push({
         type: "image_url",
-        image_url: {
-          url: image_url
-        }
+        image_url: { url: image_url }
       });
     }
     
     const textPrompt = isFarsi
-      ? `این مدرک پزشکی را تحلیل کن. تمام مقادیر را بخوان و وضعیت هر کدام را مشخص کن:\n\n${recordContext}`
-      : `Analyze this medical document. Read all values and indicate the status of each:\n\n${recordContext}`;
+      ? `فقط مقادیر غیرنرمال را لیست کن. مختصر باش.`
+      : `List only abnormal values. Be concise.`;
     
-    userContent.push({
-      type: "text",
-      text: textPrompt
-    });
+    userContent.push({ type: "text", text: textPrompt });
 
-    console.log('Sending request to Lovable AI Gateway with vision...');
-
-    // Use gemini-2.5-pro for better vision analysis with higher token limit
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -111,13 +74,13 @@ Important: Write the analysis directly. No introductory sentences. Just results.
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userContent },
         ],
-        max_tokens: 2048, // Increased for complete analysis
-        temperature: 0.2, // Lower temperature for more accurate reading
+        max_tokens: 512,
+        temperature: 0.1,
       }),
     });
 
@@ -127,24 +90,14 @@ Important: Write the analysis directly. No introductory sentences. Just results.
       
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ 
-            error: 'Rate limit exceeded', 
-            analysis: isFarsi 
-              ? 'متأسفانه درخواست‌های زیادی ارسال شده. لطفاً کمی صبر کنید.' 
-              : 'Too many requests. Please wait a moment.' 
-          }),
+          JSON.stringify({ error: 'Rate limit exceeded', analysis: isFarsi ? 'لطفاً کمی صبر کنید.' : 'Please wait a moment.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ 
-            error: 'Payment required', 
-            analysis: isFarsi 
-              ? 'سرویس AI موقتاً در دسترس نیست.' 
-              : 'AI service temporarily unavailable.' 
-          }),
+          JSON.stringify({ error: 'Payment required', analysis: isFarsi ? 'سرویس موقتاً در دسترس نیست.' : 'Service temporarily unavailable.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -153,24 +106,16 @@ Important: Write the analysis directly. No introductory sentences. Just results.
     }
 
     const data = await response.json();
-    console.log('AI Response received, choices:', data.choices?.length);
-    
     const analysis = data.choices?.[0]?.message?.content;
-    console.log('Analysis length:', analysis?.length || 0);
 
-    if (!analysis || analysis.length < 50) {
-      console.error('Analysis too short or empty:', analysis);
+    if (!analysis) {
       return new Response(
-        JSON.stringify({ 
-          analysis: isFarsi 
-            ? 'متأسفم، تصویر به درستی خوانده نشد. لطفاً مطمئن شوید تصویر واضح است و دوباره امتحان کنید.' 
-            : 'Sorry, the image could not be read properly. Please ensure the image is clear and try again.' 
-        }),
+        JSON.stringify({ analysis: isFarsi ? 'تصویر خوانا نبود.' : 'Image not readable.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Analysis completed successfully');
+    console.log('Analysis completed, length:', analysis.length);
 
     return new Response(
       JSON.stringify({ analysis }),
@@ -178,17 +123,10 @@ Important: Write the analysis directly. No introductory sentences. Just results.
     );
 
   } catch (error) {
-    console.error('Error in analyze-medical-record:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: errorMessage,
-        analysis: 'خطایی رخ داد. لطفاً دوباره امتحان کنید. 🙏'
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error', analysis: 'خطا رخ داد.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
