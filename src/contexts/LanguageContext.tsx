@@ -270,6 +270,9 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.expired': 'Expired',
     'admin.pending': 'Pending',
     'admin.noInvites': 'No pending invites',
+    'admin.editRecord': 'Edit Record',
+    'admin.recordUpdated': 'Record updated successfully',
+    'admin.noChanges': 'No changes to save',
   },
   fa: {
     // Navigation
@@ -532,6 +535,9 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.expired': 'منقضی شده',
     'admin.pending': 'در انتظار',
     'admin.noInvites': 'دعوتنامه‌ای در انتظار نیست',
+    'admin.editRecord': 'ویرایش رکورد',
+    'admin.recordUpdated': 'رکورد با موفقیت بروزرسانی شد',
+    'admin.noChanges': 'تغییری برای ذخیره وجود ندارد',
   },
 };
 
