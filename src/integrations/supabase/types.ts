@@ -122,6 +122,8 @@ export type Database = {
       }
       medical_records: {
         Row: {
+          ai_analysis: string | null
+          ai_analyzed_at: string | null
           category: string
           created_at: string
           id: string
@@ -132,6 +134,8 @@ export type Database = {
           title: string | null
         }
         Insert: {
+          ai_analysis?: string | null
+          ai_analyzed_at?: string | null
           category: string
           created_at?: string
           id?: string
@@ -142,6 +146,8 @@ export type Database = {
           title?: string | null
         }
         Update: {
+          ai_analysis?: string | null
+          ai_analyzed_at?: string | null
           category?: string
           created_at?: string
           id?: string
