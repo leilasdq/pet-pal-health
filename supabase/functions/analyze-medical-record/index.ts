@@ -37,46 +37,48 @@ serve(async (req) => {
     if (pet_type) recordContext += `Pet Type: ${pet_type}\n`;
 
     const systemPrompt = isFarsi 
-      ? `شما یک دستیار دامپزشکی هوشمند هستید که به تحلیل مدارک پزشکی حیوانات خانگی کمک می‌کنید.
+      ? `شما یک دستیار دامپزشکی هوشمند هستید. وظیفه شما تحلیل دقیق مدارک پزشکی حیوانات خانگی است.
 
-⚠️ هشدار مهم: این تحلیل صرفاً جنبه آموزشی دارد و جایگزین مشاوره دامپزشک نیست!
+دستورالعمل‌های تحلیل:
 
-وظیفه شما:
-1. تصویر مدرک پزشکی را با دقت بررسی کنید
-2. اگر آزمایش خون یا آزمایش دیگری است:
-   - مقادیر را بخوانید و شناسایی کنید
-   - مقادیری که بالاتر از حد نرمال هستند را با 🔴 مشخص کنید
-   - مقادیری که پایین‌تر از حد نرمال هستند را با 🔵 مشخص کنید
-   - مقادیر نرمال را با ✅ نشان دهید
-   - توضیح دهید هر مقدار غیرنرمال چه معنایی می‌تواند داشته باشد
-3. اگر نسخه دارو است، داروها را لیست کنید و نکات مهم مصرف را بگویید
-4. اگر پاسپورت/شناسنامه است، اطلاعات مهم مثل واکسیناسیون‌ها را خلاصه کنید
+برای آزمایش خون یا آزمایشات:
+- تمام مقادیر را از تصویر بخوانید
+- برای هر مقدار بنویسید: نام آزمایش | مقدار | واحد | وضعیت
+- وضعیت‌ها: 🔴 بالا | 🔵 پایین | ✅ نرمال
+- برای مقادیر غیرنرمال توضیح کوتاه بدهید
 
-فرمت پاسخ:
-- ساختارمند و خوانا
-- استفاده از ایموجی برای وضوح
-- اگر متن تصویر خوانا نیست، صادقانه بگویید
-- پایان با یادآوری مراجعه به دامپزشک برای تفسیر دقیق`
-      : `You are an intelligent veterinary assistant helping to analyze pet medical records.
+برای نسخه دارو:
+- لیست داروها با دوز و دستور مصرف
+- هشدارهای مهم
 
-⚠️ Important: This analysis is for educational purposes only and does NOT replace professional veterinary advice!
+برای پاسپورت/شناسنامه:
+- واکسیناسیون‌ها با تاریخ
+- تاریخ‌های مهم آینده
 
-Your task:
-1. Carefully examine the medical document image
-2. If it's a blood test or lab work:
-   - Read and identify the values
-   - Mark values ABOVE normal range with 🔴
-   - Mark values BELOW normal range with 🔵
-   - Mark normal values with ✅
-   - Explain what each abnormal value could mean
-3. If it's a prescription, list the medications and important usage notes
-4. If it's a passport/ID, summarize important info like vaccinations
+مهم: مستقیماً تحلیل را بنویسید. جمله مقدماتی ننویسید. فقط نتایج.
 
-Response format:
-- Structured and readable
-- Use emojis for clarity
-- If the text in the image is not readable, honestly say so
-- End with a reminder to consult a vet for accurate interpretation`;
+⚠️ در انتها یادآوری کنید: برای تفسیر دقیق به دامپزشک مراجعه کنید.`
+      : `You are an intelligent veterinary assistant. Your task is to accurately analyze pet medical documents.
+
+Analysis instructions:
+
+For blood tests or lab work:
+- Read ALL values from the image
+- For each value write: Test Name | Value | Unit | Status
+- Status: 🔴 High | 🔵 Low | ✅ Normal
+- Provide brief explanation for abnormal values
+
+For prescriptions:
+- List medications with dosage and instructions
+- Important warnings
+
+For passport/ID:
+- Vaccinations with dates
+- Important future dates
+
+Important: Write the analysis directly. No introductory sentences. Just results.
+
+⚠️ End with reminder: Consult a vet for accurate interpretation.`;
 
     // Build messages with image if available
     const userContent: any[] = [];
@@ -91,8 +93,8 @@ Response format:
     }
     
     const textPrompt = isFarsi
-      ? `لطفاً این مدرک پزشکی را با دقت تحلیل کنید. اگر آزمایش است، مقادیر را بخوانید و بگویید کدام‌ها نرمال، بالا یا پایین هستند:\n\n${recordContext}`
-      : `Please carefully analyze this medical document. If it's a test, read the values and indicate which are normal, high, or low:\n\n${recordContext}`;
+      ? `این مدرک پزشکی را تحلیل کن. تمام مقادیر را بخوان و وضعیت هر کدام را مشخص کن:\n\n${recordContext}`
+      : `Analyze this medical document. Read all values and indicate the status of each:\n\n${recordContext}`;
     
     userContent.push({
       type: "text",
@@ -101,7 +103,7 @@ Response format:
 
     console.log('Sending request to Lovable AI Gateway with vision...');
 
-    // Use gemini-2.5-pro for better vision analysis
+    // Use gemini-2.5-pro for better vision analysis with higher token limit
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -114,14 +116,14 @@ Response format:
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userContent },
         ],
-        max_tokens: 1024,
-        temperature: 0.3, // Lower temperature for more accurate reading
+        max_tokens: 2048, // Increased for complete analysis
+        temperature: 0.2, // Lower temperature for more accurate reading
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', errorText);
+      console.error('AI Gateway error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -151,9 +153,22 @@ Response format:
     }
 
     const data = await response.json();
-    const analysis = data.choices?.[0]?.message?.content || (isFarsi 
-      ? 'متأسفم، نتوانستم تحلیل کنم. لطفاً دوباره امتحان کنید.' 
-      : 'Sorry, I couldn\'t analyze this. Please try again.');
+    console.log('AI Response received, choices:', data.choices?.length);
+    
+    const analysis = data.choices?.[0]?.message?.content;
+    console.log('Analysis length:', analysis?.length || 0);
+
+    if (!analysis || analysis.length < 50) {
+      console.error('Analysis too short or empty:', analysis);
+      return new Response(
+        JSON.stringify({ 
+          analysis: isFarsi 
+            ? 'متأسفم، تصویر به درستی خوانده نشد. لطفاً مطمئن شوید تصویر واضح است و دوباره امتحان کنید.' 
+            : 'Sorry, the image could not be read properly. Please ensure the image is clear and try again.' 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('Analysis completed successfully');
 
