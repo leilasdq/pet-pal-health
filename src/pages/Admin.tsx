@@ -14,8 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Download, UserPlus, Trash2, Edit, Shield, Users, Database } from 'lucide-react';
+import { Loader2, Download, UserPlus, Trash2, Edit, Shield, Users, Database, Plus } from 'lucide-react';
 import { EditRecordDialog } from '@/components/admin/EditRecordDialog';
+import { CreateRecordDialog } from '@/components/admin/CreateRecordDialog';
 
 type TableName = 'profiles' | 'pets' | 'reminders' | 'medical_records' | 'conversations' | 'chat_messages' | 'ai_usage' | 'payments' | 'user_subscriptions' | 'promo_codes' | 'promo_code_usage' | 'subscription_tiers' | 'user_roles' | 'admin_invites';
 
@@ -50,6 +51,7 @@ const Admin = () => {
   const [admins, setAdmins] = useState<UserRole[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Record<string, any> | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Fetch table data
   const fetchTableData = async (tableName: TableName) => {
@@ -201,11 +203,23 @@ const Admin = () => {
     }
   };
 
+  // Create record
+  const handleCreateRecord = async (data: Record<string, any>) => {
+    try {
+      const { error } = await supabase.from(activeTable).insert([data] as any);
+      if (error) throw error;
+      fetchTableData(activeTable);
+      toast({ title: t('admin.recordCreated') });
+    } catch (error: any) {
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    }
+  };
+
   // Export all data
   const handleExportData = async () => {
     setLoading(true);
     try {
-      const tables: TableName[] = ['profiles', 'pets', 'reminders', 'medical_records', 'conversations', 'user_roles', 'admin_invites'];
+      const tables: TableName[] = ['profiles', 'pets', 'reminders', 'medical_records', 'conversations', 'chat_messages', 'ai_usage', 'payments', 'user_subscriptions', 'promo_codes', 'promo_code_usage', 'subscription_tiers', 'user_roles', 'admin_invites'];
       const exportData: Record<string, any[]> = {};
 
       for (const table of tables) {
@@ -302,9 +316,15 @@ const Admin = () => {
 
           <TabsContent value="database">
             <Card>
-              <CardHeader>
-                <CardTitle>{t('admin.databaseTables')}</CardTitle>
-                <CardDescription>{t('admin.databaseDesc')}</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>{t('admin.databaseTables')}</CardTitle>
+                  <CardDescription>{t('admin.databaseDesc')}</CardDescription>
+                </div>
+                <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  {t('admin.createRecord')}
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -532,6 +552,13 @@ const Admin = () => {
           record={editingRecord}
           tableName={activeTable}
           onSave={handleUpdateRecord}
+        />
+
+        <CreateRecordDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          tableName={activeTable}
+          onSave={handleCreateRecord}
         />
       </div>
     </AppLayout>

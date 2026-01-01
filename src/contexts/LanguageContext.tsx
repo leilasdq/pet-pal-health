@@ -273,6 +273,8 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.editRecord': 'Edit Record',
     'admin.recordUpdated': 'Record updated successfully',
     'admin.noChanges': 'No changes to save',
+    'admin.createRecord': 'Create Record',
+    'admin.recordCreated': 'Record created successfully',
   },
   fa: {
     // Navigation
@@ -538,6 +540,8 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.editRecord': 'ویرایش رکورد',
     'admin.recordUpdated': 'رکورد با موفقیت بروزرسانی شد',
     'admin.noChanges': 'تغییری برای ذخیره وجود ندارد',
+    'admin.createRecord': 'ایجاد رکورد',
+    'admin.recordCreated': 'رکورد با موفقیت ایجاد شد',
   },
 };
 
