@@ -327,7 +327,10 @@ const HealthVault = () => {
     }
 
     setAnalyzing(true);
-    setAiAnalysis(null);
+    // Clear the local aiAnalysis state to show loading
+    if (forceRegenerate) {
+      setAiAnalysis(null);
+    }
     setReminderSuggestion(null);
     
     try {
@@ -350,30 +353,38 @@ const HealthVault = () => {
       if (error) throw error;
       
       const analysisText = data.analysis;
-      setAiAnalysis(analysisText);
       
       if (data.reminderSuggestion) {
         setReminderSuggestion(data.reminderSuggestion);
       }
+
+      const analyzedAt = new Date().toISOString();
 
       // Save the analysis to the database
       await supabase
         .from('medical_records')
         .update({
           ai_analysis: analysisText,
-          ai_analyzed_at: new Date().toISOString(),
+          ai_analyzed_at: analyzedAt,
         })
         .eq('id', record.id);
 
-      // Update local state
+      // Update local aiAnalysis state - this is what's displayed
+      setAiAnalysis(analysisText);
+
+      // Update records list
       setRecords(prev => prev.map(r => 
         r.id === record.id 
-          ? { ...r, ai_analysis: analysisText, ai_analyzed_at: new Date().toISOString() }
+          ? { ...r, ai_analysis: analysisText, ai_analyzed_at: analyzedAt }
           : r
       ));
-      if (viewingRecord?.id === record.id) {
-        setViewingRecord({ ...record, ai_analysis: analysisText, ai_analyzed_at: new Date().toISOString() });
-      }
+      
+      // Update viewingRecord using functional update to get latest state
+      setViewingRecord(prev => 
+        prev && prev.id === record.id 
+          ? { ...prev, ai_analysis: analysisText, ai_analyzed_at: analyzedAt }
+          : prev
+      );
     } catch (error) {
       console.error('AI Analysis error:', error);
       toast({ 
