@@ -18,7 +18,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.profile': 'Profile',
     
     // Auth
-    'auth.welcome': 'Welcome to PetCare',
+    'auth.welcome': 'Welcome to VitaPet',
     'auth.subtitle': 'Your pet\'s health companion',
     'auth.signIn': 'Sign In',
     'auth.signUp': 'Sign Up',
@@ -33,7 +33,7 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.signInSuccess': 'You have successfully signed in.',
     'auth.invalidCredentials': 'Invalid email or password. Please try again.',
     'auth.accountCreated': 'Account created!',
-    'auth.signUpSuccess': 'Welcome to PetCare! You can now sign in.',
+    'auth.signUpSuccess': 'Welcome to VitaPet! You can now sign in.',
     'auth.emailAlreadyRegistered': 'This email is already registered. Please sign in instead.',
     
     // Dashboard
@@ -284,7 +284,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.profile': 'پروفایل',
     
     // Auth
-    'auth.welcome': 'به پت‌کر خوش آمدید',
+    'auth.welcome': 'به ویتاپت خوش آمدید',
     'auth.subtitle': 'همراه سلامت پت شما',
     'auth.signIn': 'ورود',
     'auth.signUp': 'ثبت نام',
@@ -299,7 +299,7 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.signInSuccess': 'با موفقیت وارد شدید.',
     'auth.invalidCredentials': 'ایمیل یا رمز عبور اشتباه است. لطفاً دوباره تلاش کنید.',
     'auth.accountCreated': 'حساب ایجاد شد!',
-    'auth.signUpSuccess': 'به پت‌پل خوش آمدید! اکنون می‌توانید وارد شوید.',
+    'auth.signUpSuccess': 'به ویتاپت خوش آمدید! اکنون می‌توانید وارد شوید.',
     'auth.emailAlreadyRegistered': 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.',
     
     // Dashboard

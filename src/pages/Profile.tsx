@@ -211,9 +211,9 @@ const Profile = () => {
       return;
     }
     
-    const success = await showNotification('🐾 PetCare Test', {
+    const success = await showNotification('🐾 VitaPet Test', {
       body: t('profile.testPushSent'),
-      tag: 'petcare-test',
+      tag: 'vitapet-test',
     });
     
     if (success) {
@@ -472,7 +472,7 @@ const Profile = () => {
         </Button>
 
         {/* App Info */}
-        <p className="text-center text-xs text-muted-foreground">PetCare v1.0.0</p>
+        <p className="text-center text-xs text-muted-foreground">VitaPet v1.0.0</p>
       </div>
     </AppLayout>
   );

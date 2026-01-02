@@ -35,7 +35,7 @@ const translations = {
     title: 'Your Furry Friends Need You! 🐾',
     greeting: (name: string) => `Hey ${name}! 👋`,
     upcomingReminders: "Here's what's coming up for your beloved pets:",
-    openApp: "We know you're busy, but your pets are counting on you! Open PetCare to check details and mark them done when ready. 💪",
+    openApp: "We know you're busy, but your pets are counting on you! Open VitaPet to check details and mark them done when ready. 💪",
     footer: 'You received this email because you love your pets and have email notifications enabled. We promise to only send you the important stuff! 🐕',
     today: "⚡ Today",
     tomorrow: "📅 Tomorrow",
@@ -199,7 +199,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       try {
         const emailResponse = await resend.emails.send({
-          from: "PetCare <onboarding@resend.dev>",
+          from: "VitaPet <onboarding@resend.dev>",
           to: [profile.email],
           subject: t.subject(userData.reminders.length),
           html,
