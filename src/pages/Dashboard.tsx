@@ -425,9 +425,11 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-foreground">
               {showAllReminders ? t('dashboard.allReminders') : t('dashboard.myPets')}
             </h1>
-            <p className="text-muted-foreground text-sm">
-              {showAllReminders ? t('dashboard.allRemindersDesc') : t('dashboard.next7Days')}
-            </p>
+            {showAllReminders && (
+              <p className="text-muted-foreground text-sm">
+                {t('dashboard.allRemindersDesc')}
+              </p>
+            )}
           </div>
           {showAllReminders ? (
             <Button size="icon" variant="outline" onClick={closeAllRemindersView} className="h-10 w-10">
