@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useAdminData } from '@/hooks/useAdminData';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +41,8 @@ const Admin = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { t, isRTL } = useLanguage();
+  const adminData = useAdminData();
+  
   const [activeTable, setActiveTable] = useState<TableName>('profiles');
   const [tableData, setTableData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,15 +55,12 @@ const Admin = () => {
   const [editingRecord, setEditingRecord] = useState<Record<string, any> | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  // Fetch table data
+  // Fetch table data using edge function
   const fetchTableData = async (tableName: TableName) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
+      const { data, error } = await adminData.fetchTableData(tableName);
+      if (error) throw new Error(error);
       setTableData(data || []);
     } catch (error: any) {
       console.error('Error fetching table data:', error);
@@ -75,30 +74,16 @@ const Admin = () => {
     }
   };
 
-  // Fetch invites and admins
+  // Fetch invites and admins using edge function
   const fetchInvitesAndAdmins = async () => {
     try {
       const [invitesRes, adminsRes] = await Promise.all([
-        supabase.from('admin_invites').select('*').order('created_at', { ascending: false }),
-        supabase.from('user_roles').select('*').eq('role', 'admin'),
+        adminData.fetchInvites(),
+        adminData.fetchAdmins(),
       ]);
       
       if (invitesRes.data) setInvites(invitesRes.data);
-      
-      // Fetch profiles for admins separately
-      if (adminsRes.data) {
-        const adminsWithProfiles = await Promise.all(
-          adminsRes.data.map(async (admin) => {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('email, full_name')
-              .eq('id', admin.user_id)
-              .maybeSingle();
-            return { ...admin, profiles: profile };
-          })
-        );
-        setAdmins(adminsWithProfiles);
-      }
+      if (adminsRes.data) setAdmins(adminsRes.data);
     } catch (error) {
       console.error('Error fetching invites/admins:', error);
     }
@@ -116,13 +101,8 @@ const Admin = () => {
     if (!inviteEmail.trim()) return;
 
     try {
-      const { error } = await supabase.from('admin_invites').insert({
-        email: inviteEmail.toLowerCase().trim(),
-        role: inviteRole,
-        invited_by: user?.id,
-      });
-
-      if (error) throw error;
+      const { error } = await adminData.sendInvite(inviteEmail.toLowerCase().trim());
+      if (error) throw new Error(error);
 
       toast({
         title: t('admin.inviteSent'),
@@ -143,8 +123,8 @@ const Admin = () => {
   // Delete invite
   const handleDeleteInvite = async (id: string) => {
     try {
-      const { error } = await supabase.from('admin_invites').delete().eq('id', id);
-      if (error) throw error;
+      const { error } = await adminData.deleteInvite(id);
+      if (error) throw new Error(error);
       fetchInvitesAndAdmins();
       toast({ title: t('admin.inviteDeleted') });
     } catch (error: any) {
@@ -159,8 +139,8 @@ const Admin = () => {
       return;
     }
     try {
-      const { error } = await supabase.from('user_roles').delete().eq('id', roleId);
-      if (error) throw error;
+      const { error } = await adminData.removeAdmin(roleId);
+      if (error) throw new Error(error);
       fetchInvitesAndAdmins();
       toast({ title: t('admin.adminRemoved') });
     } catch (error: any) {
@@ -171,8 +151,8 @@ const Admin = () => {
   // Delete record
   const handleDeleteRecord = async (id: string) => {
     try {
-      const { error } = await supabase.from(activeTable).delete().eq('id', id);
-      if (error) throw error;
+      const { error } = await adminData.deleteRecord(activeTable, id);
+      if (error) throw new Error(error);
       fetchTableData(activeTable);
       toast({ title: t('admin.recordDeleted') });
     } catch (error: any) {
@@ -194,8 +174,8 @@ const Admin = () => {
     }
 
     try {
-      const { error } = await supabase.from(activeTable).update(data).eq('id', id);
-      if (error) throw error;
+      const { error } = await adminData.updateRecord(activeTable, id, data);
+      if (error) throw new Error(error);
       fetchTableData(activeTable);
       toast({ title: t('admin.recordUpdated') });
     } catch (error: any) {
@@ -206,8 +186,8 @@ const Admin = () => {
   // Create record
   const handleCreateRecord = async (data: Record<string, any>) => {
     try {
-      const { error } = await supabase.from(activeTable).insert([data] as any);
-      if (error) throw error;
+      const { error } = await adminData.createRecord(activeTable, data);
+      if (error) throw new Error(error);
       fetchTableData(activeTable);
       toast({ title: t('admin.recordCreated') });
     } catch (error: any) {
@@ -223,8 +203,8 @@ const Admin = () => {
       const exportData: Record<string, any[]> = {};
 
       for (const table of tables) {
-        const { data, error } = await supabase.from(table).select('*');
-        if (error) throw error;
+        const { data, error } = await adminData.fetchTableData(table);
+        if (error) throw new Error(error);
         exportData[table] = data || [];
       }
 
@@ -449,37 +429,28 @@ const Admin = () => {
                   </Dialog>
                 </CardHeader>
                 <CardContent>
-                  <div className="border rounded-lg overflow-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t('auth.email')}</TableHead>
-                          <TableHead>{t('profile.fullName')}</TableHead>
-                          <TableHead>{t('admin.role')}</TableHead>
-                          <TableHead>{t('admin.actions')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {admins.map((admin) => (
-                          <TableRow key={admin.id}>
-                            <TableCell>{admin.profiles?.email || '-'}</TableCell>
-                            <TableCell>{admin.profiles?.full_name || '-'}</TableCell>
-                            <TableCell className="capitalize">{admin.role}</TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveAdmin(admin.id, admin.user_id)}
-                                className="text-destructive hover:text-destructive"
-                                disabled={admin.user_id === user?.id}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <div className="space-y-2">
+                    {admins.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">{t('admin.noAdmins')}</p>
+                    ) : (
+                      admins.map((admin) => (
+                        <div key={admin.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">{admin.profiles?.full_name || admin.profiles?.email || admin.user_id}</p>
+                            <p className="text-sm text-muted-foreground">{admin.role}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveAdmin(admin.id, admin.user_id)}
+                            className="text-destructive hover:text-destructive"
+                            disabled={admin.user_id === user?.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -491,54 +462,29 @@ const Admin = () => {
                   <CardDescription>{t('admin.pendingInvitesDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="border rounded-lg overflow-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t('auth.email')}</TableHead>
-                          <TableHead>{t('admin.role')}</TableHead>
-                          <TableHead>{t('admin.expiresAt')}</TableHead>
-                          <TableHead>{t('admin.status')}</TableHead>
-                          <TableHead>{t('admin.actions')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {invites.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                              {t('admin.noInvites')}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          invites.map((invite) => (
-                            <TableRow key={invite.id}>
-                              <TableCell>{invite.email}</TableCell>
-                              <TableCell className="capitalize">{invite.role}</TableCell>
-                              <TableCell>{new Date(invite.expires_at).toLocaleDateString()}</TableCell>
-                              <TableCell>
-                                {invite.used_at ? (
-                                  <span className="text-green-600">{t('admin.used')}</span>
-                                ) : new Date(invite.expires_at) < new Date() ? (
-                                  <span className="text-destructive">{t('admin.expired')}</span>
-                                ) : (
-                                  <span className="text-amber-600">{t('admin.pending')}</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteInvite(invite.id)}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                  <div className="space-y-2">
+                    {invites.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">{t('admin.noInvites')}</p>
+                    ) : (
+                      invites.map((invite) => (
+                        <div key={invite.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">{invite.email}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {t('admin.expiresAt')}: {new Date(invite.expires_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteInvite(invite.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
