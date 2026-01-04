@@ -1,5 +1,8 @@
 project_id = "rrbyseeqiwbvazoazoot"
 
+[functions.admin-data]
+verify_jwt = false
+
 [functions.pet-ai-assistant]
 verify_jwt = false
 
