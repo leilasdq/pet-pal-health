@@ -12,14 +12,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2, Repeat, CheckCircle2, X } from 'lucide-react';
+import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2, Repeat, CheckCircle2, X, Sparkles, Heart } from 'lucide-react';
 import { differenceInDays, parseISO, startOfDay, format as formatGregorian, addWeeks, addMonths, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
 import { SwipeableReminder } from '@/components/SwipeableReminder';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 type PetType = 'dog' | 'cat';
+type Gender = 'male' | 'female';
+type ActivityLevel = 'low' | 'moderate' | 'high';
 
 interface Pet {
   id: string;
@@ -29,6 +35,10 @@ interface Pet {
   weight: number | null;
   image_url: string | null;
   pet_type: PetType;
+  gender?: Gender | null;
+  is_neutered?: boolean;
+  activity_level?: ActivityLevel | null;
+  allergies?: string | null;
 }
 
 interface Reminder {
@@ -75,7 +85,17 @@ const Dashboard = () => {
   const [editPetOpen, setEditPetOpen] = useState(false);
   const [addReminderOpen, setAddReminderOpen] = useState(false);
   const [selectedPetId, setSelectedPetId] = useState<string>('');
-  const [newPet, setNewPet] = useState({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' as PetType });
+  const [newPet, setNewPet] = useState({ 
+    name: '', 
+    breed: '', 
+    birth_date: '', 
+    weight: '', 
+    pet_type: 'dog' as PetType,
+    gender: '' as '' | Gender,
+    is_neutered: false,
+    activity_level: '' as '' | ActivityLevel,
+    allergies: ''
+  });
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [editPetData, setEditPetData] = useState({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' as PetType });
   const [newReminder, setNewReminder] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceUnit, recurrence_interval: 1 });
@@ -88,6 +108,10 @@ const Dashboard = () => {
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [editReminderData, setEditReminderData] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceUnit, recurrence_interval: 1 });
   const [savingReminder, setSavingReminder] = useState(false);
+  const [showSuccessCard, setShowSuccessCard] = useState(false);
+  const [addedPetName, setAddedPetName] = useState('');
+  const [healthTip, setHealthTip] = useState('');
+  const [loadingTip, setLoadingTip] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const showAllReminders = searchParams.get('showAllReminders') === 'true';
@@ -117,6 +141,8 @@ const Dashboard = () => {
       setPets((data || []).map(pet => ({
         ...pet,
         pet_type: (pet.pet_type || 'dog') as PetType,
+        gender: pet.gender as Gender | null,
+        activity_level: pet.activity_level as ActivityLevel | null,
       })));
     }
     setLoading(false);
@@ -142,24 +168,73 @@ const Dashboard = () => {
     if (!user) return;
 
     setAddingPet(true);
-    const { error } = await supabase.from('pets').insert({
+    const petData = {
       user_id: user.id,
       name: newPet.name,
       breed: newPet.breed || null,
       birth_date: newPet.birth_date || null,
       weight: newPet.weight ? parseFloat(newPet.weight) : null,
       pet_type: newPet.pet_type,
-    });
+      gender: newPet.gender || null,
+      is_neutered: newPet.is_neutered,
+      activity_level: newPet.activity_level || null,
+      allergies: newPet.allergies || null,
+    };
+
+    const { error } = await supabase.from('pets').insert(petData);
 
     if (error) {
       toast({ title: t('common.error'), description: t('pet.addError'), variant: 'destructive' });
+      setAddingPet(false);
     } else {
-      toast({ title: t('pet.added'), description: '' });
-      setNewPet({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' });
+      // Store pet name for success card
+      setAddedPetName(newPet.name);
+      
+      // Close form dialog
       setAddPetOpen(false);
+      
+      // Fetch the AI health tip
+      setLoadingTip(true);
+      setShowSuccessCard(true);
+      
+      try {
+        const response = await supabase.functions.invoke('pet-health-tip', {
+          body: { pet: petData }
+        });
+        
+        if (response.data?.tip) {
+          setHealthTip(response.data.tip);
+        } else {
+          setHealthTip('از سلامت دوست کوچولوی خود مراقبت کنید! 🐾💚');
+        }
+      } catch (tipError) {
+        console.error('Error fetching health tip:', tipError);
+        setHealthTip('از سلامت دوست کوچولوی خود مراقبت کنید! 🐾💚');
+      }
+      
+      setLoadingTip(false);
+      
+      // Reset form
+      setNewPet({ 
+        name: '', 
+        breed: '', 
+        birth_date: '', 
+        weight: '', 
+        pet_type: 'dog',
+        gender: '',
+        is_neutered: false,
+        activity_level: '',
+        allergies: ''
+      });
       fetchPets();
     }
     setAddingPet(false);
+  };
+
+  const handleCloseSuccessCard = () => {
+    setShowSuccessCard(false);
+    setAddedPetName('');
+    setHealthTip('');
   };
 
   const handleEditPet = (pet: Pet) => {
@@ -442,7 +517,7 @@ const Dashboard = () => {
                 <Plus className="w-5 h-5" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{t('pet.addNew')}</DialogTitle>
               </DialogHeader>
@@ -513,6 +588,67 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
+                
+                {/* Gender */}
+                <div className="space-y-2">
+                  <Label>{t('pet.gender')}</Label>
+                  <RadioGroup 
+                    value={newPet.gender}
+                    onValueChange={(value) => setNewPet({ ...newPet, gender: value as Gender })}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="male" id="gender-male" />
+                      <Label htmlFor="gender-male" className="cursor-pointer font-normal">{t('pet.male')}</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="female" id="gender-female" />
+                      <Label htmlFor="gender-female" className="cursor-pointer font-normal">{t('pet.female')}</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                
+                {/* Neutered/Spayed */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="pet-neutered" className="cursor-pointer">{t('pet.neutered')}</Label>
+                  <Switch 
+                    id="pet-neutered"
+                    checked={newPet.is_neutered}
+                    onCheckedChange={(checked) => setNewPet({ ...newPet, is_neutered: checked })}
+                  />
+                </div>
+                
+                {/* Activity Level */}
+                <div className="space-y-2">
+                  <Label>{t('pet.activityLevel')}</Label>
+                  <Select 
+                    value={newPet.activity_level}
+                    onValueChange={(value) => setNewPet({ ...newPet, activity_level: value as ActivityLevel })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('pet.activityLevel')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">{t('pet.activityLow')}</SelectItem>
+                      <SelectItem value="moderate">{t('pet.activityModerate')}</SelectItem>
+                      <SelectItem value="high">{t('pet.activityHigh')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Allergies/Medical Conditions */}
+                <div className="space-y-2">
+                  <Label htmlFor="pet-allergies">{t('pet.allergies')}</Label>
+                  <Textarea
+                    id="pet-allergies"
+                    value={newPet.allergies}
+                    onChange={(e) => setNewPet({ ...newPet, allergies: e.target.value })}
+                    placeholder={t('pet.allergiesPlaceholder')}
+                    dir={isRTL ? 'rtl' : 'ltr'}
+                    rows={2}
+                  />
+                </div>
+                
                 <Button type="submit" className="w-full" disabled={addingPet}>
                   {addingPet ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
                   {addingPet ? t('pet.adding') : t('pet.add')}
@@ -521,6 +657,47 @@ const Dashboard = () => {
             </DialogContent>
           </Dialog>
           )}
+          
+          {/* Success Card with Health Tip */}
+          <Dialog open={showSuccessCard} onOpenChange={setShowSuccessCard}>
+            <DialogContent className="max-w-sm">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
+                  <Heart className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">{t('pet.welcomeTitle')}</h2>
+                  <p className="text-muted-foreground mt-1">
+                    {t('pet.welcomeMessage').replace('{name}', addedPetName)}
+                  </p>
+                </div>
+                
+                {/* Health Tip Section */}
+                <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-4 border border-primary/10">
+                  <div className="flex items-center gap-2 text-primary mb-2">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="font-medium text-sm">
+                      {t('pet.healthTip').replace('{name}', addedPetName)}
+                    </span>
+                  </div>
+                  {loadingTip ? (
+                    <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">{t('pet.loadingTip')}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-foreground leading-relaxed" dir={isRTL ? 'rtl' : 'ltr'}>
+                      {healthTip}
+                    </p>
+                  )}
+                </div>
+                
+                <Button onClick={handleCloseSuccessCard} className="w-full" disabled={loadingTip}>
+                  {t('pet.gotIt')}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
 
