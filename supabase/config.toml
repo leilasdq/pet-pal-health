@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.pet-ai-assistant]
 verify_jwt = false
 
+[functions.pet-health-tip]
+verify_jwt = false
+
 [functions.send-reminder-email]
 verify_jwt = false
 

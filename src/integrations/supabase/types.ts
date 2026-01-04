@@ -262,11 +262,15 @@ export type Database = {
       }
       pets: {
         Row: {
+          activity_level: string | null
+          allergies: string | null
           birth_date: string | null
           breed: string | null
           created_at: string
+          gender: string | null
           id: string
           image_url: string | null
+          is_neutered: boolean | null
           name: string
           pet_type: string
           updated_at: string
@@ -274,11 +278,15 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          activity_level?: string | null
+          allergies?: string | null
           birth_date?: string | null
           breed?: string | null
           created_at?: string
+          gender?: string | null
           id?: string
           image_url?: string | null
+          is_neutered?: boolean | null
           name: string
           pet_type?: string
           updated_at?: string
@@ -286,11 +294,15 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          activity_level?: string | null
+          allergies?: string | null
           birth_date?: string | null
           breed?: string | null
           created_at?: string
+          gender?: string | null
           id?: string
           image_url?: string | null
+          is_neutered?: boolean | null
           name?: string
           pet_type?: string
           updated_at?: string
