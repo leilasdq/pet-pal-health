@@ -57,6 +57,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Add Pet Dialog
     'pet.addNew': 'Add New Pet',
     'pet.edit': 'Edit Pet',
+    'pet.details': 'Pet Details',
+    'pet.viewDetails': 'View Details',
     'pet.name': 'Pet Name',
     'pet.namePlaceholder': 'e.g., Max',
     'pet.breed': 'Breed',
@@ -340,6 +342,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Add Pet Dialog
     'pet.addNew': 'افزودن پت جدید',
     'pet.edit': 'ویرایش پت',
+    'pet.details': 'مشخصات پت',
+    'pet.viewDetails': 'مشاهده جزئیات',
     'pet.name': 'نام پت',
     'pet.namePlaceholder': 'مثلاً: مکس',
     'pet.breed': 'نژاد',

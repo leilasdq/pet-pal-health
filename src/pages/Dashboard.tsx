@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2, Repeat, CheckCircle2, X, Sparkles, Heart } from 'lucide-react';
+import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight, Loader2, Dog, Cat, Pencil, Camera, ChevronDown, Trash2, Repeat, CheckCircle2, X, Sparkles, Heart, Eye } from 'lucide-react';
 import { differenceInDays, parseISO, startOfDay, format as formatGregorian, addWeeks, addMonths, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
@@ -122,6 +122,7 @@ const Dashboard = () => {
   const [addedPetName, setAddedPetName] = useState('');
   const [healthTip, setHealthTip] = useState('');
   const [loadingTip, setLoadingTip] = useState(false);
+  const [viewingPet, setViewingPet] = useState<Pet | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const showAllReminders = searchParams.get('showAllReminders') === 'true';
@@ -911,17 +912,31 @@ const Dashboard = () => {
                         {pet.is_neutered && ` • ${t('pet.neuteredShort')}`}
                       </p>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditPet(pet);
-                      }} 
-                      className="shrink-0"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingPet(pet);
+                        }} 
+                        className="h-8 w-8"
+                        title={t('pet.viewDetails')}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditPet(pet);
+                        }} 
+                        className="h-8 w-8"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                   
                   {/* Expanded Reminders Section with Animation */}
@@ -1104,6 +1119,100 @@ const Dashboard = () => {
             )})}
           </div>
         )}
+
+        {/* View Pet Details Dialog */}
+        <Dialog open={!!viewingPet} onOpenChange={(open) => !open && setViewingPet(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t('pet.details')}</DialogTitle>
+            </DialogHeader>
+            {viewingPet && (() => {
+              const PetIcon = petTypeIcons[viewingPet.pet_type] || Dog;
+              return (
+                <div className="space-y-4">
+                  {/* Pet Header */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-2xl bg-primary-soft flex items-center justify-center overflow-hidden">
+                      {viewingPet.image_url ? (
+                        <img src={viewingPet.image_url} alt={viewingPet.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <PetIcon className="w-8 h-8 text-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-xl">{viewingPet.name}</h3>
+                      <p className="text-muted-foreground">
+                        {t(`pet.${viewingPet.pet_type}`)}
+                        {viewingPet.breed && ` • ${viewingPet.breed}`}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Pet Info Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {viewingPet.birth_date && (
+                      <div className="p-3 rounded-xl bg-muted/50">
+                        <p className="text-xs text-muted-foreground">{t('pet.birthDate')}</p>
+                        <p className="font-medium">{calculateAge(viewingPet.birth_date)}</p>
+                      </div>
+                    )}
+                    {viewingPet.weight && (
+                      <div className="p-3 rounded-xl bg-muted/50">
+                        <p className="text-xs text-muted-foreground">{t('pet.weight')}</p>
+                        <p className="font-medium">{formatNumber(viewingPet.weight, language)} {t('dashboard.kg')}</p>
+                      </div>
+                    )}
+                    {viewingPet.gender && (
+                      <div className="p-3 rounded-xl bg-muted/50">
+                        <p className="text-xs text-muted-foreground">{t('pet.gender')}</p>
+                        <p className="font-medium">{t(`pet.${viewingPet.gender}`)}</p>
+                      </div>
+                    )}
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <p className="text-xs text-muted-foreground">{t('pet.neutered')}</p>
+                      <p className="font-medium">{viewingPet.is_neutered ? t('common.yes') : t('common.no')}</p>
+                    </div>
+                    {viewingPet.activity_level && (
+                      <div className="p-3 rounded-xl bg-muted/50">
+                        <p className="text-xs text-muted-foreground">{t('pet.activityLevel')}</p>
+                        <p className="font-medium">{t(`pet.activity${viewingPet.activity_level.charAt(0).toUpperCase() + viewingPet.activity_level.slice(1)}`)}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Allergies Section */}
+                  {viewingPet.allergies && (
+                    <div className="p-3 rounded-xl bg-warning/10 border border-warning/20">
+                      <p className="text-xs text-warning font-medium mb-1">{t('pet.allergies')}</p>
+                      <p className="text-sm">{viewingPet.allergies}</p>
+                    </div>
+                  )}
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => setViewingPet(null)}
+                    >
+                      {t('common.close')}
+                    </Button>
+                    <Button 
+                      className="flex-1"
+                      onClick={() => {
+                        setViewingPet(null);
+                        handleEditPet(viewingPet);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4 me-2" />
+                      {t('pet.edit')}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Pet Dialog */}
         <Dialog open={editPetOpen} onOpenChange={(open) => {
