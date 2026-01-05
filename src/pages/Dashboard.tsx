@@ -1107,7 +1107,7 @@ const Dashboard = () => {
           setEditPetOpen(open);
           if (!open) setEditingPet(null);
         }}>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t('pet.edit')}</DialogTitle>
             </DialogHeader>
