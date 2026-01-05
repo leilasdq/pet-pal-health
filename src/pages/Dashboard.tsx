@@ -901,11 +901,14 @@ const Dashboard = () => {
                       <p className="text-muted-foreground text-sm truncate">
                         {t(`pet.${pet.pet_type}`)}
                         {pet.breed && ` • ${pet.breed}`}
+                        {pet.gender && ` • ${t(`pet.${pet.gender}`)}`}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {pet.birth_date && calculateAge(pet.birth_date)}
                         {pet.birth_date && pet.weight && ' • '}
                         {pet.weight && `${formatNumber(pet.weight, language)} ${t('dashboard.kg')}`}
+                        {pet.activity_level && ` • ${t(`pet.activity${pet.activity_level.charAt(0).toUpperCase() + pet.activity_level.slice(1)}`)}`}
+                        {pet.is_neutered && ` • ${t('pet.neuteredShort')}`}
                       </p>
                     </div>
                     <Button 
