@@ -97,7 +97,17 @@ const Dashboard = () => {
     allergies: ''
   });
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
-  const [editPetData, setEditPetData] = useState({ name: '', breed: '', birth_date: '', weight: '', pet_type: 'dog' as PetType });
+  const [editPetData, setEditPetData] = useState({ 
+    name: '', 
+    breed: '', 
+    birth_date: '', 
+    weight: '', 
+    pet_type: 'dog' as PetType,
+    gender: '' as '' | Gender,
+    is_neutered: false,
+    activity_level: '' as '' | ActivityLevel,
+    allergies: ''
+  });
   const [newReminder, setNewReminder] = useState({ title: '', type: 'vaccination', due_date: '', recurrence: 'none' as RecurrenceUnit, recurrence_interval: 1 });
   const [addingPet, setAddingPet] = useState(false);
   const [editingPetLoading, setEditingPetLoading] = useState(false);
@@ -245,6 +255,10 @@ const Dashboard = () => {
       birth_date: pet.birth_date || '',
       weight: pet.weight?.toString() || '',
       pet_type: pet.pet_type || 'dog',
+      gender: pet.gender || '',
+      is_neutered: pet.is_neutered || false,
+      activity_level: pet.activity_level || '',
+      allergies: pet.allergies || '',
     });
     setEditPetOpen(true);
   };
@@ -260,6 +274,10 @@ const Dashboard = () => {
       birth_date: editPetData.birth_date || null,
       weight: editPetData.weight ? parseFloat(editPetData.weight) : null,
       pet_type: editPetData.pet_type,
+      gender: editPetData.gender || null,
+      is_neutered: editPetData.is_neutered,
+      activity_level: editPetData.activity_level || null,
+      allergies: editPetData.allergies || null,
     }).eq('id', editingPet.id);
 
     if (error) {
@@ -1188,6 +1206,67 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
+                
+                {/* Gender */}
+                <div className="space-y-2">
+                  <Label>{t('pet.gender')}</Label>
+                  <RadioGroup 
+                    value={editPetData.gender}
+                    onValueChange={(value) => setEditPetData({ ...editPetData, gender: value as Gender })}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="male" id="edit-gender-male" />
+                      <Label htmlFor="edit-gender-male" className="cursor-pointer font-normal">{t('pet.male')}</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="female" id="edit-gender-female" />
+                      <Label htmlFor="edit-gender-female" className="cursor-pointer font-normal">{t('pet.female')}</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                
+                {/* Neutered/Spayed */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="edit-pet-neutered" className="cursor-pointer">{t('pet.neutered')}</Label>
+                  <Switch 
+                    id="edit-pet-neutered"
+                    checked={editPetData.is_neutered}
+                    onCheckedChange={(checked) => setEditPetData({ ...editPetData, is_neutered: checked })}
+                  />
+                </div>
+                
+                {/* Activity Level */}
+                <div className="space-y-2">
+                  <Label>{t('pet.activityLevel')}</Label>
+                  <Select 
+                    value={editPetData.activity_level}
+                    onValueChange={(value) => setEditPetData({ ...editPetData, activity_level: value as ActivityLevel })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('pet.activityLevel')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">{t('pet.activityLow')}</SelectItem>
+                      <SelectItem value="moderate">{t('pet.activityModerate')}</SelectItem>
+                      <SelectItem value="high">{t('pet.activityHigh')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Allergies/Medical Conditions */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-pet-allergies">{t('pet.allergies')}</Label>
+                  <Textarea
+                    id="edit-pet-allergies"
+                    value={editPetData.allergies}
+                    onChange={(e) => setEditPetData({ ...editPetData, allergies: e.target.value })}
+                    placeholder={t('pet.allergiesPlaceholder')}
+                    dir={isRTL ? 'rtl' : 'ltr'}
+                    rows={2}
+                  />
+                </div>
+                
                 <Button type="submit" className="w-full" disabled={editingPetLoading}>
                   {editingPetLoading ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
                   {editingPetLoading ? t('common.saving') : t('common.save')}
