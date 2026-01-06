@@ -95,6 +95,19 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.loadingTip': 'Getting a personalized health tip...',
     'pet.imageUploadError': 'Failed to upload image',
     
+    // Weight Tracking
+    'weight.history': 'Weight History',
+    'weight.add': 'Add Weight',
+    'weight.addNew': 'Add Weight Entry',
+    'weight.value': 'Weight (kg)',
+    'weight.date': 'Date',
+    'weight.added': 'Weight added successfully!',
+    'weight.addError': 'Failed to add weight',
+    'weight.deleted': 'Weight entry deleted',
+    'weight.deleteError': 'Failed to delete weight',
+    'weight.noData': 'No weight data yet',
+    'weight.startTracking': 'Start tracking your pet\'s weight',
+    
     // Add Reminder Dialog
     'reminder.addNew': 'Add Reminder',
     'reminder.title': 'Title',
@@ -382,6 +395,19 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.healthTip': 'یک نکته سلامتی برای {name}:',
     'pet.gotIt': 'متوجه شدم!',
     'pet.loadingTip': 'در حال دریافت نکته سلامتی...',
+    
+    // Weight Tracking
+    'weight.history': 'تاریخچه وزن',
+    'weight.add': 'ثبت وزن',
+    'weight.addNew': 'ثبت وزن جدید',
+    'weight.value': 'وزن (کیلوگرم)',
+    'weight.date': 'تاریخ',
+    'weight.added': 'وزن با موفقیت ثبت شد!',
+    'weight.addError': 'خطا در ثبت وزن',
+    'weight.deleted': 'وزن حذف شد',
+    'weight.deleteError': 'خطا در حذف وزن',
+    'weight.noData': 'هنوز وزنی ثبت نشده',
+    'weight.startTracking': 'شروع به پیگیری وزن پت خود کنید',
     
     // Add Reminder Dialog
     'reminder.addNew': 'افزودن یادآوری',
