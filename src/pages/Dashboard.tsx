@@ -908,8 +908,6 @@ const Dashboard = () => {
                         {pet.birth_date && calculateAge(pet.birth_date)}
                         {pet.birth_date && pet.weight && ' • '}
                         {pet.weight && `${formatNumber(pet.weight, language)} ${t('dashboard.kg')}`}
-                        {pet.activity_level && ` • ${t(`pet.activity${pet.activity_level.charAt(0).toUpperCase() + pet.activity_level.slice(1)}`)}`}
-                        {pet.is_neutered && ` • ${t('pet.neuteredShort')}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">

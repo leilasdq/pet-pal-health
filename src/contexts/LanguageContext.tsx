@@ -247,6 +247,9 @@ const translations: Record<Language, Record<string, string>> = {
     'common.edit': 'Edit',
     'common.all': 'All',
     'common.selectDate': 'Select date',
+    'common.yes': 'Yes',
+    'common.no': 'No',
+    'common.close': 'Close',
     
     // Vault extras
     'vault.fileTooLarge': 'File size must be less than 10MB',
@@ -532,6 +535,9 @@ const translations: Record<Language, Record<string, string>> = {
     'common.edit': 'ویرایش',
     'common.all': 'همه',
     'common.selectDate': 'انتخاب تاریخ',
+    'common.yes': 'بله',
+    'common.no': 'خیر',
+    'common.close': 'بستن',
     
     // Vault extras
     'vault.fileTooLarge': 'حجم فایل باید کمتر از ۱۰ مگابایت باشد',
