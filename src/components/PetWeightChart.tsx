@@ -141,8 +141,9 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
     if (weightHistory.length < 2) return null;
     const latest = weightHistory[weightHistory.length - 1].weight;
     const previous = weightHistory[weightHistory.length - 2].weight;
-    const diff = latest - previous;
-    return { diff, percentage: ((diff / previous) * 100).toFixed(1) };
+    const diff = Number((latest - previous).toFixed(1));
+    const percentage = ((diff / previous) * 100).toFixed(1);
+    return { diff, percentage };
   };
 
   const trend = getWeightTrend();
@@ -213,19 +214,22 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
           {/* Weight Trend */}
           {trend && (
             <div className={cn(
-              "flex items-center gap-2 p-2 rounded-lg text-sm",
+              "flex items-center justify-between p-2 rounded-lg text-xs",
               trend.diff > 0 ? "bg-success/10 text-success" : trend.diff < 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
             )}>
-              {trend.diff > 0 ? (
-                <TrendingUp className="w-4 h-4" />
-              ) : trend.diff < 0 ? (
-                <TrendingDown className="w-4 h-4" />
-              ) : (
-                <Minus className="w-4 h-4" />
-              )}
-              <span>
-                {trend.diff > 0 ? '+' : ''}{formatNumber(trend.diff, language)} {t('dashboard.kg')} ({trend.diff > 0 ? '+' : ''}{trend.percentage}%)
-              </span>
+              <span className="text-muted-foreground">{t('weight.sinceLast')}</span>
+              <div className="flex items-center gap-1">
+                {trend.diff > 0 ? (
+                  <TrendingUp className="w-3 h-3" />
+                ) : trend.diff < 0 ? (
+                  <TrendingDown className="w-3 h-3" />
+                ) : (
+                  <Minus className="w-3 h-3" />
+                )}
+                <span className="font-medium">
+                  {trend.diff > 0 ? '+' : ''}{trend.diff} {t('dashboard.kg')} ({trend.diff > 0 ? '+' : ''}{trend.percentage}%)
+                </span>
+              </div>
             </div>
           )}
 
