@@ -597,6 +597,41 @@ export type Database = {
           },
         ]
       }
+      weight_history: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          pet_id: string
+          recorded_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pet_id: string
+          recorded_at?: string
+          weight: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pet_id?: string
+          recorded_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_history_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

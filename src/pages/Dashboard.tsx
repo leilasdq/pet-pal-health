@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
 import { DatePicker } from '@/components/ui/date-picker';
 import { SwipeableReminder } from '@/components/SwipeableReminder';
+import { PetWeightChart } from '@/components/PetWeightChart';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -1120,7 +1121,7 @@ const Dashboard = () => {
 
         {/* View Pet Details Dialog */}
         <Dialog open={!!viewingPet} onOpenChange={(open) => !open && setViewingPet(null)}>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t('pet.details')}</DialogTitle>
             </DialogHeader>
@@ -1185,6 +1186,11 @@ const Dashboard = () => {
                       <p className="text-sm">{viewingPet.allergies}</p>
                     </div>
                   )}
+                  
+                  {/* Weight Chart */}
+                  <div className="border-t pt-4">
+                    <PetWeightChart petId={viewingPet.id} currentWeight={viewingPet.weight} />
+                  </div>
                   
                   {/* Action Buttons */}
                   <div className="flex gap-2">
