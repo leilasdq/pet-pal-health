@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { Plus, Loader2, TrendingUp, TrendingDown, Minus, Trash2 } from 'lucide-react';
 import { format as formatGregorian, parseISO } from 'date-fns';
+import { format as formatJalali } from 'date-fns-jalali';
 import { formatNumber } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
 
@@ -122,13 +123,18 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
   const formatDate = (dateStr: string) => {
     const date = parseISO(dateStr);
     if (language === 'fa') {
-      // Simple Persian month abbreviation
-      const months = ['فرو', 'ارد', 'خرد', 'تیر', 'مرد', 'شهر', 'مهر', 'آبا', 'آذر', 'دی', 'بهم', 'اسف'];
-      const d = new Date(dateStr);
-      // Approximate conversion - just show the date in a readable format
-      return `${d.getDate()}/${d.getMonth() + 1}`;
+      // Use date-fns-jalali for proper Persian date formatting
+      return formatJalali(date, 'd/M');
     }
     return formatGregorian(date, 'MMM d');
+  };
+
+  const formatFullDate = (dateStr: string) => {
+    const date = parseISO(dateStr);
+    if (language === 'fa') {
+      return formatJalali(date, 'd MMMM yyyy');
+    }
+    return formatGregorian(date, 'MMM d, yyyy');
   };
 
   const chartData = weightHistory.map((entry) => ({
@@ -230,7 +236,7 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
                 {formatNumber(latestWeight.weight, language)} <span className="text-lg font-normal">{t('dashboard.kg')}</span>
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatDate(latestWeight.recorded_at)}
+                {formatFullDate(latestWeight.recorded_at)}
               </p>
               {/* Weight Trend */}
               {trend && (
