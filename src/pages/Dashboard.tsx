@@ -1155,12 +1155,6 @@ const Dashboard = () => {
                         <p className="font-medium">{calculateAge(viewingPet.birth_date)}</p>
                       </div>
                     )}
-                    {viewingPet.weight && (
-                      <div className="p-3 rounded-xl bg-muted/50">
-                        <p className="text-xs text-muted-foreground">{t('pet.weight')}</p>
-                        <p className="font-medium">{formatNumber(viewingPet.weight, language)} {t('dashboard.kg')}</p>
-                      </div>
-                    )}
                     {viewingPet.gender && (
                       <div className="p-3 rounded-xl bg-muted/50">
                         <p className="text-xs text-muted-foreground">{t('pet.gender')}</p>

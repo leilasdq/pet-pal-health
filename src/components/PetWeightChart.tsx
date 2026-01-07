@@ -156,9 +156,9 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
     const latest = Number(weightHistory[weightHistory.length - 1].weight.toFixed(3));
     const previous = Number(weightHistory[weightHistory.length - 2].weight.toFixed(3));
     const diff = Number((latest - previous).toFixed(3));
-    const percentage = Number(((diff / previous) * 100).toFixed(1));
-    // Display with 1 decimal for readability
-    return { diff: Number(diff.toFixed(1)), percentage };
+    const percentage = Number(((diff / previous) * 100).toFixed(2));
+    // Keep 2 decimal display for meaningful differences
+    return { diff: Number(diff.toFixed(2)), percentage };
   };
 
   const latestWeight = getLatestWeight();
