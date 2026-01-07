@@ -108,6 +108,7 @@ const translations: Record<Language, Record<string, string>> = {
     'weight.noData': 'No weight data yet',
     'weight.startTracking': 'Start tracking your pet\'s weight',
     'weight.sinceLast': 'Since last entry',
+    'weight.current': 'Current Weight',
     
     // Add Reminder Dialog
     'reminder.addNew': 'Add Reminder',
@@ -410,6 +411,7 @@ const translations: Record<Language, Record<string, string>> = {
     'weight.noData': 'هنوز وزنی ثبت نشده',
     'weight.startTracking': 'شروع به پیگیری وزن پت خود کنید',
     'weight.sinceLast': 'نسبت به آخرین ثبت',
+    'weight.current': 'وزن فعلی',
     
     // Add Reminder Dialog
     'reminder.addNew': 'افزودن یادآوری',

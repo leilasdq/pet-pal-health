@@ -65,11 +65,13 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
 
     setSubmitting(true);
     try {
+      // Store with 3 decimal precision for accurate calculations
+      const weightValue = Number(parseFloat(newWeight).toFixed(3));
       const { error } = await supabase
         .from('weight_history')
         .insert({
           pet_id: petId,
-          weight: parseFloat(newWeight),
+          weight: weightValue,
           recorded_at: formatGregorian(newDate, 'yyyy-MM-dd'),
         });
 
@@ -136,15 +138,24 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
     id: entry.id,
   }));
 
-  // Calculate weight trend
+  // Get latest weight entry
+  const getLatestWeight = () => {
+    if (weightHistory.length === 0) return null;
+    return weightHistory[weightHistory.length - 1];
+  };
+
+  // Calculate weight trend with 3 decimal precision internally
   const getWeightTrend = () => {
     if (weightHistory.length < 2) return null;
-    const latest = weightHistory[weightHistory.length - 1].weight;
-    const previous = weightHistory[weightHistory.length - 2].weight;
-    const diff = Number((latest - previous).toFixed(1));
-    const percentage = ((diff / previous) * 100).toFixed(1);
-    return { diff, percentage };
+    const latest = Number(weightHistory[weightHistory.length - 1].weight.toFixed(3));
+    const previous = Number(weightHistory[weightHistory.length - 2].weight.toFixed(3));
+    const diff = Number((latest - previous).toFixed(3));
+    const percentage = Number(((diff / previous) * 100).toFixed(1));
+    // Display with 1 decimal for readability
+    return { diff: Number(diff.toFixed(1)), percentage };
   };
+
+  const latestWeight = getLatestWeight();
 
   const trend = getWeightTrend();
 
@@ -211,25 +222,34 @@ export function PetWeightChart({ petId, currentWeight }: PetWeightChartProps) {
         </div>
       ) : (
         <>
-          {/* Weight Trend */}
-          {trend && (
-            <div className={cn(
-              "flex items-center justify-between p-2 rounded-lg text-xs",
-              trend.diff > 0 ? "bg-success/10 text-success" : trend.diff < 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
-            )}>
-              <span className="text-muted-foreground">{t('weight.sinceLast')}</span>
-              <div className="flex items-center gap-1">
-                {trend.diff > 0 ? (
-                  <TrendingUp className="w-3 h-3" />
-                ) : trend.diff < 0 ? (
-                  <TrendingDown className="w-3 h-3" />
-                ) : (
-                  <Minus className="w-3 h-3" />
-                )}
-                <span className="font-medium">
-                  {trend.diff > 0 ? '+' : ''}{trend.diff} {t('dashboard.kg')} ({trend.diff > 0 ? '+' : ''}{trend.percentage}%)
-                </span>
-              </div>
+          {/* Latest Weight - Prominent Display */}
+          {latestWeight && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">{t('weight.current')}</p>
+              <p className="text-3xl font-bold text-primary">
+                {formatNumber(latestWeight.weight, language)} <span className="text-lg font-normal">{t('dashboard.kg')}</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {formatDate(latestWeight.recorded_at)}
+              </p>
+              {/* Weight Trend */}
+              {trend && (
+                <div className={cn(
+                  "inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-full text-xs",
+                  trend.diff > 0 ? "bg-success/10 text-success" : trend.diff < 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+                )}>
+                  {trend.diff > 0 ? (
+                    <TrendingUp className="w-3 h-3" />
+                  ) : trend.diff < 0 ? (
+                    <TrendingDown className="w-3 h-3" />
+                  ) : (
+                    <Minus className="w-3 h-3" />
+                  )}
+                  <span>
+                    {trend.diff > 0 ? '+' : ''}{trend.diff} {t('dashboard.kg')} ({trend.diff > 0 ? '+' : ''}{trend.percentage}%)
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
