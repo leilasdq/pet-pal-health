@@ -193,12 +193,20 @@ const Dashboard = () => {
       allergies: newPet.allergies || null,
     };
 
-    const { error } = await supabase.from('pets').insert(petData);
+    const { data: insertedPet, error } = await supabase.from('pets').insert(petData).select('id').single();
 
     if (error) {
       toast({ title: t('common.error'), description: t('pet.addError'), variant: 'destructive' });
       setAddingPet(false);
     } else {
+      // Add initial weight to weight history if weight was provided
+      if (petData.weight && insertedPet?.id) {
+        await supabase.from('weight_history').insert({
+          pet_id: insertedPet.id,
+          weight: Number(petData.weight.toFixed(3)),
+          recorded_at: new Date().toISOString().split('T')[0],
+        });
+      }
       // Store pet name for success card
       setAddedPetName(newPet.name);
       
@@ -270,11 +278,14 @@ const Dashboard = () => {
     if (!editingPet) return;
 
     setEditingPetLoading(true);
+    const newWeight = editPetData.weight ? parseFloat(editPetData.weight) : null;
+    const oldWeight = editingPet.weight;
+    
     const { error } = await supabase.from('pets').update({
       name: editPetData.name,
       breed: editPetData.breed || null,
       birth_date: editPetData.birth_date || null,
-      weight: editPetData.weight ? parseFloat(editPetData.weight) : null,
+      weight: newWeight,
       pet_type: editPetData.pet_type,
       gender: editPetData.gender || null,
       is_neutered: editPetData.is_neutered,
@@ -285,6 +296,15 @@ const Dashboard = () => {
     if (error) {
       toast({ title: t('common.error'), description: t('pet.updateError'), variant: 'destructive' });
     } else {
+      // Add weight history entry if weight changed
+      if (newWeight !== null && newWeight !== oldWeight) {
+        await supabase.from('weight_history').insert({
+          pet_id: editingPet.id,
+          weight: Number(newWeight.toFixed(3)),
+          recorded_at: new Date().toISOString().split('T')[0],
+        });
+      }
+      
       toast({ title: t('pet.updated'), description: '' });
       setEditPetOpen(false);
       setEditingPet(null);
