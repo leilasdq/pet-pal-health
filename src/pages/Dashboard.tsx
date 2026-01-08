@@ -16,6 +16,7 @@ import { Plus, PawPrint, Calendar, Bell, Syringe, Bug, Stethoscope, ChevronRight
 import { differenceInDays, parseISO, startOfDay, format as formatGregorian, addWeeks, addMonths, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatShortDate, calculateAge as calcAge, formatNumber } from '@/lib/dateUtils';
+import { getBreedsByPetType } from '@/lib/petBreeds';
 import { DatePicker } from '@/components/ui/date-picker';
 import { SwipeableReminder } from '@/components/SwipeableReminder';
 import { PetWeightChart } from '@/components/PetWeightChart';
@@ -571,7 +572,7 @@ const Dashboard = () => {
                         <button
                           key={type}
                           type="button"
-                          onClick={() => setNewPet({ ...newPet, pet_type: type })}
+                          onClick={() => setNewPet({ ...newPet, pet_type: type, breed: '' })}
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                             newPet.pet_type === type
@@ -598,14 +599,22 @@ const Dashboard = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pet-breed">{t('pet.breed')}</Label>
-                  <Input
-                    id="pet-breed"
+                  <Label>{t('pet.breed')}</Label>
+                  <Select 
                     value={newPet.breed}
-                    onChange={(e) => setNewPet({ ...newPet, breed: e.target.value })}
-                    placeholder={t('pet.breedPlaceholder')}
-                    dir={isRTL ? 'rtl' : 'ltr'}
-                  />
+                    onValueChange={(value) => setNewPet({ ...newPet, breed: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('pet.selectBreed')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getBreedsByPetType(newPet.pet_type).map((breed) => (
+                        <SelectItem key={breed} value={breed}>
+                          {t(`breed.${breed}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -922,7 +931,7 @@ const Dashboard = () => {
                       </div>
                       <p className="text-muted-foreground text-sm truncate">
                         {t(`pet.${pet.pet_type}`)}
-                        {pet.breed && ` • ${pet.breed}`}
+                        {pet.breed && ` • ${t(`breed.${pet.breed}`) !== `breed.${pet.breed}` ? t(`breed.${pet.breed}`) : pet.breed}`}
                         {pet.gender && ` • ${t(`pet.${pet.gender}`)}`}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -1162,7 +1171,7 @@ const Dashboard = () => {
                       <h3 className="font-bold text-xl">{viewingPet.name}</h3>
                       <p className="text-muted-foreground">
                         {t(`pet.${viewingPet.pet_type}`)}
-                        {viewingPet.breed && ` • ${viewingPet.breed}`}
+                        {viewingPet.breed && ` • ${t(`breed.${viewingPet.breed}`) !== `breed.${viewingPet.breed}` ? t(`breed.${viewingPet.breed}`) : viewingPet.breed}`}
                       </p>
                     </div>
                   </div>
@@ -1279,7 +1288,7 @@ const Dashboard = () => {
                         <button
                           key={type}
                           type="button"
-                          onClick={() => setEditPetData({ ...editPetData, pet_type: type })}
+                          onClick={() => setEditPetData({ ...editPetData, pet_type: type, breed: '' })}
                           className={cn(
                             "flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all",
                             editPetData.pet_type === type
@@ -1306,14 +1315,22 @@ const Dashboard = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-pet-breed">{t('pet.breed')}</Label>
-                  <Input
-                    id="edit-pet-breed"
+                  <Label>{t('pet.breed')}</Label>
+                  <Select 
                     value={editPetData.breed}
-                    onChange={(e) => setEditPetData({ ...editPetData, breed: e.target.value })}
-                    placeholder={t('pet.breedPlaceholder')}
-                    dir={isRTL ? 'rtl' : 'ltr'}
-                  />
+                    onValueChange={(value) => setEditPetData({ ...editPetData, breed: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('pet.selectBreed')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getBreedsByPetType(editPetData.pet_type).map((breed) => (
+                        <SelectItem key={breed} value={breed}>
+                          {t(`breed.${breed}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
