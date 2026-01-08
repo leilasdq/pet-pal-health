@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { BreedCombobox } from '@/components/BreedCombobox';
 
 type PetType = 'dog' | 'cat';
 type Gender = 'male' | 'female';
@@ -600,21 +601,11 @@ const Dashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>{t('pet.breed')}</Label>
-                  <Select 
+                  <BreedCombobox
+                    petType={newPet.pet_type}
                     value={newPet.breed}
                     onValueChange={(value) => setNewPet({ ...newPet, breed: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('pet.selectBreed')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getBreedsByPetType(newPet.pet_type).map((breed) => (
-                        <SelectItem key={breed} value={breed}>
-                          {t(`breed.${breed}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1316,21 +1307,11 @@ const Dashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>{t('pet.breed')}</Label>
-                  <Select 
+                  <BreedCombobox
+                    petType={editPetData.pet_type}
                     value={editPetData.breed}
                     onValueChange={(value) => setEditPetData({ ...editPetData, breed: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('pet.selectBreed')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getBreedsByPetType(editPetData.pet_type).map((breed) => (
-                        <SelectItem key={breed} value={breed}>
-                          {t(`breed.${breed}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

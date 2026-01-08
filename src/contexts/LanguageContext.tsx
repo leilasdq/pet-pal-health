@@ -95,6 +95,8 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.loadingTip': 'Getting a personalized health tip...',
     'pet.imageUploadError': 'Failed to upload image',
     'pet.selectBreed': 'Select breed',
+    'pet.searchBreed': 'Search breeds...',
+    'pet.noBreedFound': 'No breed found',
     
     // Dog Breeds
     'breed.mixed': 'Mixed / Unknown',
@@ -474,6 +476,8 @@ const translations: Record<Language, Record<string, string>> = {
     'pet.updateError': 'خطا در بروزرسانی پت',
     'pet.imageUploadError': 'خطا در آپلود تصویر',
     'pet.selectBreed': 'انتخاب نژاد',
+    'pet.searchBreed': 'جستجوی نژاد...',
+    'pet.noBreedFound': 'نژادی یافت نشد',
     'pet.welcomeTitle': 'تبریک! 🎉',
     
     // Dog Breeds
